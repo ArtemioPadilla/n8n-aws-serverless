@@ -272,5 +272,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <p align="center">
-  Made with ❤️ by the n8n Deploy community
+  Made with ❤️
 </p>
