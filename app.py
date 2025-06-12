@@ -67,6 +67,12 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
         if env_config.settings.monitoring:
             components.append("monitoring")
     
+    # Create CDK environment
+    cdk_env = cdk.Environment(
+        account=env_config.account,
+        region=env_config.region
+    )
+    
     # Create network stack
     network_stack = None
     if "network" in components or env_config.settings.networking:
@@ -75,6 +81,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             f"{stack_prefix}-network",
             config=config,
             environment=environment,
+            env=cdk_env,
         )
     
     # Create storage stack
@@ -88,6 +95,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             config=config,
             environment=environment,
             network_stack=network_stack,
+            env=cdk_env,
         )
     
     # Create database stack if needed
@@ -108,6 +116,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             config=config,
             environment=environment,
             network_stack=network_stack,
+            env=cdk_env,
         )
         database_endpoint = database_stack.endpoint
         database_secret = database_stack.secret
@@ -127,6 +136,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             storage_stack=storage_stack,
             database_endpoint=database_endpoint,
             database_secret=database_secret,
+            env=cdk_env,
         )
     
     # Create access stack
@@ -140,6 +150,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             config=config,
             environment=environment,
             compute_stack=compute_stack,
+            env=cdk_env,
         )
     
     # Create monitoring stack if enabled
@@ -155,6 +166,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             compute_stack=compute_stack,
             storage_stack=storage_stack,
             database_stack=database_stack,
+            env=cdk_env,
         )
     
     # Add tags to all stacks
