@@ -4,66 +4,196 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an AWS CDK (Cloud Development Kit) Python project for deploying n8n workflow automation tool in a serverless architecture on AWS. The project aims to provide a cost-effective serverless deployment solution for n8n.
+This is a configuration-driven AWS CDK (Cloud Development Kit) Python project for deploying n8n workflow automation tool using serverless infrastructure on AWS. The project provides a cost-effective deployment solution that scales from $5/month for personal use to enterprise-grade deployments.
+
+## Key Features
+
+- **Configuration-driven deployment** via `system.yaml`
+- **Multi-environment support** (local, dev, staging, production)
+- **Cost-optimized architecture** using Fargate Spot, API Gateway, and EFS
+- **Local development** with Docker Compose
+- **Comprehensive testing** with pytest and coverage reporting
+- **CI/CD ready** with GitHub Actions
 
 ## Development Commands
 
-### Setup
+### Quick Start
 ```bash
-# Create virtual environment
-python3 -m venv .venv
+# Setup environment
+make install
 
-# Activate virtual environment
-source .venv/bin/activate  # MacOS/Linux
-.venv\Scripts\activate.bat  # Windows
+# Run tests
+make test
 
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt  # For development
+# Start local n8n
+make local-up
+
+# Deploy to AWS
+make deploy-dev
 ```
 
-### CDK Commands
+### Common Commands
 ```bash
-cdk ls        # List all stacks in the app
-cdk synth     # Synthesize CloudFormation template
-cdk deploy    # Deploy stack to AWS
-cdk diff      # Compare deployed stack with current state
-cdk destroy   # Remove stack from AWS
-```
+# CDK deployment
+cdk deploy -c environment=dev
+cdk deploy -c environment=production
+cdk deploy -c environment=dev -c stack_type=minimal
 
-### Testing
-```bash
-# Run all tests
-pytest
+# Local development
+./scripts/local-setup.sh    # One-time setup
+./scripts/local-deploy.sh   # Start n8n locally
+./scripts/local-test.sh     # Test local deployment
 
-# Run specific test file
-pytest tests/unit/test_n8n_aws_serverless_stack.py
-
-# Run with verbose output
-pytest -v
+# Testing
+pytest                      # Run all tests
+pytest --cov               # With coverage
+tox                        # Multi-environment testing
+make lint                  # Run linting
+make format                # Format code
 ```
 
 ## Project Architecture
 
-### Core Structure
-- **app.py**: CDK application entry point that instantiates the stack
-- **n8n_aws_serverless/n8n_aws_serverless_stack.py**: Main stack definition where all AWS resources for n8n serverless deployment should be defined
-- **cdk.json**: CDK configuration with security-focused feature flags and app settings
+### Directory Structure
+```
+n8n-aws-serverless/
+├── n8n_aws_serverless/
+│   ├── config/           # Configuration management
+│   │   ├── config_loader.py
+│   │   └── models.py     # Pydantic models
+│   ├── stacks/          # CDK stack definitions
+│   │   ├── base_stack.py
+│   │   ├── network_stack.py
+│   │   ├── storage_stack.py
+│   │   ├── compute_stack.py
+│   │   ├── database_stack.py
+│   │   ├── access_stack.py
+│   │   └── monitoring_stack.py
+│   └── constructs/      # Reusable CDK constructs
+│       └── fargate_n8n.py
+├── docker/              # Local development
+├── scripts/             # Utility scripts
+├── tests/               # Test suite
+├── docs/                # Documentation
+└── system.yaml          # Main configuration file
+```
 
-### Stack Implementation
-The `N8NAwsServerlessStack` class in `n8n_aws_serverless_stack.py` is where all AWS infrastructure should be defined. Currently empty, it will need to include:
-- Container/Lambda definitions for running n8n
-- API Gateway or ALB for HTTP access
-- Database resources (DynamoDB/RDS)
-- S3 buckets for workflow storage
-- IAM roles and policies
-- Secrets management for n8n configuration
+### Configuration-Driven Architecture
 
-### Testing Approach
-Tests use pytest with AWS CDK assertions library. Unit tests should verify:
-- Stack synthesis without errors
-- Presence of expected resources
-- Correct resource configurations
-- IAM policy validations
+The entire infrastructure is configured via `system.yaml`:
 
-The test structure follows CDK best practices with separate unit test directories.
+```yaml
+environments:
+  dev:
+    account: "123456789012"
+    region: "us-east-1"
+    settings:
+      fargate:
+        cpu: 256
+        memory: 512
+        spot_percentage: 80
+      scaling:
+        min_tasks: 1
+        max_tasks: 3
+```
+
+### Stack Dependencies
+
+1. **NetworkStack**: VPC, subnets, security groups
+2. **StorageStack**: EFS for persistent storage (depends on Network)
+3. **DatabaseStack**: Optional RDS/Aurora (depends on Network)
+4. **ComputeStack**: ECS Fargate service (depends on Network, Storage)
+5. **AccessStack**: API Gateway + CloudFront (depends on Compute)
+6. **MonitoringStack**: CloudWatch dashboards and alarms (depends on all)
+
+## Testing Strategy
+
+### Unit Tests
+- Test each stack independently with mocked dependencies
+- Verify resource creation and configuration
+- Check IAM policies and security settings
+
+### Integration Tests
+- Test stack interactions
+- Verify end-to-end deployment
+- Local Docker Compose testing
+
+### Coverage Requirements
+- Minimum 80% code coverage
+- Coverage reports in HTML and XML formats
+- Pre-commit hooks for code quality
+
+## Cost Optimization
+
+The project is designed for cost efficiency:
+
+1. **Fargate Spot**: 70% cost reduction
+2. **API Gateway**: $1/million requests (vs $16/month for ALB)
+3. **SQLite on EFS**: Free database for small workloads
+4. **Auto-scaling**: Scale down during low usage
+
+## Security Considerations
+
+- VPC isolation with private subnets
+- Secrets Manager for credentials
+- IAM roles with least privilege
+- Encryption at rest and in transit
+- Optional WAF for production
+
+## Local Development
+
+### Docker Compose Setup
+- Development configuration with SQLite
+- Production-like setup with PostgreSQL
+- Optional monitoring stack (Prometheus + Grafana)
+
+### Testing Locally
+```bash
+# Start services
+./scripts/local-deploy.sh
+
+# Run with PostgreSQL
+./scripts/local-deploy.sh -p postgres
+
+# With monitoring
+./scripts/local-deploy.sh -m
+```
+
+## Deployment Patterns
+
+### Environment Types
+- **local**: Docker-based development
+- **dev**: Minimal AWS resources
+- **staging**: Production-like with lower scale
+- **production**: Full HA with monitoring
+
+### Stack Types
+- **minimal**: Basic n8n ($5-10/month)
+- **standard**: With monitoring ($15-30/month)
+- **enterprise**: Full features ($50-100/month)
+
+## Best Practices
+
+1. **Always run tests before deployment**
+   ```bash
+   make check  # Runs lint + test
+   ```
+
+2. **Use configuration for all settings**
+   - Avoid hardcoding values
+   - Use system.yaml for environment-specific config
+
+3. **Follow the existing patterns**
+   - Inherit from N8nBaseStack
+   - Use consistent naming via get_resource_name()
+   - Apply proper tagging
+
+4. **Security first**
+   - Never commit secrets
+   - Use Secrets Manager for sensitive data
+   - Follow least privilege for IAM
+
+5. **Cost awareness**
+   - Use Spot instances for non-production
+   - Enable auto-scaling
+   - Set up cost alerts

@@ -1,0 +1,40 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "n8n-metrics",
+    "title": "n8n Metrics Dashboard",
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "datasource": "Prometheus",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "showLegend": true
+        },
+        "targets": [
+          {
+            "expr": "n8n_workflow_executions_total",
+            "refId": "A"
+          }
+        ],
+        "title": "Workflow Executions",
+        "type": "graph"
+      }
+    ]
+  }
+}

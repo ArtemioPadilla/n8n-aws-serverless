@@ -8,3 +8,95 @@ __pycache__
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# Python
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Testing
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+coverage.xml
+*.cover
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Local environment
+.env
+.env.local
+.env.*.local
+docker/.env
+!docker/.env.example
+
+# AWS
+.aws-sam/
+samconfig.toml
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.p12
+.secrets.baseline
+
+# Temporary files
+*.tmp
+*.bak
+*~
+.#*
+
+# n8n specific
+docker/workflows/
+docker/n8n_data/
+docker/postgres_data/
+docker/redis_data/
+docker/nginx_logs/
+docker/prometheus_data/
+docker/grafana_data/
+
+# Local test files
+test-*.yaml
+scratch/

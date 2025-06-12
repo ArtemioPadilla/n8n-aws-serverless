@@ -1,0 +1,240 @@
+global:
+  project_name: "n8n-serverless"
+  organization: "mycompany"
+  tags:
+    Project: "n8n"
+    ManagedBy: "CDK"
+    CostCenter: "Engineering"
+
+defaults:
+  fargate:
+    cpu: 256
+    memory: 512
+    spot_percentage: 80
+    n8n_version: "1.94.1"  # Pinned version for security and stability
+  efs:
+    lifecycle_days: 30
+    backup_retention_days: 7
+  monitoring:
+    log_retention_days: 30
+    alarm_email: "ops@company.com"
+    enable_container_insights: true
+  backup:
+    enabled: true
+    retention_days: 7
+    cross_region_backup: false
+
+environments:
+  local:
+    account: "000000000000"  # Local/mock account
+    region: "us-east-1"
+    settings:
+      deployment_type: "docker"
+      docker:
+        compose_file: "docker/docker-compose.yml"
+        image: "n8nio/n8n:1.94.1"  # Pinned version
+        port: 5678
+      auth:
+        basic_auth_enabled: true
+        oauth_enabled: false
+      features:
+        webhooks_enabled: true
+        external_api_access: true
+        local_development: true
+
+  dev:
+    account: "123456789012"
+    region: "us-east-1"
+    settings:
+      fargate:
+        cpu: 256
+        memory: 512
+      scaling:
+        min_tasks: 1
+        max_tasks: 1
+      networking:
+        use_existing_vpc: false
+        vpc_cidr: "10.0.0.0/16"
+      access:
+        cloudfront_enabled: false
+        api_gateway_throttle: 100
+      auth:
+        basic_auth_enabled: true
+        oauth_enabled: false
+      features:
+        webhooks_enabled: true
+        external_api_access: true
+
+  staging:
+    account: "123456789013"
+    region: "us-east-1"
+    settings:
+      fargate:
+        cpu: 512
+        memory: 1024
+      scaling:
+        min_tasks: 1
+        max_tasks: 3
+        target_cpu_utilization: 70
+      networking:
+        use_existing_vpc: false
+        vpc_cidr: "10.1.0.0/16"
+      access:
+        domain_name: "n8n-staging.company.com"
+        cloudfront_enabled: true
+        api_gateway_throttle: 1000
+      database:
+        type: "postgres"
+        use_existing: false
+        aurora_serverless:
+          min_capacity: 0.5
+          max_capacity: 1
+      auth:
+        basic_auth_enabled: false
+        oauth_enabled: true
+        oauth_provider: "google"
+      monitoring:
+        log_retention_days: 60
+        enable_xray_tracing: true
+
+  production:
+    account: "123456789014"
+    region: "us-west-2"
+    multi_region:
+      enabled: true
+      regions:
+        - name: "us-west-2"
+          primary: true
+        - name: "eu-west-1"
+          primary: false
+    settings:
+      fargate:
+        cpu: 1024
+        memory: 2048
+        spot_percentage: 50
+      scaling:
+        min_tasks: 2
+        max_tasks: 10
+        target_cpu_utilization: 70
+        scale_in_cooldown: 300
+        scale_out_cooldown: 60
+      networking:
+        use_existing_vpc: true
+        vpc_id: "vpc-prod-12345"
+        subnet_ids: 
+          - "subnet-prod-1a"
+          - "subnet-prod-1b"
+          - "subnet-prod-1c"
+      access:
+        domain_name: "n8n.company.com"
+        cloudfront_enabled: true
+        waf_enabled: true
+        api_gateway_throttle: 10000
+        ip_whitelist:
+          - "1.2.3.4/32"  # Office IP
+          - "5.6.7.8/32"  # VPN endpoint
+      database:
+        type: "postgres"
+        use_existing: false
+        instance_class: "db.r6g.large"
+        multi_az: true
+        backup_retention_days: 30
+      high_availability:
+        multi_az: true
+        auto_scaling_enabled: true
+        health_check_interval: 30
+        unhealthy_threshold: 2
+      backup:
+        enabled: true
+        retention_days: 30
+        cross_region_backup: true
+        backup_regions:
+          - "us-east-1"
+      auth:
+        basic_auth_enabled: false
+        oauth_enabled: true
+        oauth_provider: "okta"
+        mfa_required: true
+        allowed_email_domains:
+          - "company.com"
+      monitoring:
+        log_retention_days: 90
+        alarm_email: "prod-ops@company.com"
+        enable_container_insights: true
+        enable_xray_tracing: true
+
+# Stack configurations for different use cases
+stacks:
+  minimal:
+    description: "Minimal setup for personal use or testing"
+    components:
+      - fargate
+      - efs
+      - api_gateway
+    settings:
+      fargate:
+        cpu: 256
+        memory: 512
+      scaling:
+        min_tasks: 1
+        max_tasks: 1
+
+  standard:
+    description: "Standard setup with monitoring and backups"
+    components:
+      - fargate
+      - efs
+      - api_gateway
+      - cloudfront
+      - monitoring
+      - backup
+    inherit_from: "defaults"
+    settings:
+      fargate:
+        cpu: 512
+        memory: 1024
+      scaling:
+        min_tasks: 1
+        max_tasks: 5
+
+  enterprise:
+    description: "Full enterprise setup with HA and security"
+    components:
+      - fargate
+      - rds_postgres
+      - api_gateway
+      - cloudfront
+      - waf
+      - monitoring
+      - backup
+      - vpc_endpoints
+      - secrets_rotation
+    settings:
+      fargate:
+        cpu: 2048
+        memory: 4096
+        spot_percentage: 30
+      database:
+        type: "postgres"
+        instance_class: "db.r6g.large"
+        multi_az: true
+      scaling:
+        min_tasks: 3
+        max_tasks: 20
+        target_cpu_utilization: 60
+
+# Shared resources that can be referenced across environments
+shared_resources:
+  security:
+    # KMS key for encryption across all environments
+    kms_key_arn: "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+    # ACM certificate for HTTPS
+    certificate_arn: "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+  networking:
+    # Transit gateway for multi-region connectivity
+    transit_gateway_id: "tgw-12345678"
+    # Route53 hosted zone for DNS
+    route53_zone_id: "Z1234567890ABC"
+  storage:
+    # Central S3 bucket for cross-environment artifacts
+    artifacts_bucket: "mycompany-n8n-artifacts"

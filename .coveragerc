@@ -1,0 +1,54 @@
+[run]
+source = n8n_aws_serverless
+branch = True
+parallel = True
+omit =
+    */tests/*
+    */test_*.py
+    */__init__.py
+    */venv/*
+    */.venv/*
+    */site-packages/*
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+sort = Cover
+
+exclude_lines =
+    # Standard exclusions
+    pragma: no cover
+    def __repr__
+    def __str__
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Debugging and logging
+    if self\.debug:
+    if settings\.DEBUG
+    
+    # Python 2/3 compatibility
+    except ImportError
+    
+    # Type checking
+    if TYPE_CHECKING:
+    if typing\.TYPE_CHECKING:
+    
+    # Abstract methods
+    @abstract
+    @abc\.abstractmethod
+    
+    # Main entry points
+    if __name__ == .__main__.:
+
+[html]
+directory = htmlcov
+title = n8n AWS Serverless Coverage Report
+
+[xml]
+output = coverage.xml
+
+[json]
+output = coverage.json
+pretty_print = True

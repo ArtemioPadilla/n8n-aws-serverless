@@ -1,0 +1,213 @@
+global:
+  project_name: "n8n-serverless"
+  organization: "mycompany"
+  tags:
+    Project: "n8n"
+    ManagedBy: "CDK"
+    CostCenter: "Engineering"
+
+defaults:
+  fargate:
+    cpu: 256
+    memory: 512
+    spot_percentage: 80
+    n8n_version: "1.94.1"  # Pinned version for security and stability
+  efs:
+    lifecycle_days: 30
+    backup_retention_days: 7
+  monitoring:
+    log_retention_days: 30
+    alarm_email: "ops@company.com"
+    enable_container_insights: true
+  backup:
+    enabled: true
+    retention_days: 7
+    cross_region_backup: false
+
+environments:
+  # Local development environment (Docker)
+  local:
+    account: "000000000000"
+    region: "us-east-1"
+    settings:
+      deployment_type: "docker"
+      docker:
+        compose_file: "docker/docker-compose.yml"
+        image: "n8nio/n8n:1.94.1"  # Pinned version, update as needed
+        port: 5678
+      auth:
+        basic_auth_enabled: true
+        oauth_enabled: false
+
+  # Development environment
+  dev:
+    account: "YOUR_AWS_ACCOUNT_ID"  # TODO: Replace with your AWS account ID
+    region: "us-east-1"
+    settings:
+      fargate:
+        cpu: 256
+        memory: 512
+      scaling:
+        min_tasks: 1
+        max_tasks: 1
+      networking:
+        use_existing_vpc: false
+        vpc_cidr: "10.0.0.0/16"
+      access:
+        cloudfront_enabled: false
+        api_gateway_throttle: 100
+      auth:
+        basic_auth_enabled: true
+        oauth_enabled: false
+      features:
+        webhooks_enabled: true
+        external_api_access: true
+
+  # Staging environment
+  staging:
+    account: "YOUR_AWS_ACCOUNT_ID"  # TODO: Replace with your AWS account ID
+    region: "us-east-1"
+    settings:
+      fargate:
+        cpu: 512
+        memory: 1024
+      scaling:
+        min_tasks: 1
+        max_tasks: 3
+        target_cpu_utilization: 70
+      networking:
+        use_existing_vpc: false
+        vpc_cidr: "10.1.0.0/16"
+      access:
+        domain_name: "n8n-staging.yourdomain.com"  # TODO: Update domain
+        cloudfront_enabled: true
+        api_gateway_throttle: 1000
+      database:
+        type: "postgres"
+        use_existing: false
+        aurora_serverless:
+          min_capacity: 0.5
+          max_capacity: 1
+      auth:
+        basic_auth_enabled: false
+        oauth_enabled: true
+        oauth_provider: "google"
+      monitoring:
+        log_retention_days: 60
+        enable_xray_tracing: true
+
+  # Production environment
+  production:
+    account: "YOUR_AWS_ACCOUNT_ID"  # TODO: Replace with your AWS account ID
+    region: "us-west-2"
+    settings:
+      fargate:
+        cpu: 1024
+        memory: 2048
+        spot_percentage: 50
+      scaling:
+        min_tasks: 2
+        max_tasks: 10
+        target_cpu_utilization: 70
+      networking:
+        use_existing_vpc: false  # Set to true if you have existing VPC
+        vpc_cidr: "10.2.0.0/16"
+        # vpc_id: "vpc-xxxxx"  # Uncomment if using existing VPC
+        # subnet_ids:          # Uncomment if using existing VPC
+        #   - "subnet-xxxxx"
+        #   - "subnet-yyyyy"
+      access:
+        domain_name: "n8n.yourdomain.com"  # TODO: Update domain
+        cloudfront_enabled: true
+        waf_enabled: true
+        api_gateway_throttle: 10000
+      database:
+        type: "postgres"
+        use_existing: false
+        instance_class: "db.t4g.micro"  # Or use Aurora Serverless
+        multi_az: true
+        backup_retention_days: 30
+      high_availability:
+        multi_az: true
+        auto_scaling_enabled: true
+      backup:
+        enabled: true
+        retention_days: 30
+        cross_region_backup: true
+        backup_regions:
+          - "us-east-1"
+      auth:
+        basic_auth_enabled: false
+        oauth_enabled: true
+        oauth_provider: "okta"  # TODO: Configure your OAuth provider
+        mfa_required: true
+      monitoring:
+        log_retention_days: 90
+        alarm_email: "prod-ops@company.com"  # TODO: Update email
+        enable_container_insights: true
+        enable_xray_tracing: true
+
+# Stack configurations for different use cases
+stacks:
+  minimal:
+    description: "Minimal setup for personal use or testing"
+    components:
+      - fargate
+      - efs
+      - api_gateway
+    settings:
+      fargate:
+        cpu: 256
+        memory: 512
+      scaling:
+        min_tasks: 1
+        max_tasks: 1
+
+  standard:
+    description: "Standard setup with monitoring and backups"
+    components:
+      - fargate
+      - efs
+      - api_gateway
+      - cloudfront
+      - monitoring
+      - backup
+    inherit_from: "defaults"
+
+  enterprise:
+    description: "Full enterprise setup with HA and security"
+    components:
+      - fargate
+      - rds_postgres
+      - api_gateway
+      - cloudfront
+      - waf
+      - monitoring
+      - backup
+      - vpc_endpoints
+      - secrets_rotation
+    settings:
+      fargate:
+        cpu: 2048
+        memory: 4096
+        spot_percentage: 30
+      database:
+        type: "postgres"
+        instance_class: "db.r6g.large"
+        multi_az: true
+      scaling:
+        min_tasks: 3
+        max_tasks: 20
+        target_cpu_utilization: 60
+
+# Shared resources that can be referenced across environments
+shared_resources:
+  security:
+    # Uncomment and update if you have existing resources
+    # kms_key_arn: "arn:aws:kms:us-east-1:YOUR_ACCOUNT:key/xxxxx"
+    # certificate_arn: "arn:aws:acm:us-east-1:YOUR_ACCOUNT:certificate/xxxxx"
+  networking:
+    # transit_gateway_id: "tgw-xxxxx"
+    # route53_zone_id: "ZXXXXXXXXXXXXX"
+  storage:
+    # artifacts_bucket: "mycompany-n8n-artifacts"
