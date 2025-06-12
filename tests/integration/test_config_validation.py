@@ -1,7 +1,5 @@
 """Integration tests for configuration validation and loading."""
 import os
-import tempfile
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -247,7 +245,7 @@ class TestConfigValidation:
             os.environ["N8N_ENVIRONMENT"] = "production"
 
             loader = ConfigLoader()
-            config = loader.get_config()
+            loader.get_config()
 
             # Clean up
             del os.environ["N8N_ENVIRONMENT"]

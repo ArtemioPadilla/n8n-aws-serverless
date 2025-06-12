@@ -1,14 +1,13 @@
 """Access stack for API Gateway and CloudFront."""
-from typing import List, Optional
+from typing import Optional
 
-from aws_cdk import CfnOutput, Duration, RemovalPolicy
+from aws_cdk import Duration
 from aws_cdk import aws_apigatewayv2 as apigatewayv2
 from aws_cdk import aws_apigatewayv2_integrations as apigatewayv2_integrations
 from aws_cdk import aws_certificatemanager as acm
 from aws_cdk import aws_cloudfront as cloudfront
 from aws_cdk import aws_cloudfront_origins as origins
 from aws_cdk import aws_ec2 as ec2
-from aws_cdk import aws_iam as iam
 from aws_cdk import aws_route53 as route53
 from aws_cdk import aws_route53_targets as targets
 from aws_cdk import aws_wafv2 as waf

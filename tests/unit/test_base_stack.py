@@ -1,6 +1,5 @@
 """Unit tests for base stack."""
-import pytest
-from aws_cdk import App, RemovalPolicy, Stack, Tags
+from aws_cdk import RemovalPolicy
 from aws_cdk.assertions import Template
 
 from n8n_deploy.stacks.base_stack import N8nBaseStack
@@ -26,7 +25,7 @@ class TestBaseStack:
             mock_app, "test-stack", config=test_config, environment="test"
         )
 
-        template = Template.from_stack(stack)
+        Template.from_stack(stack)
 
         # Check that tags are present in the stack template
         # Note: CDK applies tags at synthesis time, so we'd need to verify

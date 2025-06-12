@@ -1,5 +1,4 @@
 """Unit tests for Cloudflare Tunnel configuration and constructs."""
-from unittest.mock import MagicMock, Mock, patch
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
@@ -8,17 +7,8 @@ import pytest
 from aws_cdk import App, Stack
 from aws_cdk.assertions import Match, Template
 
-from n8n_deploy.config.models import (
-    AccessConfig,
-    AccessType,
-    CloudflareConfig,
-    EnvironmentConfig,
-    EnvironmentSettings,
-)
-from n8n_deploy.constructs.cloudflare_tunnel import (
-    CloudflareTunnelConfiguration,
-    CloudflareTunnelSidecar,
-)
+from n8n_deploy.config.models import AccessConfig, AccessType, CloudflareConfig
+from n8n_deploy.constructs.cloudflare_tunnel import CloudflareTunnelConfiguration, CloudflareTunnelSidecar
 
 
 class TestCloudflareConfig:
@@ -158,7 +148,7 @@ class TestCloudflareTunnelConfiguration:
 
     def test_configuration_creates_new_secret(self):
         """Test configuration creates new secret when not provided."""
-        config = CloudflareTunnelConfiguration(
+        CloudflareTunnelConfiguration(
             self.stack,
             "TunnelConfig",
             tunnel_name="test-tunnel",
@@ -241,7 +231,7 @@ class TestCloudflareTunnelSidecar:
 
     def test_sidecar_creation(self):
         """Test sidecar container creation."""
-        sidecar = CloudflareTunnelSidecar(
+        CloudflareTunnelSidecar(
             self.stack,
             "TestSidecar",
             task_definition=self.task_definition,
@@ -280,7 +270,7 @@ class TestCloudflareTunnelSidecar:
 
     def test_sidecar_health_check(self):
         """Test sidecar container health check configuration."""
-        sidecar = CloudflareTunnelSidecar(
+        CloudflareTunnelSidecar(
             self.stack,
             "TestSidecar",
             task_definition=self.task_definition,
@@ -320,7 +310,7 @@ class TestCloudflareTunnelSidecar:
 
     def test_sidecar_secret_access(self):
         """Test sidecar has access to tunnel secret."""
-        sidecar = CloudflareTunnelSidecar(
+        CloudflareTunnelSidecar(
             self.stack,
             "TestSidecar",
             task_definition=self.task_definition,

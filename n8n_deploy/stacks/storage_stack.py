@@ -1,7 +1,6 @@
 """Storage stack for EFS and backup resources."""
-from typing import List, Optional
 
-from aws_cdk import Duration, Fn, RemovalPolicy
+from aws_cdk import Duration, Fn
 from aws_cdk import aws_backup as backup
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_efs as efs

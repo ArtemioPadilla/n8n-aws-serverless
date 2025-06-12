@@ -1,7 +1,6 @@
 """Integration tests for Cloudflare Tunnel deployment."""
 import pytest
 from aws_cdk import App, Environment
-from aws_cdk.assertions import Match, Template
 
 from n8n_deploy.config import ConfigLoader
 from n8n_deploy.stacks.access_stack import AccessStack
@@ -123,9 +122,6 @@ environments:
     def test_cloudflare_monitoring_integration(self, cloudflare_config):
         """Test monitoring stack includes Cloudflare metrics."""
         app = App()
-
-        # Define stack env
-        env = {"account": "123456789012", "region": "us-east-1"}
 
         # Create required stacks
         network_stack = NetworkStack(

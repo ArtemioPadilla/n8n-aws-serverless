@@ -1,6 +1,5 @@
 """Integration tests for stack deployment and dependencies."""
-import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from aws_cdk import App, Environment
@@ -137,12 +136,12 @@ class TestStackDeployment:
 
         # Deploy all stacks in order
         network_stack = NetworkStack(
-            app, f"test-network", config=config, environment=environment, env=env
+            app, "test-network", config=config, environment=environment, env=env
         )
 
         storage_stack = StorageStack(
             app,
-            f"test-storage",
+            "test-storage",
             config=config,
             environment=environment,
             network_stack=network_stack,
@@ -151,7 +150,7 @@ class TestStackDeployment:
 
         database_stack = DatabaseStack(
             app,
-            f"test-database",
+            "test-database",
             config=config,
             environment=environment,
             network_stack=network_stack,
@@ -160,7 +159,7 @@ class TestStackDeployment:
 
         compute_stack = ComputeStack(
             app,
-            f"test-compute",
+            "test-compute",
             config=config,
             environment=environment,
             network_stack=network_stack,
@@ -176,7 +175,7 @@ class TestStackDeployment:
 
         access_stack = AccessStack(
             app,
-            f"test-access",
+            "test-access",
             config=config,
             environment=environment,
             compute_stack=compute_stack,
@@ -185,7 +184,7 @@ class TestStackDeployment:
 
         monitoring_stack = MonitoringStack(
             app,
-            f"test-monitoring",
+            "test-monitoring",
             config=config,
             environment=environment,
             compute_stack=compute_stack,
@@ -220,12 +219,12 @@ class TestStackDeployment:
 
         # Deploy network and storage stacks
         network_stack = NetworkStack(
-            app, f"test-network", config=config, environment=environment, env=env
+            app, "test-network", config=config, environment=environment, env=env
         )
 
         storage_stack = StorageStack(
             app,
-            f"test-storage",
+            "test-storage",
             config=config,
             environment=environment,
             network_stack=network_stack,
@@ -324,7 +323,7 @@ class TestStackDeployment:
 
         # Deploy network stack with existing VPC
         network_stack = NetworkStack(
-            app, f"test-network", config=config, environment=environment, env=env
+            app, "test-network", config=config, environment=environment, env=env
         )
 
         # Verify VPC was imported, not created
@@ -344,12 +343,12 @@ class TestStackDeployment:
 
         # Deploy minimal stack
         network_stack = NetworkStack(
-            app, f"test-network", config=config, environment=environment, env=env
+            app, "test-network", config=config, environment=environment, env=env
         )
 
-        storage_stack = StorageStack(
+        StorageStack(
             app,
-            f"test-storage",
+            "test-storage",
             config=config,
             environment=environment,
             network_stack=network_stack,
@@ -418,7 +417,7 @@ class TestStackDeployment:
         )
 
         network_stack = NetworkStack(
-            app, f"test-network", config=config, environment=environment, env=env
+            app, "test-network", config=config, environment=environment, env=env
         )
 
         # Verify tags are applied

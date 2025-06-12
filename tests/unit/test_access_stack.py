@@ -1,19 +1,11 @@
 """Unit tests for AccessStack."""
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-from aws_cdk import App, Duration, Environment
-from aws_cdk import aws_apigatewayv2 as apigatewayv2
-from aws_cdk import aws_cloudfront as cloudfront
+from aws_cdk import App, Environment
 from aws_cdk.assertions import Match, Template
 
-from n8n_deploy.config.models import (
-    AccessConfig,
-    EnvironmentConfig,
-    EnvironmentSettings,
-    GlobalConfig,
-    N8nConfig,
-)
+from n8n_deploy.config.models import AccessConfig, EnvironmentConfig, EnvironmentSettings, GlobalConfig, N8nConfig
 from n8n_deploy.stacks.access_stack import AccessStack
 from n8n_deploy.stacks.compute_stack import ComputeStack
 from n8n_deploy.stacks.network_stack import NetworkStack
@@ -211,7 +203,7 @@ class TestAccessStack:
         sg_mock.add_ingress_rule = Mock()
         compute_stack_mock.service_security_group = sg_mock
 
-        stack = AccessStack(
+        AccessStack(
             app,
             "TestAccessStack",
             config=test_config_basic,
@@ -523,7 +515,10 @@ class TestAccessStack:
     def test_certificate_import(self, app, test_config_cloudfront, compute_stack_mock):
         """Test certificate import from shared resources."""
         with patch.object(AccessStack, "get_shared_resource") as mock_shared:
-            mock_shared.return_value = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+            mock_shared.return_value = (
+                "arn:aws:acm:us-east-1:123456789012:certificate/"
+                "12345678-1234-1234-1234-123456789012"
+            )
 
             with patch(
                 "n8n_deploy.stacks.access_stack.acm.Certificate.from_certificate_arn"

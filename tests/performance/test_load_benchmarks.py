@@ -3,7 +3,6 @@ import asyncio
 import json
 import statistics
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Dict, List, Tuple
 
@@ -39,7 +38,7 @@ class TestLoadBenchmarks:
                 await response.text()
                 response_time = time.time() - start_time
                 return status, response_time
-        except Exception as e:
+        except Exception:
             return 500, time.time() - start_time
 
     async def _run_webhook_load_test(
@@ -164,8 +163,8 @@ class TestLoadBenchmarks:
 
     def test_scaling_performance(self):
         """Test auto-scaling performance."""
-        ecs = boto3.client("ecs")
-        cloudwatch = boto3.client("cloudwatch")
+        boto3.client("ecs")
+        boto3.client("cloudwatch")
 
         # This would test how quickly the service scales
         # under load and how it affects performance

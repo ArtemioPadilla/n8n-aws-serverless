@@ -1,10 +1,10 @@
 """Base stack with common patterns for all n8n stacks."""
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
-from aws_cdk import Aws, CfnOutput, RemovalPolicy, Stack, Tags
+from aws_cdk import CfnOutput, RemovalPolicy, Stack, Tags
 from constructs import Construct
 
-from ..config.models import EnvironmentConfig, N8nConfig
+from ..config.models import N8nConfig
 
 
 class N8nBaseStack(Stack):

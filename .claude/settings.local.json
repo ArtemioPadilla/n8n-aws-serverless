@@ -28,7 +28,8 @@
       "Bash(python -m black:*)",
       "Bash(python3 -m black:*)",
       "Bash(sed:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(flake8:*)"
     ],
     "deny": []
   }

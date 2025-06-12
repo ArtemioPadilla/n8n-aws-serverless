@@ -1,8 +1,8 @@
 """Pytest configuration and fixtures for unit tests."""
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-from aws_cdk import App, Stack
+from aws_cdk import App
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_efs as efs

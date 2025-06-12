@@ -1,7 +1,7 @@
 """Monitoring stack for CloudWatch alarms and dashboards."""
-from typing import List, Optional
+from typing import Optional
 
-from aws_cdk import CfnOutput, Duration
+from aws_cdk import Duration
 from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_cloudwatch_actions as cloudwatch_actions
 from aws_cdk import aws_logs as logs
@@ -261,7 +261,8 @@ class MonitoringStack(N8nBaseStack):
             metric_namespace=cf_namespace,
             metric_value="1",
             filter_pattern=logs.FilterPattern.literal(
-                '[timestamp, request_id, container="cloudflare-tunnel", level="error", message="*connection*" || message="*tunnel*"]'
+                '[timestamp, request_id, container="cloudflare-tunnel", level="error", '
+                'message="*connection*" || message="*tunnel*"]'
             ),
             default_value=0,
         )
@@ -899,6 +900,9 @@ class MonitoringStack(N8nBaseStack):
         # Dashboard URL
         self.add_output(
             "DashboardUrl",
-            value=f"https://{self.region}.console.aws.amazon.com/cloudwatch/home?region={self.region}#dashboards:name={self.dashboard.dashboard_name}",
+            value=(
+                f"https://{self.region}.console.aws.amazon.com/cloudwatch/home?"
+                f"region={self.region}#dashboards:name={self.dashboard.dashboard_name}"
+            ),
             description="CloudWatch dashboard URL",
         )

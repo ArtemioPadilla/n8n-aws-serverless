@@ -1,7 +1,6 @@
 """Database stack for optional RDS PostgreSQL."""
-from typing import Optional
 
-from aws_cdk import CfnOutput, Duration, RemovalPolicy
+from aws_cdk import Duration
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_rds as rds

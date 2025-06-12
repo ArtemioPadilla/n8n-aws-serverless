@@ -1,10 +1,9 @@
 """Security tests for IAM policies and permissions."""
-import json
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from aws_cdk import App, Environment
-from aws_cdk.assertions import Match, Template
+from aws_cdk.assertions import Template
 
 from n8n_deploy.config import ConfigLoader
 from n8n_deploy.stacks.compute_stack import ComputeStack
@@ -449,7 +448,7 @@ class TestIAMPolicies:
             env=Environment(account="123456789012", region="us-east-1"),
         )
 
-        template = Template.from_stack(network_stack)
+        Template.from_stack(network_stack)
 
         # In production, we should have VPC endpoints for services like S3, ECR
         # This reduces data transfer costs and improves security

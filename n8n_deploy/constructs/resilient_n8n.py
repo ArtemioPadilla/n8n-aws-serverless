@@ -483,7 +483,11 @@ def handler(event, context):
             environment={
                 "CLUSTER_NAME": self.compute_stack.cluster.cluster_name,
                 "SERVICE_NAME": self.compute_stack.n8n_service.service.service_name,
-                "HEALTH_URL": f"http://{self.compute_stack.n8n_service.service.cloud_map_service.service_name}.{self.compute_stack.n8n_service.service.cloud_map_service.namespace.namespace_name}:5678/healthz",
+                "HEALTH_URL": (
+                    f"http://{self.compute_stack.n8n_service.service.cloud_map_service.service_name}."
+                    f"{self.compute_stack.n8n_service.service.cloud_map_service.namespace.namespace_name}"
+                    f":5678/healthz"
+                ),
                 "SNS_TOPIC_ARN": self.monitoring_topic.topic_arn,
                 "ENVIRONMENT": self.environment,
             },

@@ -1,5 +1,5 @@
 """Unit tests for MonitoringStack."""
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
 
 import pytest
 from aws_cdk import App, Environment

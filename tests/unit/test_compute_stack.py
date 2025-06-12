@@ -1,14 +1,11 @@
 """Unit tests for ComputeStack."""
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-from aws_cdk import App, Duration, Environment
-from aws_cdk import aws_autoscaling as autoscaling
-from aws_cdk import aws_ecs as ecs
+from aws_cdk import App, Environment
 from aws_cdk.assertions import Match, Template
 
 from n8n_deploy.config.models import (
-    BackupConfig,
     EnvironmentConfig,
     EnvironmentSettings,
     FargateConfig,
@@ -201,7 +198,7 @@ class TestComputeStack:
             )
             mock_fargate.return_value = mock_service
 
-            stack = ComputeStack(
+            ComputeStack(
                 app,
                 "TestComputeStack",
                 config=test_config,
@@ -235,7 +232,7 @@ class TestComputeStack:
             mock_service = Mock()
             mock_fargate.return_value = mock_service
 
-            stack = ComputeStack(
+            ComputeStack(
                 app,
                 "TestComputeStack",
                 config=test_config,
@@ -272,7 +269,7 @@ class TestComputeStack:
             mock_service.service.service_name = "test-service"
             mock_fargate.return_value = mock_service
 
-            stack = ComputeStack(
+            ComputeStack(
                 app,
                 "TestComputeStack",
                 config=test_config,
@@ -294,7 +291,7 @@ class TestComputeStack:
         mock_secret = Mock()
 
         with patch("n8n_deploy.stacks.compute_stack.N8nFargateService") as mock_fargate:
-            stack = ComputeStack(
+            ComputeStack(
                 app,
                 "TestComputeStack",
                 config=test_config,
@@ -426,7 +423,7 @@ class TestComputeStack:
             )
             mock_fargate.return_value = mock_service
 
-            stack = ComputeStack(
+            ComputeStack(
                 app,
                 "TestComputeStack",
                 config=test_config,
@@ -463,7 +460,7 @@ class TestComputeStack:
             mock_service = Mock()
             mock_fargate.return_value = mock_service
 
-            stack = ComputeStack(
+            ComputeStack(
                 app,
                 "TestComputeStack",
                 config=config,

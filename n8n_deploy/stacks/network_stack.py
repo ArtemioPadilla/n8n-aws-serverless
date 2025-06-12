@@ -1,7 +1,7 @@
 """Network stack for VPC and related resources."""
-from typing import List, Optional
+from typing import List
 
-from aws_cdk import CfnOutput, Fn, Stack
+from aws_cdk import Fn
 from aws_cdk import aws_ec2 as ec2
 from constructs import Construct
 
@@ -247,6 +247,8 @@ class NetworkStack(N8nBaseStack):
             NetworkStack instance with imported resources
         """
         # Create a dummy stack instance
+        from aws_cdk import Stack
+
         stack = NetworkStack.__new__(NetworkStack)
         Stack.__init__(stack, scope, construct_id)
 

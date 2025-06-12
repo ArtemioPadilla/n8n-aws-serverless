@@ -1,6 +1,4 @@
 """Security tests for secrets scanning and validation."""
-import json
-import os
 import re
 from pathlib import Path
 
