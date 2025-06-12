@@ -68,7 +68,7 @@ jobs:
         fail_ci_if_error: false
 
     - name: Upload coverage HTML report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: coverage-report-${{ matrix.python-version }}
@@ -89,7 +89,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
 
     - name: Install AWS CDK
       run: |
@@ -124,13 +124,13 @@ jobs:
     - name: Test Docker Compose Configuration
       run: |
         cd docker
-        docker-compose config
-        docker-compose -f docker-compose.yml -f docker-compose.prod.yml config
+        docker compose config
+        docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 
     - name: Build Docker images
       run: |
         cd docker
-        docker-compose build --no-cache
+        docker compose build --no-cache
 
   security-scan:
     name: Security Scan
@@ -159,7 +159,7 @@ jobs:
         bandit -r n8n_deploy -f json -o bandit-report.json || true
 
     - name: Upload bandit results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: bandit-report

@@ -271,6 +271,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+This software is provided 'as is' and without warranty of any kind, express or implied, including but not limited to the implied warranties of merchantability and fitness for a particular purpose.
+
+---
+
 <p align="center">
   Made with ❤️
 </p>

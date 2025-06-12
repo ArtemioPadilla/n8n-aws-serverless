@@ -40,6 +40,7 @@ environments:
         type: "cloudflare"  # Use Cloudflare Tunnel for local development
         cloudflare:
           enabled: true
+          tunnel_token_secret_name: "n8n/local/cloudflare-tunnel-token"  # Required for validation
           tunnel_name: "n8n-local"
           tunnel_domain: "n8n-local.example.com"
       auth:
