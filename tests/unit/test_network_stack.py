@@ -29,9 +29,7 @@ class TestNetworkStack:
         mock_vpc_class.return_value = mock_vpc
 
         # Create stack
-        NetworkStack(
-            mock_app, "network-stack", config=test_config, environment="test"
-        )
+        NetworkStack(mock_app, "network-stack", config=test_config, environment="test")
 
         # Verify VPC was created with correct parameters
         mock_vpc_class.assert_called_once()
@@ -96,9 +94,7 @@ class TestNetworkStack:
         mock_sg_class.side_effect = [mock_n8n_sg, mock_efs_sg]
 
         # Create stack
-        NetworkStack(
-            mock_app, "network-stack", config=test_config, environment="test"
-        )
+        NetworkStack(mock_app, "network-stack", config=test_config, environment="test")
 
         # Verify security groups were created
         assert mock_sg_class.call_count == 2
@@ -154,9 +150,7 @@ class TestNetworkStack:
         # Test with NAT gateways
         test_config.environments["test"].settings.networking.nat_gateways = 2
 
-        NetworkStack(
-            mock_app, "network-stack", config=test_config, environment="test"
-        )
+        NetworkStack(mock_app, "network-stack", config=test_config, environment="test")
 
         vpc_call = mock_vpc_class.call_args_list[-1]
         assert vpc_call[1]["nat_gateways"] == 2
@@ -187,9 +181,7 @@ class TestNetworkStack:
         mock_sg_class.return_value = mock_sg
 
         # Create stack
-        NetworkStack(
-            mock_app, "network-stack", config=test_config, environment="test"
-        )
+        NetworkStack(mock_app, "network-stack", config=test_config, environment="test")
 
         # Verify outputs were created
         output_calls = mock_output_class.call_args_list
