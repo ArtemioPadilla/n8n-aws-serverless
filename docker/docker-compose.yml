@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Default n8n service (SQLite)
   n8n:

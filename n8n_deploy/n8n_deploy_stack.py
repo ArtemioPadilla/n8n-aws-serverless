@@ -1,12 +1,8 @@
-from aws_cdk import (
-    # Duration,
-    Stack,
-    # aws_sqs as sqs,
-)
+from aws_cdk import Stack  # Duration,; aws_sqs as sqs,
 from constructs import Construct
 
-class N8NAwsServerlessStack(Stack):
 
+class N8NAwsServerlessStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 

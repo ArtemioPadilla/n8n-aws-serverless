@@ -1,24 +1,22 @@
 """Construct for n8n Fargate service with all required configurations."""
-from typing import Optional, Dict, Any, List
-from aws_cdk import (
-    Duration,
-    RemovalPolicy,
-    Stack,
-)
-from aws_cdk import aws_ecs as ecs
+from typing import Any, Dict, List, Optional
+
+from aws_cdk import Duration, RemovalPolicy, Stack
 from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_efs as efs
-from aws_cdk import aws_logs as logs
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_logs as logs
 from aws_cdk import aws_secretsmanager as secretsmanager
 from aws_cdk import aws_servicediscovery as servicediscovery
 from constructs import Construct
-from ..config.models import EnvironmentConfig, FargateConfig, DatabaseConfig, DatabaseType
+
+from ..config.models import DatabaseConfig, DatabaseType, EnvironmentConfig, FargateConfig
 
 
 class N8nFargateService(Construct):
     """Construct for n8n Fargate service."""
-    
+
     def __init__(
         self,
         scope: Construct,
@@ -33,10 +31,10 @@ class N8nFargateService(Construct):
         environment: str,
         database_endpoint: Optional[str] = None,
         database_secret: Optional[secretsmanager.ISecret] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Initialize n8n Fargate service.
-        
+
         Args:
             scope: CDK scope
             construct_id: Construct ID
@@ -53,7 +51,7 @@ class N8nFargateService(Construct):
             **kwargs: Additional properties
         """
         super().__init__(scope, construct_id, **kwargs)
-        
+
         self.cluster = cluster
         self.vpc = vpc
         self.subnets = subnets
@@ -62,26 +60,26 @@ class N8nFargateService(Construct):
         self.access_point = access_point
         self.env_config = env_config
         self.environment = environment
-        
+
         # Get configurations
         self.fargate_config = env_config.settings.fargate or FargateConfig()
         self.database_config = env_config.settings.database or DatabaseConfig()
-        
+
         # Create log group
         self.log_group = self._create_log_group()
-        
+
         # Create task definition
         self.task_definition = self._create_task_definition()
-        
+
         # Add container
         self.container = self._add_n8n_container(database_endpoint, database_secret)
-        
+
         # Create service
         self.service = self._create_fargate_service()
-        
+
         # Enable service discovery
         self._setup_service_discovery()
-    
+
     def _create_log_group(self) -> logs.LogGroup:
         """Create CloudWatch log group for n8n."""
         # Map numeric days to RetentionDays enum
@@ -104,22 +102,29 @@ class N8nFargateService(Construct):
             1096: logs.RetentionDays.THREE_YEARS,
             1827: logs.RetentionDays.FIVE_YEARS,
         }
-        
+
         retention_days = logs.RetentionDays.ONE_MONTH  # Default
-        if self.env_config.settings.monitoring and self.env_config.settings.monitoring.log_retention_days:
+        if (
+            self.env_config.settings.monitoring
+            and self.env_config.settings.monitoring.log_retention_days
+        ):
             requested_days = self.env_config.settings.monitoring.log_retention_days
             # Find the closest matching retention period
-            closest_days = min(retention_map.keys(), key=lambda x: abs(x - requested_days))
+            closest_days = min(
+                retention_map.keys(), key=lambda x: abs(x - requested_days)
+            )
             retention_days = retention_map[closest_days]
-        
+
         return logs.LogGroup(
             self,
             "LogGroup",
             log_group_name=f"/ecs/n8n/{self.environment}",
             retention=retention_days,
-            removal_policy=RemovalPolicy.DESTROY if self.environment == "dev" else RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY
+            if self.environment == "dev"
+            else RemovalPolicy.RETAIN,
         )
-    
+
     def _create_task_definition(self) -> ecs.FargateTaskDefinition:
         """Create Fargate task definition."""
         task_definition = ecs.FargateTaskDefinition(
@@ -129,7 +134,7 @@ class N8nFargateService(Construct):
             memory_limit_mib=self.fargate_config.memory,
             family=f"n8n-{self.environment}",
         )
-        
+
         # Add EFS volume
         task_definition.add_volume(
             name="n8n-data",
@@ -137,40 +142,39 @@ class N8nFargateService(Construct):
                 file_system_id=self.file_system.file_system_id,
                 transit_encryption="ENABLED",
                 authorization_config=ecs.AuthorizationConfig(
-                    access_point_id=self.access_point.access_point_id,
-                    iam="ENABLED"
-                )
-            )
+                    access_point_id=self.access_point.access_point_id, iam="ENABLED"
+                ),
+            ),
         )
-        
+
         # Grant EFS permissions
         self.file_system.grant_read_write(task_definition.task_role)
-        
+
         # Add required permissions for n8n
         self._add_n8n_permissions(task_definition.task_role)
-        
+
         return task_definition
-    
+
     def _add_n8n_container(
         self,
         database_endpoint: Optional[str],
-        database_secret: Optional[secretsmanager.ISecret]
+        database_secret: Optional[secretsmanager.ISecret],
     ) -> ecs.ContainerDefinition:
         """Add n8n container to task definition."""
         # Get or create encryption key secret
         encryption_key = self._get_or_create_encryption_key()
-        
+
         # Build environment variables
         environment = self._build_environment_variables(database_endpoint)
-        
+
         # Build secrets
         secrets = self._build_secrets(encryption_key, database_secret)
-        
+
         # Get n8n version from config, default to 1.94.1
         n8n_version = "1.94.1"
         if self.env_config.settings and self.env_config.settings.fargate:
             n8n_version = self.env_config.settings.fargate.n8n_version or "1.94.1"
-        
+
         # Add container
         container = self.task_definition.add_container(
             "n8n",
@@ -188,15 +192,20 @@ class N8nFargateService(Construct):
                 )
             ],
             health_check=ecs.HealthCheck(
-                command=["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"],
+                command=[
+                    "CMD-SHELL",
+                    "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1",
+                ],
                 interval=Duration.seconds(30),
                 timeout=Duration.seconds(5),
                 retries=3,
                 start_period=Duration.seconds(60),
             ),
-            memory_reservation_mib=int(self.fargate_config.memory * 0.8),  # 80% soft limit
+            memory_reservation_mib=int(
+                self.fargate_config.memory * 0.8
+            ),  # 80% soft limit
         )
-        
+
         # Mount EFS volume
         container.add_mount_points(
             ecs.MountPoint(
@@ -205,10 +214,12 @@ class N8nFargateService(Construct):
                 read_only=False,
             )
         )
-        
+
         return container
-    
-    def _build_environment_variables(self, database_endpoint: Optional[str]) -> Dict[str, str]:
+
+    def _build_environment_variables(
+        self, database_endpoint: Optional[str]
+    ) -> Dict[str, str]:
         """Build environment variables for n8n container."""
         env_vars = {
             # Basic configuration
@@ -216,79 +227,103 @@ class N8nFargateService(Construct):
             "N8N_PORT": "5678",
             "N8N_PROTOCOL": "https",
             "NODE_ENV": "production",
-            
             # Paths
             "N8N_USER_FOLDER": "/home/node/.n8n",
-            
             # Security
             "N8N_SECURE_COOKIE": "true",
-            
             # Execution settings
             "EXECUTIONS_MODE": "regular",
             "EXECUTIONS_PROCESS": "main",
-            
             # Timezone
             "TZ": "UTC",
             "GENERIC_TIMEZONE": "UTC",
         }
-        
+
         # Database configuration
         if self.database_config.type == DatabaseType.POSTGRES and database_endpoint:
-            env_vars.update({
-                "DB_TYPE": "postgresdb",
-                "DB_POSTGRESDB_HOST": database_endpoint.split(":")[0],
-                "DB_POSTGRESDB_PORT": database_endpoint.split(":")[1] if ":" in database_endpoint else "5432",
-                "DB_POSTGRESDB_DATABASE": "n8n",
-                "DB_POSTGRESDB_SCHEMA": "public",
-            })
+            env_vars.update(
+                {
+                    "DB_TYPE": "postgresdb",
+                    "DB_POSTGRESDB_HOST": database_endpoint.split(":")[0],
+                    "DB_POSTGRESDB_PORT": database_endpoint.split(":")[1]
+                    if ":" in database_endpoint
+                    else "5432",
+                    "DB_POSTGRESDB_DATABASE": "n8n",
+                    "DB_POSTGRESDB_SCHEMA": "public",
+                }
+            )
         else:
-            env_vars.update({
-                "DB_TYPE": "sqlite",
-                "DB_SQLITE_DATABASE": "/home/node/.n8n/database.sqlite",
-            })
-        
+            env_vars.update(
+                {
+                    "DB_TYPE": "sqlite",
+                    "DB_SQLITE_DATABASE": "/home/node/.n8n/database.sqlite",
+                }
+            )
+
         # Auth configuration
         if self.env_config.settings.auth:
             if self.env_config.settings.auth.basic_auth_enabled:
                 env_vars["N8N_BASIC_AUTH_ACTIVE"] = "true"
-        
+
         # Webhook configuration
-        if self.env_config.settings.features and self.env_config.settings.features.get("webhooks_enabled"):
-            env_vars["WEBHOOK_URL"] = f"https://{self.env_config.settings.access.domain_name}/webhook" if self.env_config.settings.access and self.env_config.settings.access.domain_name else ""
-        
+        if self.env_config.settings.features and self.env_config.settings.features.get(
+            "webhooks_enabled"
+        ):
+            env_vars["WEBHOOK_URL"] = (
+                f"https://{self.env_config.settings.access.domain_name}/webhook"
+                if self.env_config.settings.access
+                and self.env_config.settings.access.domain_name
+                else ""
+            )
+
         # Metrics
         env_vars["N8N_METRICS"] = "true"
         env_vars["N8N_METRICS_PREFIX"] = "n8n_"
-        
+
         return env_vars
-    
+
     def _build_secrets(
         self,
         encryption_key: secretsmanager.ISecret,
-        database_secret: Optional[secretsmanager.ISecret]
+        database_secret: Optional[secretsmanager.ISecret],
     ) -> Dict[str, ecs.Secret]:
         """Build secrets for n8n container."""
         secrets = {
             "N8N_ENCRYPTION_KEY": ecs.Secret.from_secrets_manager(encryption_key),
         }
-        
+
         # Database credentials
         if database_secret and self.database_config.type == DatabaseType.POSTGRES:
-            secrets.update({
-                "DB_POSTGRESDB_USER": ecs.Secret.from_secrets_manager(database_secret, "username"),
-                "DB_POSTGRESDB_PASSWORD": ecs.Secret.from_secrets_manager(database_secret, "password"),
-            })
-        
+            secrets.update(
+                {
+                    "DB_POSTGRESDB_USER": ecs.Secret.from_secrets_manager(
+                        database_secret, "username"
+                    ),
+                    "DB_POSTGRESDB_PASSWORD": ecs.Secret.from_secrets_manager(
+                        database_secret, "password"
+                    ),
+                }
+            )
+
         # Basic auth credentials
-        if self.env_config.settings.auth and self.env_config.settings.auth.basic_auth_enabled:
+        if (
+            self.env_config.settings.auth
+            and self.env_config.settings.auth.basic_auth_enabled
+        ):
             basic_auth_secret = self._get_or_create_basic_auth_secret()
-            secrets.update({
-                "N8N_BASIC_AUTH_USER": ecs.Secret.from_secrets_manager(basic_auth_secret, "username"),
-                "N8N_BASIC_AUTH_PASSWORD": ecs.Secret.from_secrets_manager(basic_auth_secret, "password"),
-            })
-        
+            secrets.update(
+                {
+                    "N8N_BASIC_AUTH_USER": ecs.Secret.from_secrets_manager(
+                        basic_auth_secret, "username"
+                    ),
+                    "N8N_BASIC_AUTH_PASSWORD": ecs.Secret.from_secrets_manager(
+                        basic_auth_secret, "password"
+                    ),
+                }
+            )
+
         return secrets
-    
+
     def _get_or_create_encryption_key(self) -> secretsmanager.ISecret:
         """Get or create n8n encryption key secret."""
         return secretsmanager.Secret(
@@ -301,7 +336,7 @@ class N8nFargateService(Construct):
                 password_length=32,
             ),
         )
-    
+
     def _get_or_create_basic_auth_secret(self) -> secretsmanager.ISecret:
         """Get or create basic auth credentials secret."""
         return secretsmanager.Secret(
@@ -316,12 +351,12 @@ class N8nFargateService(Construct):
                 password_length=20,
             ),
         )
-    
+
     def _create_fargate_service(self) -> ecs.FargateService:
         """Create Fargate service."""
         # Determine capacity provider strategy
         capacity_provider_strategies = []
-        
+
         if self.fargate_config.spot_percentage > 0:
             # Use spot instances
             capacity_provider_strategies.append(
@@ -330,7 +365,7 @@ class N8nFargateService(Construct):
                     weight=self.fargate_config.spot_percentage,
                 )
             )
-            
+
             if self.fargate_config.spot_percentage < 100:
                 # Use on-demand for remaining capacity
                 capacity_provider_strategies.append(
@@ -347,7 +382,7 @@ class N8nFargateService(Construct):
                     weight=100,
                 )
             )
-        
+
         # Create service
         service = ecs.FargateService(
             self,
@@ -357,20 +392,22 @@ class N8nFargateService(Construct):
             service_name=f"n8n-{self.environment}",
             vpc_subnets=ec2.SubnetSelection(subnets=self.subnets),
             security_groups=[self.security_group],
-            desired_count=self.env_config.settings.scaling.min_tasks if self.env_config.settings.scaling else 1,
+            desired_count=self.env_config.settings.scaling.min_tasks
+            if self.env_config.settings.scaling
+            else 1,
             capacity_provider_strategies=capacity_provider_strategies,
             enable_execute_command=True,  # Enable ECS Exec for debugging
             health_check_grace_period=Duration.seconds(120),
             platform_version=ecs.FargatePlatformVersion.LATEST,
         )
-        
+
         return service
-    
+
     def _setup_service_discovery(self) -> None:
         """Set up service discovery for internal communication."""
         # Check if namespace already exists on the cluster
         namespace = None
-        if hasattr(self.cluster, 'default_cloud_map_namespace'):
+        if hasattr(self.cluster, "default_cloud_map_namespace"):
             namespace = self.cluster.default_cloud_map_namespace
         else:
             # Create new namespace
@@ -379,7 +416,7 @@ class N8nFargateService(Construct):
                 type=servicediscovery.NamespaceType.DNS_PRIVATE,
                 vpc=self.vpc,
             )
-        
+
         # Associate service with service discovery if namespace exists
         if namespace:
             self.service.enable_cloud_map(
@@ -387,7 +424,7 @@ class N8nFargateService(Construct):
                 dns_record_type=servicediscovery.DnsRecordType.A,
                 dns_ttl=Duration.seconds(10),
             )
-    
+
     def _add_n8n_permissions(self, role: iam.IRole) -> None:
         """Add required IAM permissions for n8n."""
         # S3 permissions for workflow storage/import/export
@@ -406,9 +443,11 @@ class N8nFargateService(Construct):
                 ],
             )
         )
-        
+
         # SES permissions for email sending (if needed)
-        if self.env_config.settings.features and self.env_config.settings.features.get("email_enabled"):
+        if self.env_config.settings.features and self.env_config.settings.features.get(
+            "email_enabled"
+        ):
             role.add_to_policy(
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -419,7 +458,7 @@ class N8nFargateService(Construct):
                     resources=["*"],
                 )
             )
-        
+
         # SSM Parameter Store (for dynamic configuration)
         role.add_to_policy(
             iam.PolicyStatement(

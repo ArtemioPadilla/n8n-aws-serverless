@@ -1,24 +1,25 @@
 """Pytest configuration and fixtures for unit tests."""
+from unittest.mock import MagicMock, patch
+
 import pytest
 from aws_cdk import App, Stack
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_efs as efs
 from aws_cdk import aws_secretsmanager as secretsmanager
-from unittest.mock import MagicMock, patch
 
 from n8n_deploy.config.models import (
-    N8nConfig,
-    GlobalConfig,
+    AccessConfig,
+    AuthConfig,
+    BackupConfig,
     EnvironmentConfig,
     EnvironmentSettings,
     FargateConfig,
+    GlobalConfig,
+    MonitoringConfig,
+    N8nConfig,
     NetworkingConfig,
     ScalingConfig,
-    AccessConfig,
-    AuthConfig,
-    MonitoringConfig,
-    BackupConfig,
 )
 
 
@@ -144,7 +145,9 @@ def mock_service():
 def mock_secret():
     """Create a mock Secrets Manager secret."""
     secret = MagicMock(spec=secretsmanager.Secret)
-    secret.secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret"
+    secret.secret_arn = (
+        "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret"
+    )
     return secret
 
 
@@ -192,6 +195,8 @@ def mock_database_stack(mock_secret):
     stack.secret = mock_secret
     stack.endpoint = "test-db.cluster-12345.us-east-1.rds.amazonaws.com:5432"
     stack.instance = MagicMock()
-    stack.instance.db_instance_endpoint_address = "test-db.12345.us-east-1.rds.amazonaws.com"
+    stack.instance.db_instance_endpoint_address = (
+        "test-db.12345.us-east-1.rds.amazonaws.com"
+    )
     stack.instance.db_instance_endpoint_port = "5432"
     return stack

@@ -1,23 +1,21 @@
 """Database stack for optional RDS PostgreSQL."""
 from typing import Optional
-from aws_cdk import (
-    Duration,
-    RemovalPolicy,
-    CfnOutput,
-)
-from aws_cdk import aws_rds as rds
+
+from aws_cdk import CfnOutput, Duration, RemovalPolicy
 from aws_cdk import aws_ec2 as ec2
-from aws_cdk import aws_secretsmanager as secretsmanager
 from aws_cdk import aws_logs as logs
+from aws_cdk import aws_rds as rds
+from aws_cdk import aws_secretsmanager as secretsmanager
 from constructs import Construct
+
+from ..config.models import DatabaseConfig, N8nConfig
 from .base_stack import N8nBaseStack
 from .network_stack import NetworkStack
-from ..config.models import N8nConfig, DatabaseConfig
 
 
 class DatabaseStack(N8nBaseStack):
     """Stack for RDS PostgreSQL database resources."""
-    
+
     def __init__(
         self,
         scope: Construct,
@@ -25,10 +23,10 @@ class DatabaseStack(N8nBaseStack):
         config: N8nConfig,
         environment: str,
         network_stack: NetworkStack,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Initialize database stack.
-        
+
         Args:
             scope: CDK scope
             construct_id: Stack ID
@@ -38,13 +36,13 @@ class DatabaseStack(N8nBaseStack):
             **kwargs: Additional stack properties
         """
         super().__init__(scope, construct_id, config, environment, **kwargs)
-        
+
         self.network_stack = network_stack
         self.db_config = self.env_config.settings.database or DatabaseConfig()
-        
+
         # Create database security group
         self.db_security_group = self._create_database_security_group()
-        
+
         # Create or import database
         if self.db_config.use_existing:
             self._import_existing_database()
@@ -53,10 +51,10 @@ class DatabaseStack(N8nBaseStack):
                 self._create_aurora_serverless()
             else:
                 self._create_rds_instance()
-        
+
         # Add outputs
         self._add_outputs()
-    
+
     def _create_database_security_group(self) -> ec2.SecurityGroup:
         """Create security group for database."""
         sg = ec2.SecurityGroup(
@@ -67,32 +65,32 @@ class DatabaseStack(N8nBaseStack):
             description="Security group for n8n database",
             allow_all_outbound=False,  # Databases don't need outbound
         )
-        
+
         # Allow access from n8n containers
         sg.add_ingress_rule(
             peer=self.network_stack.n8n_security_group,
             connection=ec2.Port.tcp(5432),
-            description="Allow PostgreSQL access from n8n containers"
+            description="Allow PostgreSQL access from n8n containers",
         )
-        
+
         return sg
-    
+
     def _import_existing_database(self) -> None:
         """Import existing database from configuration."""
         if not self.db_config.connection_secret_arn:
             raise ValueError("connection_secret_arn required when use_existing is True")
-        
+
         # Import secret
         self.secret = secretsmanager.Secret.from_secret_complete_arn(
             self,
             "ImportedDatabaseSecret",
-            secret_complete_arn=self.db_config.connection_secret_arn
+            secret_complete_arn=self.db_config.connection_secret_arn,
         )
-        
+
         # Extract endpoint from secret (this is a simplified version)
         # In practice, you'd need to handle this more robustly
         self.endpoint = None  # Will be resolved from secret at runtime
-    
+
     def _create_aurora_serverless(self) -> None:
         """Create Aurora Serverless v2 PostgreSQL cluster."""
         # Create credentials secret
@@ -108,7 +106,7 @@ class DatabaseStack(N8nBaseStack):
                 password_length=30,
             ),
         )
-        
+
         # Create subnet group
         subnet_group = rds.SubnetGroup(
             self,
@@ -118,12 +116,12 @@ class DatabaseStack(N8nBaseStack):
             vpc_subnets=ec2.SubnetSelection(subnets=self.network_stack.subnets),
             removal_policy=self.removal_policy,
         )
-        
+
         # Create Aurora Serverless v2 cluster
         aurora_config = self.db_config.aurora_serverless or {}
         min_capacity = aurora_config.get("min_capacity", 0.5)
         max_capacity = aurora_config.get("max_capacity", 1.0)
-        
+
         self.cluster = rds.DatabaseCluster(
             self,
             "AuroraCluster",
@@ -151,7 +149,7 @@ class DatabaseStack(N8nBaseStack):
             deletion_protection=self.is_production(),
             removal_policy=self.removal_policy,
         )
-        
+
         # Add writer instance
         self.cluster.add_instance(
             "WriterInstance",
@@ -161,9 +159,9 @@ class DatabaseStack(N8nBaseStack):
             ),
             enable_performance_insights=self.is_production(),
         )
-        
+
         self.endpoint = self.cluster.cluster_endpoint.socket_address
-    
+
     def _create_rds_instance(self) -> None:
         """Create standard RDS PostgreSQL instance."""
         # Create credentials secret
@@ -179,7 +177,7 @@ class DatabaseStack(N8nBaseStack):
                 password_length=30,
             ),
         )
-        
+
         # Determine instance class
         instance_class = ec2.InstanceType.of(
             ec2.InstanceClass.T4G,  # Graviton for cost savings
@@ -195,7 +193,7 @@ class DatabaseStack(N8nBaseStack):
                     getattr(ec2.InstanceClass, class_name),
                     getattr(ec2.InstanceSize, size_name),
                 )
-        
+
         # Create RDS instance
         self.instance = rds.DatabaseInstance(
             self,
@@ -226,30 +224,32 @@ class DatabaseStack(N8nBaseStack):
             storage_encrypted=True,
             auto_minor_version_upgrade=False,  # Control updates
         )
-        
-        self.endpoint = self.instance.db_instance_endpoint_address + ":" + self.instance.db_instance_endpoint_port
-    
+
+        self.endpoint = (
+            self.instance.db_instance_endpoint_address
+            + ":"
+            + self.instance.db_instance_endpoint_port
+        )
+
     def _add_outputs(self) -> None:
         """Add stack outputs."""
         # Database endpoint
-        if hasattr(self, 'endpoint') and self.endpoint:
+        if hasattr(self, "endpoint") and self.endpoint:
             self.add_output(
-                "DatabaseEndpoint",
-                value=self.endpoint,
-                description="Database endpoint"
+                "DatabaseEndpoint", value=self.endpoint, description="Database endpoint"
             )
-        
+
         # Secret ARN
-        if hasattr(self, 'secret'):
+        if hasattr(self, "secret"):
             self.add_output(
                 "DatabaseSecretArn",
                 value=self.secret.secret_arn,
-                description="Database credentials secret ARN"
+                description="Database credentials secret ARN",
             )
-        
+
         # Security group
         self.add_output(
             "DatabaseSecurityGroupId",
             value=self.db_security_group.security_group_id,
-            description="Database security group ID"
+            description="Database security group ID",
         )

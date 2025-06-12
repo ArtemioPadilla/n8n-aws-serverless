@@ -23,7 +23,8 @@
       "Bash(git --no-pager diff)",
       "Bash(pip install:*)",
       "Bash(rg:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(black:*)"
     ],
     "deny": []
   }

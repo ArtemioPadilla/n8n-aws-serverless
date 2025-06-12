@@ -124,21 +124,30 @@ jobs:
     - name: Test Docker Compose Configuration
       run: |
         cd docker
-        # Set test environment variable for Cloudflare tunnel
+        # Set test environment variables
         export CLOUDFLARE_TUNNEL_TOKEN=test-token
+        export N8N_ENCRYPTION_KEY=test-encryption-key
+        export N8N_BASIC_AUTH_USER=test-user
+        export N8N_BASIC_AUTH_PASSWORD=test-password
         docker compose config
         docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 
     - name: Build Docker images
       run: |
         cd docker
-        # Set test environment variable for Cloudflare tunnel
+        # Set test environment variables
         export CLOUDFLARE_TUNNEL_TOKEN=test-token
+        export N8N_ENCRYPTION_KEY=test-encryption-key
+        export N8N_BASIC_AUTH_USER=test-user
+        export N8N_BASIC_AUTH_PASSWORD=test-password
         docker compose build --no-cache
 
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
     - uses: actions/checkout@v4

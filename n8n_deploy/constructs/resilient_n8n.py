@@ -1,23 +1,21 @@
 """Resilient n8n construct with error recovery mechanisms."""
-from typing import Optional, Dict, Any
-from aws_cdk import (
-    Duration,
-    RemovalPolicy,
-)
-from aws_cdk import aws_sqs as sqs
-from aws_cdk import aws_sns as sns
-from aws_cdk import aws_lambda as lambda_
-from aws_cdk import aws_iam as iam
+from typing import Any, Dict, Optional
+
+from aws_cdk import Duration, RemovalPolicy
 from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_cloudwatch_actions as cloudwatch_actions
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as events_targets
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_sns as sns
+from aws_cdk import aws_sqs as sqs
 from constructs import Construct
 
 
 class ResilientN8n(Construct):
     """Construct for adding resilience patterns to n8n deployment."""
-    
+
     def __init__(
         self,
         scope: Construct,
@@ -25,10 +23,10 @@ class ResilientN8n(Construct):
         compute_stack: Any,
         monitoring_topic: sns.Topic,
         environment: str,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Initialize resilient n8n construct.
-        
+
         Args:
             scope: CDK scope
             construct_id: Construct ID
@@ -38,27 +36,27 @@ class ResilientN8n(Construct):
             **kwargs: Additional properties
         """
         super().__init__(scope, construct_id, **kwargs)
-        
+
         self.compute_stack = compute_stack
         self.monitoring_topic = monitoring_topic
         self.environment = environment
-        
+
         # Create dead letter queues
         self.webhook_dlq = self._create_webhook_dlq()
         self.workflow_dlq = self._create_workflow_dlq()
-        
+
         # Create circuit breaker for external services
         self.circuit_breaker = self._create_circuit_breaker()
-        
+
         # Create retry handler
         self.retry_handler = self._create_retry_handler()
-        
+
         # Create health check automation
         self._create_health_check_automation()
-        
+
         # Create auto-recovery mechanisms
         self._create_auto_recovery()
-    
+
     def _create_webhook_dlq(self) -> sqs.Queue:
         """Create dead letter queue for failed webhook processing."""
         dlq = sqs.Queue(
@@ -69,7 +67,7 @@ class ResilientN8n(Construct):
             encryption=sqs.QueueEncryption.KMS_MANAGED,
             visibility_timeout=Duration.minutes(5),
         )
-        
+
         # Create alarm for DLQ messages
         dlq_alarm = cloudwatch.Alarm(
             self,
@@ -81,15 +79,15 @@ class ResilientN8n(Construct):
             evaluation_periods=1,
             treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
         )
-        dlq_alarm.add_alarm_action(
-            cloudwatch_actions.SnsAction(self.monitoring_topic)
-        )
-        
+        dlq_alarm.add_alarm_action(cloudwatch_actions.SnsAction(self.monitoring_topic))
+
         # Grant n8n service permission to send to DLQ
-        dlq.grant_send_messages(self.compute_stack.n8n_service.task_definition.task_role)
-        
+        dlq.grant_send_messages(
+            self.compute_stack.n8n_service.task_definition.task_role
+        )
+
         return dlq
-    
+
     def _create_workflow_dlq(self) -> sqs.Queue:
         """Create dead letter queue for failed workflow executions."""
         dlq = sqs.Queue(
@@ -100,7 +98,7 @@ class ResilientN8n(Construct):
             encryption=sqs.QueueEncryption.KMS_MANAGED,
             visibility_timeout=Duration.minutes(30),  # Longer for workflows
         )
-        
+
         # Create alarm for DLQ messages
         dlq_alarm = cloudwatch.Alarm(
             self,
@@ -113,15 +111,15 @@ class ResilientN8n(Construct):
             datapoints_to_alarm=2,
             treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
         )
-        dlq_alarm.add_alarm_action(
-            cloudwatch_actions.SnsAction(self.monitoring_topic)
-        )
-        
+        dlq_alarm.add_alarm_action(cloudwatch_actions.SnsAction(self.monitoring_topic))
+
         # Grant permissions
-        dlq.grant_send_messages(self.compute_stack.n8n_service.task_definition.task_role)
-        
+        dlq.grant_send_messages(
+            self.compute_stack.n8n_service.task_definition.task_role
+        )
+
         return dlq
-    
+
     def _create_circuit_breaker(self) -> lambda_.Function:
         """Create Lambda function for circuit breaker pattern."""
         # Create Lambda function for circuit breaker logic
@@ -131,7 +129,8 @@ class ResilientN8n(Construct):
             function_name=f"n8n-{self.environment}-circuit-breaker",
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="index.handler",
-            code=lambda_.Code.from_inline("""
+            code=lambda_.Code.from_inline(
+                """
 import json
 import boto3
 import os
@@ -214,7 +213,8 @@ def handler(event, context):
         return {'state': 'closed', 'message': 'Circuit closed after success'}
     
     return {'error': 'Invalid action'}
-"""),
+"""
+            ),
             timeout=Duration.seconds(30),
             memory_size=256,
             environment={
@@ -224,23 +224,24 @@ def handler(event, context):
             },
             tracing=lambda_.Tracing.ACTIVE,
         )
-        
+
         # Create DynamoDB table for circuit state
         from aws_cdk import aws_dynamodb as dynamodb
-        
+
         circuit_state_table = dynamodb.Table(
             self,
             "CircuitStateTable",
             table_name=f"n8n-{self.environment}-circuit-state",
             partition_key=dynamodb.Attribute(
-                name="service_name",
-                type=dynamodb.AttributeType.STRING
+                name="service_name", type=dynamodb.AttributeType.STRING
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.DESTROY if self.environment != "production" else RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY
+            if self.environment != "production"
+            else RemovalPolicy.RETAIN,
             point_in_time_recovery=self.environment == "production",
         )
-        
+
         # Grant permissions
         circuit_state_table.grant_read_write_data(circuit_breaker_fn)
         circuit_breaker_fn.add_to_role_policy(
@@ -249,12 +250,14 @@ def handler(event, context):
                 resources=["*"],
             )
         )
-        
+
         # Allow n8n to invoke circuit breaker
-        circuit_breaker_fn.grant_invoke(self.compute_stack.n8n_service.task_definition.task_role)
-        
+        circuit_breaker_fn.grant_invoke(
+            self.compute_stack.n8n_service.task_definition.task_role
+        )
+
         return circuit_breaker_fn
-    
+
     def _create_retry_handler(self) -> lambda_.Function:
         """Create Lambda function for intelligent retry handling."""
         retry_handler_fn = lambda_.Function(
@@ -263,7 +266,8 @@ def handler(event, context):
             function_name=f"n8n-{self.environment}-retry-handler",
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="index.handler",
-            code=lambda_.Code.from_inline("""
+            code=lambda_.Code.from_inline(
+                """
 import json
 import boto3
 import os
@@ -333,7 +337,8 @@ def handler(event, context):
         'retry_count': retry_count + 1,
         'delay': delay
     }
-"""),
+"""
+            ),
             timeout=Duration.minutes(1),
             memory_size=256,
             environment={
@@ -343,7 +348,7 @@ def handler(event, context):
             },
             reserved_concurrent_executions=10,  # Limit concurrency
         )
-        
+
         # Create retry queue
         retry_queue = sqs.Queue(
             self,
@@ -352,7 +357,7 @@ def handler(event, context):
             visibility_timeout=Duration.minutes(2),
             encryption=sqs.QueueEncryption.KMS_MANAGED,
         )
-        
+
         # Add Lambda trigger
         retry_handler_fn.add_event_source(
             lambda_.SqsEventSource(
@@ -361,7 +366,7 @@ def handler(event, context):
                 max_batching_window_time=Duration.seconds(5),
             )
         )
-        
+
         # Grant permissions
         retry_queue.grant_consume_messages(retry_handler_fn)
         self.workflow_dlq.grant_send_messages(retry_handler_fn)
@@ -371,12 +376,14 @@ def handler(event, context):
                 resources=["*"],
             )
         )
-        
+
         # Allow n8n to send to retry queue
-        retry_queue.grant_send_messages(self.compute_stack.n8n_service.task_definition.task_role)
-        
+        retry_queue.grant_send_messages(
+            self.compute_stack.n8n_service.task_definition.task_role
+        )
+
         return retry_handler_fn
-    
+
     def _create_health_check_automation(self) -> None:
         """Create automated health check and recovery."""
         # Create Lambda for health checks
@@ -386,7 +393,8 @@ def handler(event, context):
             function_name=f"n8n-{self.environment}-health-check",
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="index.handler",
-            code=lambda_.Code.from_inline("""
+            code=lambda_.Code.from_inline(
+                """
 import json
 import boto3
 import urllib3
@@ -468,7 +476,8 @@ def handler(event, context):
         return {'status': 'unhealthy', 'error': str(e)}
     
     return {'status': 'healthy', 'running_tasks': running_count}
-"""),
+"""
+            ),
             timeout=Duration.seconds(30),
             memory_size=256,
             environment={
@@ -481,7 +490,7 @@ def handler(event, context):
             vpc=self.compute_stack.network_stack.vpc,
             vpc_subnets=self.compute_stack.network_stack.subnets,
         )
-        
+
         # Grant permissions
         health_check_fn.add_to_role_policy(
             iam.PolicyStatement(
@@ -499,7 +508,7 @@ def handler(event, context):
             )
         )
         self.monitoring_topic.grant_publish(health_check_fn)
-        
+
         # Schedule health checks
         health_check_rule = events.Rule(
             self,
@@ -507,10 +516,8 @@ def handler(event, context):
             rule_name=f"n8n-{self.environment}-health-check",
             schedule=events.Schedule.rate(Duration.minutes(5)),
         )
-        health_check_rule.add_target(
-            events_targets.LambdaFunction(health_check_fn)
-        )
-    
+        health_check_rule.add_target(events_targets.LambdaFunction(health_check_fn))
+
     def _create_auto_recovery(self) -> None:
         """Create auto-recovery alarms for the ECS service."""
         # Create alarm for service with no running tasks
@@ -533,12 +540,12 @@ def handler(event, context):
             comparison_operator=cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
             treat_missing_data=cloudwatch.TreatMissingData.BREACHING,
         )
-        
+
         # Add alarm action
         no_tasks_alarm.add_alarm_action(
             cloudwatch_actions.SnsAction(self.monitoring_topic)
         )
-        
+
         # Create alarm for high error rate
         error_rate_alarm = cloudwatch.Alarm(
             self,
@@ -569,18 +576,18 @@ def handler(event, context):
             datapoints_to_alarm=2,
             comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
         )
-        
+
         error_rate_alarm.add_alarm_action(
             cloudwatch_actions.SnsAction(self.monitoring_topic)
         )
-    
+
     def get_dlq_arns(self) -> Dict[str, str]:
         """Get ARNs of dead letter queues."""
         return {
             "webhook_dlq": self.webhook_dlq.queue_arn,
             "workflow_dlq": self.workflow_dlq.queue_arn,
         }
-    
+
     def get_circuit_breaker_function_name(self) -> str:
         """Get circuit breaker Lambda function name."""
         return self.circuit_breaker.function_name
