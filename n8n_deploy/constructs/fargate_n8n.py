@@ -1,5 +1,5 @@
 """Construct for n8n Fargate service with all required configurations."""
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from aws_cdk import Duration, RemovalPolicy, Stack
 from aws_cdk import aws_ec2 as ec2

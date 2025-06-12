@@ -1,5 +1,5 @@
 """Cloudflare Tunnel construct for zero-trust access to n8n."""
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from aws_cdk import Duration, Stack
 from aws_cdk import aws_ecs as ecs

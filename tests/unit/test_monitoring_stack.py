@@ -2,9 +2,7 @@
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from aws_cdk import App, Duration, Environment
-from aws_cdk import aws_cloudwatch as cloudwatch
-from aws_cdk import aws_ecs as ecs
+from aws_cdk import App, Environment
 from aws_cdk.assertions import Match, Template
 
 from n8n_deploy.config.models import (

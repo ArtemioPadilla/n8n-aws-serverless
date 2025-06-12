@@ -1,12 +1,11 @@
 """Configuration loader for system.yaml."""
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
 from pydantic import ValidationError
 
-from .models import EnvironmentConfig, N8nConfig, StackConfig
+from .models import EnvironmentConfig, N8nConfig
 
 
 class ConfigLoader:

@@ -145,7 +145,10 @@ class CloudflareConfig(BaseModel):
             # - Cannot have consecutive dots
             # - Cannot end with hyphen
             # - Must have valid TLD
-            pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9-_]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-_]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$"
+            pattern = (
+                r"^[a-zA-Z0-9]([a-zA-Z0-9-_]*[a-zA-Z0-9])?"
+                r"(\.[a-zA-Z0-9]([a-zA-Z0-9-_]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$"
+            )
             if not re.match(pattern, v):
                 raise ValueError(
                     f"Invalid domain format: {v}. Must be a valid domain name."

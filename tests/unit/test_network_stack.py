@@ -2,8 +2,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from aws_cdk import App
-from aws_cdk.assertions import Match, Template
 
 from n8n_deploy.config.models import NetworkingConfig
 from n8n_deploy.stacks.network_stack import NetworkStack
@@ -31,7 +29,7 @@ class TestNetworkStack:
         mock_vpc_class.return_value = mock_vpc
 
         # Create stack
-        stack = NetworkStack(
+        NetworkStack(
             mock_app, "network-stack", config=test_config, environment="test"
         )
 
@@ -98,7 +96,7 @@ class TestNetworkStack:
         mock_sg_class.side_effect = [mock_n8n_sg, mock_efs_sg]
 
         # Create stack
-        stack = NetworkStack(
+        NetworkStack(
             mock_app, "network-stack", config=test_config, environment="test"
         )
 
@@ -123,7 +121,7 @@ class TestNetworkStack:
         # Test production environment
         test_config.environments["production"] = test_config.environments["test"]
 
-        stack_prod = NetworkStack(
+        NetworkStack(
             mock_app, "network-stack-prod", config=test_config, environment="production"
         )
 
@@ -133,7 +131,7 @@ class TestNetworkStack:
         # Test staging environment
         test_config.environments["staging"] = test_config.environments["test"]
 
-        stack_staging = NetworkStack(
+        NetworkStack(
             mock_app, "network-stack-staging", config=test_config, environment="staging"
         )
 
@@ -143,7 +141,7 @@ class TestNetworkStack:
         # Test dev environment
         test_config.environments["dev"] = test_config.environments["test"]
 
-        stack_dev = NetworkStack(
+        NetworkStack(
             mock_app, "network-stack-dev", config=test_config, environment="dev"
         )
 
@@ -156,7 +154,7 @@ class TestNetworkStack:
         # Test with NAT gateways
         test_config.environments["test"].settings.networking.nat_gateways = 2
 
-        stack = NetworkStack(
+        NetworkStack(
             mock_app, "network-stack", config=test_config, environment="test"
         )
 
@@ -189,7 +187,7 @@ class TestNetworkStack:
         mock_sg_class.return_value = mock_sg
 
         # Create stack
-        stack = NetworkStack(
+        NetworkStack(
             mock_app, "network-stack", config=test_config, environment="test"
         )
 

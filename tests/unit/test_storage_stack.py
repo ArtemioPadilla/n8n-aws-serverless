@@ -1,8 +1,8 @@
 """Unit tests for StorageStack."""
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock
 
 import pytest
-from aws_cdk import App, Duration, Environment, RemovalPolicy
+from aws_cdk import App, Environment, RemovalPolicy
 from aws_cdk.assertions import Match, Template
 
 from n8n_deploy.config.models import (

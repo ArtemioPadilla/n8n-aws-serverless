@@ -1,5 +1,5 @@
 """Resilient n8n construct with error recovery mechanisms."""
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from aws_cdk import Duration, RemovalPolicy
 from aws_cdk import aws_cloudwatch as cloudwatch
@@ -143,12 +143,12 @@ cloudwatch = boto3.client('cloudwatch')
 def handler(event, context):
     service_name = event.get('service_name')
     action = event.get('action', 'check')  # check, open, close, half-open
-    
+
     if action == 'check':
         # Check circuit state
         response = table.get_item(Key={'service_name': service_name})
         item = response.get('Item', {})
-        
+
         state = item.get('state', 'closed')
         if state == 'open':
             # Check if it's time to try half-open
@@ -164,14 +164,14 @@ def handler(event, context):
                 return {'state': 'half-open', 'allow_request': True}
             else:
                 return {'state': 'open', 'allow_request': False}
-        
+
         return {'state': state, 'allow_request': state != 'open'}
-    
+
     elif action == 'record_failure':
         # Record failure and potentially open circuit
         failure_count = event.get('failure_count', 1)
         threshold = int(os.environ.get('FAILURE_THRESHOLD', '5'))
-        
+
         if failure_count >= threshold:
             # Open circuit
             table.put_item(Item={
@@ -180,7 +180,7 @@ def handler(event, context):
                 'open_time': datetime.now().isoformat(),
                 'failure_count': failure_count
             })
-            
+
             # Send metric
             cloudwatch.put_metric_data(
                 Namespace='N8n/CircuitBreaker',
@@ -194,11 +194,11 @@ def handler(event, context):
                     ]
                 }]
             )
-            
+
             return {'state': 'open', 'message': 'Circuit opened due to failures'}
-        
+
         return {'state': 'closed', 'failure_count': failure_count}
-    
+
     elif action == 'record_success':
         # Record success and potentially close circuit
         table.update_item(
@@ -211,7 +211,7 @@ def handler(event, context):
             }
         )
         return {'state': 'closed', 'message': 'Circuit closed after success'}
-    
+
     return {'error': 'Invalid action'}
 """
             ),
@@ -287,13 +287,13 @@ def exponential_backoff(retry_count, base_delay=1, max_delay=300):
 def handler(event, context):
     # Parse retry request
     request = json.loads(event['Records'][0]['body'])
-    
+
     retry_count = request.get('retry_count', 0)
     max_retries = int(os.environ.get('MAX_RETRIES', '3'))
     workflow_id = request.get('workflow_id')
     webhook_url = request.get('webhook_url')
     payload = request.get('payload')
-    
+
     if retry_count >= max_retries:
         # Send to DLQ
         dlq_url = os.environ['DLQ_URL']
@@ -308,7 +308,7 @@ def handler(event, context):
                 'reason': 'Max retries exceeded'
             })
         )
-        
+
         # Send metric
         cloudwatch.put_metric_data(
             Namespace='N8n/Retry',
@@ -321,15 +321,15 @@ def handler(event, context):
                 ]
             }]
         )
-        
+
         return {'status': 'failed', 'reason': 'Max retries exceeded'}
-    
+
     # Calculate backoff
     delay = exponential_backoff(retry_count)
-    
+
     # Wait (in real implementation, would reschedule)
     time.sleep(min(delay, 5))  # Cap at 5 seconds for Lambda
-    
+
     # In real implementation, would call n8n API to retry
     # For now, just return success
     return {
@@ -410,29 +410,29 @@ def handler(event, context):
     cluster_name = os.environ['CLUSTER_NAME']
     service_name = os.environ['SERVICE_NAME']
     health_url = os.environ['HEALTH_URL']
-    
+
     # Check ECS service health
     response = ecs.describe_services(
         cluster=cluster_name,
         services=[service_name]
     )
-    
+
     service = response['services'][0]
     running_count = service['runningCount']
     desired_count = service['desiredCount']
-    
+
     # Check if service is healthy
     if running_count < desired_count:
         # Service is unhealthy
         message = f"n8n service unhealthy: {running_count}/{desired_count} tasks running"
-        
+
         # Send notification
         sns.publish(
             TopicArn=os.environ['SNS_TOPIC_ARN'],
             Subject=f"n8n Health Check Failed - {os.environ['ENVIRONMENT']}",
             Message=message
         )
-        
+
         # Send metric
         cloudwatch.put_metric_data(
             Namespace='N8n/Health',
@@ -445,7 +445,7 @@ def handler(event, context):
                 ]
             }]
         )
-        
+
         # Attempt recovery if too many tasks are failing
         if running_count == 0:
             ecs.update_service(
@@ -454,7 +454,7 @@ def handler(event, context):
                 forceNewDeployment=True
             )
             return {'status': 'recovery_initiated', 'message': message}
-    
+
     # Try HTTP health check
     try:
         resp = http.request('GET', health_url, timeout=10)
@@ -474,7 +474,7 @@ def handler(event, context):
             }]
         )
         return {'status': 'unhealthy', 'error': str(e)}
-    
+
     return {'status': 'healthy', 'running_tasks': running_count}
 """
             ),

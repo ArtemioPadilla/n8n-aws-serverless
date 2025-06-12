@@ -9,7 +9,7 @@ from n8n_deploy.n8n_deploy_stack import N8NAwsServerlessStack
 def test_sqs_queue_created():
     app = core.App()
     stack = N8NAwsServerlessStack(app, "n8n-aws-serverless")
-    template = assertions.Template.from_stack(stack)
+    assertions.Template.from_stack(stack)
 
 
 #     template.has_resource_properties("AWS::SQS::Queue", {
