@@ -36,19 +36,27 @@ print_usage() {
     echo "Usage: $0 [OPTIONS]"
     echo
     echo "Options:"
-    echo "  -p, --profile PROFILE    Docker Compose profile to use (default, postgres, scaling)"
+    echo "  -p, --profile PROFILE    Docker Compose profile to use:"
+    echo "                          - default: SQLite database"
+    echo "                          - postgres: PostgreSQL database"
+    echo "                          - scaling: Redis for scaling"
+    echo "                          - cloudflare: Cloudflare Tunnel (requires token)"
+    echo "                          - full: Everything (PostgreSQL + monitoring + Cloudflare if configured)"
     echo "  -m, --monitoring         Enable monitoring stack (Prometheus + Grafana)"
     echo "  -f, --foreground        Run in foreground (don't detach)"
     echo "  -d, --down              Stop and remove containers"
     echo "  -r, --restart           Restart containers"
     echo "  -l, --logs              Show logs"
     echo "  -s, --status            Show container status"
+    echo "  --full                   Shortcut for '-p full' (deploy everything)"
     echo "  -h, --help              Show this help message"
     echo
     echo "Examples:"
     echo "  $0                      # Start with SQLite"
     echo "  $0 -p postgres          # Start with PostgreSQL"
+    echo "  $0 -p cloudflare        # Start with Cloudflare Tunnel"
     echo "  $0 -p scaling -m        # Start with Redis and monitoring"
+    echo "  $0 --full               # Start everything (PostgreSQL + monitoring + Cloudflare if configured)"
     echo "  $0 -d                   # Stop all containers"
 }
 
@@ -61,6 +69,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -m|--monitoring)
             MONITORING=true
+            shift
+            ;;
+        --full)
+            PROFILE="full"
             shift
             ;;
         -f|--foreground)
@@ -115,15 +127,24 @@ fi
 get_compose_files() {
     local files="-f docker-compose.yml"
     
-    # Always specify a profile
-    if [ "$PROFILE" = "default" ]; then
+    # Handle full profile - deploy everything
+    if [ "$PROFILE" = "full" ]; then
+        # Check if Cloudflare token exists
+        if grep -q "CLOUDFLARE_TUNNEL_TOKEN=." ".env" 2>/dev/null; then
+            files="$files --profile postgres --profile monitoring --profile cloudflare-postgres"
+        else
+            files="$files --profile postgres --profile monitoring"
+        fi
+        # Note: Not including prod compose file to avoid conflicts
+        # files="$files -f docker-compose.prod.yml"
+    elif [ "$PROFILE" = "default" ]; then
         files="$files --profile default"
     else
         files="$files --profile $PROFILE"
     fi
     
-    # Add monitoring profile if requested
-    if [ "$MONITORING" = true ]; then
+    # Add monitoring profile if requested (and not already in full mode)
+    if [ "$MONITORING" = true ] && [ "$PROFILE" != "full" ]; then
         files="$files --profile monitoring"
     fi
     
@@ -166,6 +187,15 @@ case "${ACTION:-up}" in
     up|*)
         print_info "Starting n8n with profile: $PROFILE"
         
+        # Show info for full profile
+        if [ "$PROFILE" = "full" ]; then
+            if grep -q "CLOUDFLARE_TUNNEL_TOKEN=." ".env" 2>/dev/null; then
+                print_info "Cloudflare Tunnel token detected - enabling Cloudflare"
+            else
+                print_info "No Cloudflare token found - deploying without Cloudflare Tunnel"
+            fi
+        fi
+        
         # Pull latest images
         print_info "Pulling latest images..."
         $DOCKER_COMPOSE $(get_compose_files) pull
@@ -183,7 +213,16 @@ case "${ACTION:-up}" in
                 echo "  - HTTPS: https://localhost (with nginx)"
             fi
             
-            if [ "$MONITORING" = true ]; then
+            # Check if Cloudflare is running
+            if docker ps --format "{{.Names}}" | grep -q "cloudflared"; then
+                echo
+                echo -e "${BLUE}Cloudflare Tunnel:${NC}"
+                echo "  - Status: Active"
+                echo "  - Configure your tunnel domain in Cloudflare Zero Trust dashboard"
+                echo "  - Tunnel will be accessible at your configured domain"
+            fi
+            
+            if [ "$MONITORING" = true ] || [ "$PROFILE" = "full" ]; then
                 echo
                 echo -e "${BLUE}Monitoring stack:${NC}"
                 echo "  - Prometheus: http://localhost:9090"
@@ -191,9 +230,26 @@ case "${ACTION:-up}" in
                 echo "    Username: admin (check .env for password)"
             fi
             
+            if [ "$PROFILE" = "full" ]; then
+                echo
+                echo -e "${BLUE}Full deployment includes:${NC}"
+                echo "  ✓ PostgreSQL database"
+                echo "  ✓ Redis for scaling"
+                echo "  ✓ Prometheus + Grafana monitoring"
+                if docker ps --format "{{.Names}}" | grep -q "cloudflared"; then
+                    echo "  ✓ Cloudflare Tunnel (zero-trust access)"
+                else
+                    echo "  ○ Cloudflare Tunnel (add token to .env to enable)"
+                fi
+                echo
+                echo -e "${YELLOW}Resource usage:${NC}"
+                echo "  - Total containers: $(docker ps --format "{{.Names}}" | wc -l | tr -d ' ')"
+                echo "  - Approximate memory: ~2GB"
+            fi
+            
             echo
             echo "Default credentials (if basic auth is enabled):"
-            echo "  Username: $(grep N8N_BASIC_AUTH_USER .env | cut -d'=' -f2)"
+            echo "  Username: $(grep N8N_BASIC_AUTH_USER .env | cut -d'=' -f2 || echo 'admin')"
             echo "  Password: Check your .env file"
             echo
             echo "To view logs: $0 -l"

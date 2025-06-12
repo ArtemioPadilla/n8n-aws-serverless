@@ -7,14 +7,14 @@ import aws_cdk.aws_ecs as ecs
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_logs as logs
 
-from n8n_aws_serverless.config.models import (
+from n8n_deploy.config.models import (
     CloudflareConfig, 
     AccessConfig, 
     AccessType,
     EnvironmentSettings,
     EnvironmentConfig
 )
-from n8n_aws_serverless.constructs.cloudflare_tunnel import (
+from n8n_deploy.constructs.cloudflare_tunnel import (
     CloudflareTunnelConfiguration,
     CloudflareTunnelSidecar
 )

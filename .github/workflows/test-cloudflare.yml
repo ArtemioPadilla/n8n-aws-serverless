@@ -4,20 +4,20 @@ on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'n8n_aws_serverless/constructs/cloudflare_tunnel.py'
-      - 'n8n_aws_serverless/config/models.py'
-      - 'n8n_aws_serverless/stacks/compute_stack.py'
-      - 'n8n_aws_serverless/stacks/access_stack.py'
+      - 'n8n_deploy/constructs/cloudflare_tunnel.py'
+      - 'n8n_deploy/config/models.py'
+      - 'n8n_deploy/stacks/compute_stack.py'
+      - 'n8n_deploy/stacks/access_stack.py'
       - 'tests/**/test_cloudflare*.py'
       - 'docker/docker-compose*.yml'
       - '.github/workflows/test-cloudflare.yml'
   pull_request:
     branches: [ main, develop ]
     paths:
-      - 'n8n_aws_serverless/constructs/cloudflare_tunnel.py'
-      - 'n8n_aws_serverless/config/models.py'
-      - 'n8n_aws_serverless/stacks/compute_stack.py'
-      - 'n8n_aws_serverless/stacks/access_stack.py'
+      - 'n8n_deploy/constructs/cloudflare_tunnel.py'
+      - 'n8n_deploy/config/models.py'
+      - 'n8n_deploy/stacks/compute_stack.py'
+      - 'n8n_deploy/stacks/access_stack.py'
       - 'tests/**/test_cloudflare*.py'
       - 'docker/docker-compose*.yml'
       - '.github/workflows/test-cloudflare.yml'
@@ -54,7 +54,7 @@ jobs:
 
     - name: Run Cloudflare-specific tests
       run: |
-        pytest tests/unit/test_cloudflare_config.py tests/integration/test_cloudflare_integration.py -v --cov=n8n_aws_serverless --cov-report=xml
+        pytest tests/unit/test_cloudflare_config.py tests/integration/test_cloudflare_integration.py -v --cov=n8n_deploy --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

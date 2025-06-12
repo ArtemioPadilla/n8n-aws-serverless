@@ -88,10 +88,10 @@ environments:
 
 ```bash
 # Validate system.yaml
-python -c "from n8n_aws_serverless.config import ConfigLoader; ConfigLoader().validate_config_file()"
+python -c "from n8n_deploy.config import ConfigLoader; ConfigLoader().validate_config_file()"
 
 # List available environments
-python -c "from n8n_aws_serverless.config import ConfigLoader; print(ConfigLoader().get_available_environments())"
+python -c "from n8n_deploy.config import ConfigLoader; print(ConfigLoader().get_available_environments())"
 ```
 
 ## Deployment Options

@@ -3,12 +3,12 @@ import pytest
 from aws_cdk import App, Environment
 from aws_cdk.assertions import Template, Match
 
-from n8n_aws_serverless.config import ConfigLoader
-from n8n_aws_serverless.stacks.network_stack import NetworkStack
-from n8n_aws_serverless.stacks.storage_stack import StorageStack
-from n8n_aws_serverless.stacks.compute_stack import ComputeStack
-from n8n_aws_serverless.stacks.access_stack import AccessStack
-from n8n_aws_serverless.stacks.monitoring_stack import MonitoringStack
+from n8n_deploy.config import ConfigLoader
+from n8n_deploy.stacks.network_stack import NetworkStack
+from n8n_deploy.stacks.storage_stack import StorageStack
+from n8n_deploy.stacks.compute_stack import ComputeStack
+from n8n_deploy.stacks.access_stack import AccessStack
+from n8n_deploy.stacks.monitoring_stack import MonitoringStack
 
 
 class TestCloudflareIntegration:

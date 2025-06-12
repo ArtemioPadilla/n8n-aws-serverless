@@ -1,243 +1,328 @@
-# Architecture Overview
+# n8n Deploy - Multi-Platform Architecture
 
-This document describes the architecture of the n8n AWS Serverless deployment.
+This document describes the architecture options available in n8n Deploy, covering AWS Serverless, Docker/On-Premise, and Cloudflare Tunnel deployments.
 
-## High-Level Architecture
+## 🎯 Architecture Decision Matrix
+
+| Requirement | AWS Serverless | Docker Local | Docker Production | Cloudflare Tunnel |
+|------------|----------------|--------------|-------------------|-------------------|
+| **Cost Sensitivity** | Medium | Low | Low | Low |
+| **Scalability Needs** | High | Low | Medium | Medium |
+| **Maintenance Effort** | Low | High | High | Medium |
+| **Security Requirements** | High | Medium | Medium | Very High |
+| **Compliance Needs** | Yes | Yes | Yes | Yes |
+| **Internet Exposure** | Optional | Optional | Required | Not Required |
+| **Team Size** | Any | 1-10 | 10-100 | Any |
+| **DevOps Expertise** | Low | Medium | High | Medium |
+
+## 🏗️ Architecture Overview
+
+### Option 1: AWS Serverless Architecture
 
 ```
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
-│                 │      │                 │      │                 │
 │   CloudFront    │─────▶│  API Gateway    │─────▶│  ECS Fargate    │
-│  (CDN + WAF)    │      │  (HTTP API)     │      │  (n8n + Spot)   │
-│                 │      │                 │      │                 │
-└─────────────────┘      └─────────────────┘      └─────────────────┘
+│  (CDN + Cache)  │      │  (HTTP API)     │      │  (n8n + Spot)   │
+└─────────────────┘      └─────────────────┘      └────────┬────────┘
                                                             │
-                                                            ▼
+        ┌───────────────────────────────────────────────────┼───────────────────┐
+        │                                                   │                   │
+        ▼                         ▼                         ▼                   ▼
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐ ┌─────────────────┐
+│       EFS       │      │  RDS/Aurora     │      │ Secrets Manager │ │   CloudWatch    │
+│  (Workflows)    │      │  (PostgreSQL)   │      │  (Credentials)  │ │  (Monitoring)   │
+└─────────────────┘      └─────────────────┘      └─────────────────┘ └─────────────────┘
+```
+
+**Key Components:**
+- **API Gateway HTTP API**: Cost-effective serverless API ($1/million requests)
+- **ECS Fargate**: Serverless containers with 70% cost savings using Spot
+- **EFS**: Persistent storage for workflows and SQLite option
+- **RDS/Aurora**: Optional managed PostgreSQL for production scale
+- **CloudWatch**: Comprehensive monitoring and logging
+
+**Best For:**
+- SaaS applications
+- Variable workloads
+- Teams wanting managed infrastructure
+- Cost-conscious deployments
+
+### Option 2: Docker Local/Development Architecture
+
+```
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
-│                 │      │                 │      │                 │
-│     Route53     │      │       EFS       │      │  RDS/Aurora     │
-│     (DNS)       │      │  (File Storage) │      │  (PostgreSQL)   │
-│                 │      │                 │      │                 │
-└─────────────────┘      └─────────────────┘      └─────────────────┘
+│    Browser      │─────▶│  Host Machine   │─────▶│ Docker Network  │
+│  (localhost)    │      │  (Port 5678)   │      │   (n8n_net)     │
+└─────────────────┘      └─────────────────┘      └────────┬────────┘
+                                                            │
+        ┌───────────────────────────────────────────────────┼───────────────────┐
+        │                         │                         │                   │
+        ▼                         ▼                         ▼                   ▼
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐ ┌─────────────────┐
+│   n8n Container │      │   PostgreSQL    │      │  Redis Container│ │    Grafana      │
+│   (App Logic)   │      │   Container     │      │   (Queue/Cache) │ │  + Prometheus   │
+└─────────────────┘      └─────────────────┘      └─────────────────┘ └─────────────────┘
+        │
+        ▼
+┌─────────────────┐
+│  Local Volume   │
+│ (./n8n-data)    │
+└─────────────────┘
 ```
 
-## Components
+**Key Components:**
+- **Docker Compose**: Orchestrates all services
+- **n8n Container**: Main application with hot-reload in dev mode
+- **PostgreSQL/SQLite**: Database options based on needs
+- **Redis**: Optional for scaling and queueing
+- **Monitoring Stack**: Optional Prometheus + Grafana
 
-### 1. Access Layer
+**Best For:**
+- Local development
+- Testing and CI/CD
+- Learning n8n
+- Quick prototypes
 
-#### CloudFront (Optional)
-- **Purpose**: Global content delivery and caching
-- **Features**:
-  - HTTPS termination
-  - DDoS protection
-  - Geographic restrictions
-  - Custom domain support
-- **Cost**: Pay-per-use, often within free tier
+### Option 3: Docker Production/On-Premise Architecture
 
-#### API Gateway HTTP API
-- **Purpose**: Serverless API endpoint
-- **Features**:
-  - Cost-effective ($1/million requests)
-  - Auto-scaling
-  - JWT authorization
-  - Request throttling
-- **Alternative to**: Application Load Balancer ($16/month)
-
-### 2. Compute Layer
-
-#### ECS Fargate
-- **Purpose**: Serverless container hosting
-- **Features**:
-  - No server management
-  - Auto-scaling
-  - Spot instances (70% cost savings)
-  - Pay-per-second billing
-- **Configuration**:
-  - CPU: 0.25-2 vCPU
-  - Memory: 0.5-4 GB
-  - Spot/On-demand mix
-
-#### Task Definition
-- **Container**: n8n:latest
-- **Port**: 5678
-- **Health Check**: /healthz endpoint
-- **Environment Variables**: Configured via Secrets Manager
-
-### 3. Storage Layer
-
-#### EFS (Elastic File System)
-- **Purpose**: Persistent storage for workflows and data
-- **Features**:
-  - Shared across containers
-  - Automatic backups
-  - Encryption at rest
-  - Lifecycle management
-- **Mount Point**: /home/node/.n8n
-
-#### S3 (Optional)
-- **Purpose**: Workflow backups and large file storage
-- **Features**:
-  - Lifecycle policies
-  - Cross-region replication
-  - Versioning
-
-### 4. Database Layer
-
-#### SQLite (Default)
-- **Purpose**: Lightweight database for small deployments
-- **Location**: Stored on EFS
-- **Suitable for**: <5,000 daily executions
-- **Cost**: $0 (uses EFS storage)
-
-#### PostgreSQL (Optional)
-- **Options**:
-  - RDS PostgreSQL (db.t4g.micro)
-  - Aurora Serverless v2
-- **Features**:
-  - Automated backups
-  - Multi-AZ (production)
-  - Encryption at rest
-- **When to use**: >5,000 daily executions
-
-### 5. Security Layer
-
-#### Network Security
-- **VPC**: Isolated network
-- **Security Groups**: Stateful firewall rules
-- **NACLs**: Subnet-level protection
-- **Private Subnets**: For sensitive resources
-
-#### Application Security
-- **Secrets Manager**: Credential storage
-- **IAM Roles**: Least privilege access
-- **Encryption**: TLS 1.2+ for transit, AES-256 for rest
-- **WAF** (Optional): Web application firewall
-
-#### Authentication
-- **Basic Auth**: Simple username/password
-- **OAuth2**: Enterprise SSO integration
-- **API Keys**: For webhook authentication
-
-### 6. Monitoring & Operations
-
-#### CloudWatch
-- **Logs**: Centralized logging
-- **Metrics**: CPU, memory, custom metrics
-- **Alarms**: Automated alerting
-- **Dashboards**: Visual monitoring
-
-#### Backup Strategy
-- **EFS Backups**: Daily snapshots
-- **Database Backups**: Automated with retention
-- **Cross-region**: Optional for DR
-
-## Deployment Patterns
-
-### 1. Minimal Deployment
-```yaml
-Components:
-  - API Gateway → Fargate → SQLite on EFS
-Cost: ~$5-10/month
-Use Case: Personal projects, development
+```
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│   Internet      │─────▶│  Nginx/Traefik  │─────▶│ Docker Swarm/   │
+│  (HTTPS:443)    │      │  (Reverse Proxy)│      │   Kubernetes    │
+└─────────────────┘      └─────────────────┘      └────────┬────────┘
+                                                            │
+        ┌───────────────────────────────────────────────────┼───────────────────┐
+        │                         │                         │                   │
+        ▼                         ▼                         ▼                   ▼
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐ ┌─────────────────┐
+│ n8n Replicas    │      │ PostgreSQL HA   │      │ Redis Sentinel  │ │ Monitoring Stack│
+│ (Multi-instance)│      │ (Primary/Replica)│      │ (HA Redis)      │ │ (Prometheus)    │
+└─────────────────┘      └─────────────────┘      └─────────────────┘ └─────────────────┘
+        │                         │
+        ▼                         ▼
+┌─────────────────┐      ┌─────────────────┐
+│   NFS/GlusterFS │      │ Backup Storage  │
+│ (Shared Storage)│      │ (S3/NAS/Cloud)  │
+└─────────────────┘      └─────────────────┘
 ```
 
-### 2. Standard Deployment
-```yaml
-Components:
-  - CloudFront → API Gateway → Fargate → PostgreSQL
-  - Monitoring and backups enabled
-Cost: ~$15-30/month
-Use Case: Small teams, production workloads
+**Key Components:**
+- **Load Balancer**: Nginx/Traefik with SSL termination
+- **Container Orchestration**: Docker Swarm or Kubernetes
+- **High Availability**: Multiple n8n instances with shared storage
+- **Database HA**: PostgreSQL with replication
+- **Monitoring**: Full Prometheus/Grafana/AlertManager stack
+
+**Best For:**
+- On-premise requirements
+- Full control needs
+- Existing Docker infrastructure
+- Air-gapped environments
+
+### Option 4: Cloudflare Tunnel Architecture (Zero-Trust)
+
+```
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│     Users       │─────▶│ Cloudflare Edge │─────▶│ Cloudflare      │
+│  (Anywhere)     │      │   (Global PoP)  │      │   Tunnel        │
+└─────────────────┘      └─────────────────┘      └────────┬────────┘
+                                                            │ Outbound Only
+                                                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Private Network (No Inbound)                  │
+│  ┌─────────────────┐      ┌─────────────────┐      ┌─────────────┐ │
+│  │ cloudflared     │─────▶│ n8n Container/  │─────▶│ PostgreSQL  │ │
+│  │ (Tunnel Client) │      │   Instance      │      │   Database  │ │
+│  └─────────────────┘      └─────────────────┘      └─────────────┘ │
+│                                    │                                 │
+│                                    ▼                                 │
+│                           ┌─────────────────┐                       │
+│                           │ Storage Volume  │                       │
+│                           │ (EFS/NFS/Local) │                       │
+│                           └─────────────────┘                       │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3. Enterprise Deployment
-```yaml
-Components:
-  - CloudFront + WAF → API Gateway → Fargate (Multi-AZ)
-  - Aurora Serverless PostgreSQL
-  - Comprehensive monitoring
-  - Cross-region backups
-Cost: ~$50-100/month
-Use Case: Large organizations, high availability
+**Key Components:**
+- **Cloudflare Edge**: Global network with DDoS protection
+- **Cloudflare Tunnel**: Secure outbound-only connection
+- **Zero-Trust Access**: Email/domain-based authentication
+- **No Public IPs**: All connections initiated from inside
+- **Any Backend**: Works with AWS, Docker, or bare metal
+
+**Best For:**
+- Maximum security requirements
+- No public IP allocation
+- Global user base
+- Compliance needs (SOC2, HIPAA)
+
+## 🔄 Hybrid Architectures
+
+### AWS + Cloudflare Tunnel
+
+```
+Cloudflare Edge ──► Cloudflare Tunnel ──► AWS Private Subnet ──► ECS Fargate
+                                                                      │
+                                                                      ▼
+                                                                  EFS + RDS
 ```
 
-## Scaling Strategies
+**Benefits:**
+- Zero-trust security with AWS scalability
+- No API Gateway or Load Balancer costs
+- Global edge network + auto-scaling
 
-### Horizontal Scaling
-- **Auto Scaling**: Based on CPU/memory metrics
-- **Min Tasks**: 1-2 (based on environment)
-- **Max Tasks**: 3-20 (configurable)
-- **Target Utilization**: 70% CPU
+### Multi-Region with Cloudflare
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│ US Users     │     │ EU Users     │     │ APAC Users   │
+└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
+       │                    │                    │
+       ▼                    ▼                    ▼
+┌──────────────────────────────────────────────────────┐
+│           Cloudflare Global Network                   │
+└─────────────┬────────────┬────────────┬──────────────┘
+              │            │            │
+              ▼            ▼            ▼
+        ┌─────────┐  ┌─────────┐  ┌─────────┐
+        │ US-East │  │ EU-West │  │ AP-South│
+        │   AWS   │  │   AWS   │  │   AWS   │
+        └─────────┘  └─────────┘  └─────────┘
+```
+
+## 📊 Performance Characteristics
+
+### Latency Comparison
+
+| Deployment Type | First Byte Time | API Response | Workflow Execution |
+|----------------|-----------------|--------------|-------------------|
+| AWS Serverless | 150-300ms | 50-100ms | Near-instant |
+| Docker Local | 10-50ms | 10-30ms | Near-instant |
+| Docker Production | 50-150ms | 30-80ms | Near-instant |
+| Cloudflare Tunnel | 100-200ms | 40-90ms | Near-instant |
+
+### Scalability Limits
+
+| Deployment Type | Concurrent Users | Workflows/Hour | Storage Limit |
+|----------------|------------------|----------------|---------------|
+| AWS Serverless | Unlimited* | Unlimited* | 16TB (EFS) |
+| Docker Local | 10-50 | 1,000 | Host disk |
+| Docker Production | 100-1,000 | 10,000 | NAS/SAN limit |
+| Cloudflare Tunnel | Based on backend | Based on backend | Based on backend |
+
+*Within AWS service limits
+
+## 🛡️ Security Architecture
+
+### Defense in Depth
+
+```
+Layer 1: Edge Security (CloudFront/Cloudflare)
+  ├── DDoS Protection
+  ├── WAF Rules
+  └── Geographic Restrictions
+
+Layer 2: Access Control
+  ├── API Keys (API Gateway)
+  ├── Zero-Trust (Cloudflare Access)
+  └── OAuth2/SAML (All platforms)
+
+Layer 3: Network Security
+  ├── VPC Isolation (AWS)
+  ├── Security Groups
+  └── Network Policies (Kubernetes)
+
+Layer 4: Application Security
+  ├── n8n Authentication
+  ├── Encryption at Rest
+  └── Secrets Management
+
+Layer 5: Data Security
+  ├── Backup Encryption
+  ├── Transit Encryption
+  └── Audit Logging
+```
+
+## 🔧 Technology Stack
+
+### Core Technologies
+
+| Component | AWS Serverless | Docker | Cloudflare Tunnel |
+|-----------|---------------|---------|-------------------|
+| **Runtime** | ECS Fargate | Docker Engine | Any |
+| **Database** | RDS/Aurora/SQLite | PostgreSQL/SQLite | Any |
+| **Storage** | EFS | Local/NFS | Any |
+| **Secrets** | AWS Secrets Manager | Docker Secrets | Environment |
+| **Monitoring** | CloudWatch | Prometheus | Cloudflare Analytics |
+| **Scaling** | Auto Scaling Groups | Manual/Swarm | Manual |
+| **Load Balancing** | API Gateway | Nginx/Traefik | Cloudflare |
+
+## 📈 Scaling Patterns
 
 ### Vertical Scaling
-- **Fargate Sizes**: 0.25-4 vCPU, 0.5-8 GB RAM
-- **Database**: db.t4g.micro to db.r6g.xlarge
-- **EFS**: Bursting to provisioned throughput
+- **AWS**: Increase Fargate CPU/Memory
+- **Docker**: Increase container resources
+- **Cloudflare**: Scale backend resources
 
-### Cost Optimization
-1. **Spot Instances**: 70-90% for non-production
-2. **Scheduled Scaling**: Reduce capacity during off-hours
-3. **Reserved Instances**: For predictable workloads
-4. **Graviton**: 20% cost savings with ARM
+### Horizontal Scaling
+- **AWS**: Auto Scaling with target tracking
+- **Docker**: Swarm/Kubernetes replicas
+- **Cloudflare**: Multiple tunnel instances
 
-## High Availability
+### Database Scaling
+- **AWS**: RDS read replicas, Aurora Serverless
+- **Docker**: PostgreSQL replication, pgpool
+- **Hybrid**: Managed database services
 
-### Multi-AZ Deployment
-- **Fargate**: Tasks across availability zones
-- **RDS**: Multi-AZ for automatic failover
-- **EFS**: Replicated across AZs
-- **API Gateway**: Inherently multi-AZ
+## 🎯 Choosing the Right Architecture
 
-### Disaster Recovery
-- **RTO**: 5-30 minutes
-- **RPO**: 24 hours (configurable)
-- **Backup Strategy**: Automated daily backups
-- **Cross-region**: Optional replication
+### Decision Tree
 
-## Configuration Management
-
-### system.yaml Structure
-```yaml
-environments:
-  dev:
-    account: "123456789012"
-    region: "us-east-1"
-    settings:
-      fargate:
-        cpu: 256
-        memory: 512
-      scaling:
-        min_tasks: 1
-        max_tasks: 3
+```
+Start
+  │
+  ├─ Need managed infrastructure? ──► Yes ──► AWS Serverless
+  │                                    
+  ├─ Developing locally? ──► Yes ──► Docker Local
+  │
+  ├─ Have on-premise requirements? ──► Yes ──► Docker Production
+  │
+  ├─ Need zero-trust security? ──► Yes ──► Cloudflare Tunnel
+  │
+  └─ Want lowest cost? ──► Evaluate:
+      ├─ < 100 users: Docker + Cloudflare Tunnel
+      ├─ 100-1000 users: AWS Serverless
+      └─ > 1000 users: AWS + CloudFront
 ```
 
-### Environment Variables
-- Stored in Secrets Manager
-- Injected at container runtime
-- Separate secrets per environment
+## 🚀 Migration Paths
 
-## Best Practices
+### From Docker to AWS
+1. Export workflows and credentials
+2. Deploy AWS infrastructure
+3. Import data to EFS/RDS
+4. Update DNS/access points
+5. Validate and cutover
 
-1. **Security**
-   - Use private subnets for compute
-   - Enable VPC endpoints for AWS services
-   - Rotate credentials regularly
-   - Enable CloudTrail logging
+### From AWS to Docker
+1. Create EFS backup
+2. Export RDS data
+3. Deploy Docker stack
+4. Import data
+5. Configure access method
 
-2. **Performance**
-   - Use CloudFront for static assets
-   - Enable EFS lifecycle management
-   - Right-size Fargate tasks
-   - Monitor burst credits
+### Adding Cloudflare Tunnel
+1. Create tunnel in Cloudflare
+2. Deploy cloudflared container/service
+3. Configure access policies
+4. Update DNS to Cloudflare
+5. Remove public endpoints
 
-3. **Cost**
-   - Use Spot instances for non-production
-   - Enable auto-scaling
-   - Set up budget alerts
-   - Review unused resources monthly
+## 📚 Further Reading
 
-4. **Reliability**
-   - Implement health checks
-   - Configure auto-recovery
-   - Test disaster recovery
-   - Monitor error rates
+- [Deployment Guide](deployment-guide.md) - Step-by-step deployment instructions
+- [Security Best Practices](security.md) - Hardening each architecture
+- [Cost Optimization](cost-optimization.md) - Reducing deployment costs
+- [Monitoring Setup](monitoring.md) - Observability for each platform
+- [Disaster Recovery](disaster-recovery.md) - Backup and recovery strategies

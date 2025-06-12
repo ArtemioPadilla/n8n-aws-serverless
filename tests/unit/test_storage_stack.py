@@ -3,12 +3,12 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch, call
 from aws_cdk import App, Environment, RemovalPolicy, Duration
 from aws_cdk.assertions import Template, Match
-from n8n_aws_serverless.config.models import (
+from n8n_deploy.config.models import (
     N8nConfig, EnvironmentConfig, EnvironmentSettings,
     BackupConfig, GlobalConfig, DefaultsConfig
 )
-from n8n_aws_serverless.stacks.storage_stack import StorageStack
-from n8n_aws_serverless.stacks.network_stack import NetworkStack
+from n8n_deploy.stacks.storage_stack import StorageStack
+from n8n_deploy.stacks.network_stack import NetworkStack
 
 
 class TestStorageStack:

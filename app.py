@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-n8n AWS Serverless CDK Application
+n8n Deploy CDK Application
 
-This application deploys n8n workflow automation tool using serverless infrastructure
-on AWS, configured via system.yaml file.
+This application deploys n8n workflow automation tool using multiple deployment
+targets (AWS Serverless, Docker, Cloudflare Tunnel), configured via system.yaml file.
 
 Usage:
     cdk deploy -c environment=dev
@@ -17,14 +17,14 @@ from typing import Optional
 
 import aws_cdk as cdk
 
-from n8n_aws_serverless.config import ConfigLoader
-from n8n_aws_serverless.stacks import (
+from n8n_deploy.config import ConfigLoader
+from n8n_deploy.stacks import (
     NetworkStack,
     StorageStack,
     ComputeStack,
     AccessStack,
 )
-from n8n_aws_serverless.config.models import DatabaseType
+from n8n_deploy.config.models import DatabaseType
 
 
 def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = None) -> None:
@@ -41,7 +41,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
         config = config_loader.load_config(environment, stack_type)
     except FileNotFoundError:
         print("Error: system.yaml not found. Please create a system.yaml file.")
-        print("You can use 'python -m n8n_aws_serverless.config.config_loader' to generate an example.")
+        print("You can use 'python -m n8n_deploy.config.config_loader' to generate an example.")
         sys.exit(1)
     except ValueError as e:
         print(f"Error loading configuration: {e}")
@@ -97,7 +97,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
     if "database" in components or (env_config.settings.database and 
                                    env_config.settings.database.type == DatabaseType.POSTGRES):
         # Import DatabaseStack when needed
-        from n8n_aws_serverless.stacks import DatabaseStack
+        from n8n_deploy.stacks import DatabaseStack
         
         if not network_stack:
             raise ValueError("Database stack requires network stack")
@@ -145,7 +145,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
     # Create monitoring stack if enabled
     if "monitoring" in components:
         # Import MonitoringStack when needed
-        from n8n_aws_serverless.stacks import MonitoringStack
+        from n8n_deploy.stacks import MonitoringStack
         
         monitoring_stack = MonitoringStack(
             app,

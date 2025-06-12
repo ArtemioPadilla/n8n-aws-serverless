@@ -4,8 +4,8 @@ import tempfile
 import yaml
 from pathlib import Path
 
-from n8n_aws_serverless.config.config_loader import ConfigLoader
-from n8n_aws_serverless.config.models import N8nConfig, DatabaseType
+from n8n_deploy.config.config_loader import ConfigLoader
+from n8n_deploy.config.models import N8nConfig, DatabaseType
 
 
 class TestConfigLoader:

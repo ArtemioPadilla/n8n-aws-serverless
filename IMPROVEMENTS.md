@@ -10,8 +10,8 @@ This document summarizes all the improvements implemented based on the comprehen
   - Updated all Docker image references from `n8nio/n8n:latest` to `n8nio/n8n:1.94.1`
   - Made n8n version configurable via `n8n_version` parameter in FargateConfig
   - Updated in:
-    - `n8n_aws_serverless/config/models.py` - Added n8n_version field
-    - `n8n_aws_serverless/constructs/fargate_n8n.py` - Uses version from config
+    - `n8n_deploy/config/models.py` - Added n8n_version field
+    - `n8n_deploy/constructs/fargate_n8n.py` - Uses version from config
     - `system.yaml` and `system.yaml.example` - Added version to defaults
     - `docker/docker-compose.yml` and `docker-compose.prod.yml`
     - `docs/deployment-guide.md` - Added version management instructions

@@ -1,462 +1,288 @@
-# n8n AWS Serverless
+# n8n Deploy
 
-> 🚀 Deploy n8n workflow automation on AWS using serverless infrastructure for maximum cost efficiency, or run it locally/on-premise with Docker
+> 🚀 **Deploy n8n anywhere** - AWS Serverless, Docker, or On-Premise - with enterprise features at personal costs
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![AWS CDK](https://img.shields.io/badge/aws--cdk-2.0+-orange.svg)](https://aws.amazon.com/cdk/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![n8n](https://img.shields.io/badge/n8n-1.94.1-red.svg)](https://n8n.io/)
-[![Tests](https://github.com/your-org/n8n-aws-serverless/actions/workflows/test.yml/badge.svg)](https://github.com/your-org/n8n-aws-serverless/actions/workflows/test.yml)
+[![Tests](https://github.com/your-org/n8n-deploy/actions/workflows/test.yml/badge.svg)](https://github.com/your-org/n8n-deploy/actions/workflows/test.yml)
 
-Deploy [n8n](https://n8n.io/), the workflow automation tool, on AWS using a cost-optimized serverless architecture or run it locally/on-premise with Docker. This project uses AWS CDK to provision infrastructure that can scale from $5/month for personal use to enterprise-grade deployments, with full support for local development and on-premise installations.
+**n8n Deploy** is a comprehensive deployment platform for [n8n](https://n8n.io/) workflow automation. Whether you need a $5/month personal instance, a scalable cloud deployment, or an on-premise solution with zero-trust security, n8n Deploy has you covered.
 
-## 🌟 Features
+## 🎯 Choose Your Deployment
 
-- **💰 Cost-Optimized**: Start from ~$5/month using Fargate Spot, API Gateway, and EFS
-- **🔧 Flexible Deployment**: Support for SQLite (small workloads) or PostgreSQL (production)
-- **🚀 Auto-Scaling**: Automatic scaling based on CPU/memory utilization
-- **🔒 Secure by Default**: VPC isolation, secrets management, IAM roles
-- **🌐 Cloudflare Tunnel Support**: Zero-trust access with no public IPs or load balancers
-- **🌍 Multi-Environment**: Separate dev, staging, and production deployments
-- **📊 Full Monitoring**: CloudWatch dashboards, alarms, and log aggregation
-- **🐳 Local Development**: Docker Compose setup for local testing and on-premise deployments
-- **♻️ Infrastructure as Code**: Fully automated with AWS CDK
-- **🛡️ Enhanced Security**: Pinned versions, security scanning, IAM best practices
-- **📈 Custom Metrics**: n8n-specific monitoring and performance tracking
-- **🔄 Resilience**: Dead letter queues, circuit breakers, auto-recovery
-- **🚨 Disaster Recovery**: Automated backups, cross-region replication, documented procedures
+<table>
+<tr>
+<td width="33%" align="center">
 
-## 📋 Table of Contents
+### ☁️ AWS Serverless
+**From $5/month**
 
-- [Architecture](#-architecture)
-- [Prerequisites](#-prerequisites)
-- [Quick Start](#-quick-start)
-- [Configuration](#-configuration)
-- [Deployment Options](#-deployment-options)
-- [Local Development](#-local-development)
-- [Cost Optimization](#-cost-optimization)
-- [Monitoring](#-monitoring)
-- [Security](#-security)
-- [Contributing](#-contributing)
-- [License](#-license)
+Perfect for personal projects and startups. Auto-scaling, managed infrastructure, pay-per-use.
 
-## 🏗 Architecture
+[Deploy to AWS →](#aws-serverless-deployment)
 
-### Option 1: Traditional API Gateway Architecture
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│ CloudFront  │────▶│ API Gateway │────▶│   Fargate   │
-│   (CDN)     │     │  (HTTP API) │     │    (n8n)    │
-└─────────────┘     └─────────────┘     └─────────────┘
-                                               │
-                                               ▼
-                    ┌─────────────┐     ┌─────────────┐
-                    │     EFS     │     │ RDS/Aurora  │
-                    │  (Storage)  │     │ (Optional)  │
-                    └─────────────┘     └─────────────┘
-```
+</td>
+<td width="33%" align="center">
 
-### Option 2: Cloudflare Tunnel Architecture (Zero-Trust)
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│    User     │────▶│ Cloudflare  │────▶│  Cloudflare │
-│             │     │    Edge     │     │   Tunnel    │
-└─────────────┘     └─────────────┘     └─────┬───────┘
-                                              │ (Outbound)
-                                              ▼
-                    ┌─────────────┐     ┌─────────────┐
-                    │   Fargate   │────▶│     EFS     │
-                    │  + Tunnel   │     │  (Storage)  │
-                    └─────────────┘     └─────────────┘
-```
+### 🐳 Docker Local
+**Free**
 
-### Key Components:
-- **Access Methods**:
-  - **API Gateway HTTP API**: Cost-effective alternative to ALB ($1/million requests vs $16/month)
-  - **Cloudflare Tunnel**: Zero-trust access with no public IPs ($0/month for basic use)
-- **ECS Fargate**: Serverless containers with Spot instance support (70% cost savings)
-- **EFS**: Shared persistent storage for workflows and SQLite database
-- **RDS/Aurora** (Optional): PostgreSQL for production workloads
-- **CloudFront** (Optional): Global CDN with caching and WAF protection
+Ideal for development, testing, or self-hosted deployments. Full control, no cloud costs.
 
-## 📚 Prerequisites
+[Run Locally →](#docker-local-deployment)
 
-- **AWS Account** with appropriate permissions
-- **Python 3.8+** installed
-- **Node.js 16+** installed (for CDK CLI)
-- **Docker** installed (for local development)
-- **AWS CLI** configured with credentials
+</td>
+<td width="33%" align="center">
 
-### Quick Install:
-```bash
-# Install AWS CDK globally
-npm install -g aws-cdk
+### 🔒 Cloudflare Tunnel
+**Zero-Trust Access**
 
-# Install Python dependencies
-pip install -r requirements.txt
+Enterprise security without complexity. No public IPs, built-in DDoS protection.
 
-# Bootstrap CDK (one-time per account/region)
-cdk bootstrap
-```
+[Setup Tunnel →](#cloudflare-tunnel-deployment)
+
+</td>
+</tr>
+</table>
+
+## 🌟 Why n8n Deploy?
+
+- **🎛️ One Platform, Multiple Targets**: Same configuration deploys to AWS, Docker, or hybrid setups
+- **💰 Cost-Optimized**: Start from $5/month on AWS, or run free locally
+- **🔧 Production-Ready**: Monitoring, backups, auto-scaling, and disaster recovery included
+- **🛡️ Enterprise Security**: Zero-trust options, secrets management, compliance templates
+- **📊 Full Observability**: Built-in dashboards for n8n metrics, costs, and performance
+- **🚀 Quick Start**: Deploy in under 5 minutes with sensible defaults
+
+## 📊 Deployment Comparison
+
+| Feature | AWS Serverless | Docker Local | Cloudflare Tunnel |
+|---------|---------------|--------------|-------------------|
+| **Starting Cost** | $5-10/month | Free | Free (<50 users) |
+| **Scaling** | Auto-scaling | Manual | Manual |
+| **Maintenance** | Fully managed | Self-managed | Self-managed |
+| **Public IP Required** | No | Optional | No |
+| **SSL/TLS** | Automatic | Manual/Let's Encrypt | Automatic |
+| **Monitoring** | CloudWatch | Prometheus/Grafana | Cloudflare Analytics |
+| **Backup** | Automated | Manual/Scripted | Manual/Scripted |
+| **Best For** | SaaS, Startups | Development, On-premise | Zero-trust, Enterprise |
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### AWS Serverless Deployment
+
 ```bash
-git clone https://github.com/your-org/n8n-aws-serverless.git
-cd n8n-aws-serverless
+# Install and deploy in one command
+curl -sSL https://n8n-deploy.dev/install.sh | bash -s -- --aws
+
+# Or use the manual approach
+git clone https://github.com/your-org/n8n-deploy
+cd n8n-deploy
+make install
+make deploy-aws environment=production
 ```
 
-### 2. Configure Your Deployment
-```bash
-# Copy and edit configuration
-cp system.yaml.example system.yaml
+### Docker Local Deployment
 
-# Edit with your AWS account details
-vim system.yaml
+```bash
+# Development environment with UI
+curl -sSL https://n8n-deploy.dev/install.sh | bash -s -- --docker
+
+# Or use docker-compose directly
+git clone https://github.com/your-org/n8n-deploy
+cd n8n-deploy
+make local-up
 ```
 
-### 3. Deploy to AWS
-```bash
-# Deploy development environment
-cdk deploy -c environment=dev
+### Cloudflare Tunnel Deployment
 
-# Deploy production environment
-cdk deploy -c environment=production
+```bash
+# Deploy with zero-trust access
+curl -sSL https://n8n-deploy.dev/install.sh | bash -s -- --cloudflare
+
+# Or manual setup
+git clone https://github.com/your-org/n8n-deploy
+cd n8n-deploy
+./scripts/setup-cloudflare-tunnel.sh
 ```
 
-### 4. Access n8n
-After deployment completes, you'll get URLs to access n8n:
-- API Gateway: `https://xxxxxx.execute-api.region.amazonaws.com` (when using api_gateway)
-- CloudFront (if enabled): `https://xxxxxx.cloudfront.net` (when using api_gateway with CloudFront)
-- Cloudflare Tunnel: `https://n8n.yourdomain.com` (when using cloudflare - no public IPs needed!)
+## 📋 Features
 
-## ⚙️ Configuration
+### Core Features
+- ✅ **Multi-deployment support**: AWS, Docker, Kubernetes, Cloudflare
+- ✅ **Configuration-driven**: Single `system.yaml` for all settings
+- ✅ **Environment management**: Dev, staging, production presets
+- ✅ **Cost optimization**: Spot instances, auto-scaling, resource limits
+- ✅ **Security first**: Secrets management, IAM roles, network isolation
 
-The project uses `system.yaml` for all configuration. Key settings include:
+### AWS Serverless Features
+- 🚀 **ECS Fargate**: Serverless containers with Spot support (70% savings)
+- 💾 **Flexible Storage**: EFS for workflows, optional RDS for scale
+- 🌐 **API Gateway**: Cost-effective alternative to load balancers
+- 📊 **CloudWatch**: Full monitoring and alerting
+- 🔄 **Auto-scaling**: CPU/memory-based scaling policies
+
+### Docker Features
+- 🐳 **Production-ready**: Nginx reverse proxy, SSL, health checks
+- 📊 **Full monitoring**: Prometheus, Grafana, and n8n dashboards
+- 💾 **Multiple databases**: SQLite, PostgreSQL, MySQL support
+- 🔄 **Automated backups**: Scheduled backups with retention
+- 🔧 **Development mode**: Hot-reload and debugging tools
+
+### Cloudflare Tunnel Features
+- 🔒 **Zero-trust networking**: No exposed ports or public IPs
+- 🌍 **Global edge network**: Built-in DDoS protection
+- 👥 **Access control**: Email/domain-based authentication
+- 📊 **Analytics**: Real-time metrics and security insights
+- 🚀 **Easy setup**: One-command tunnel creation
+
+## 📁 Project Structure
+
+```
+n8n-deploy/
+├── deployments/              # Deployment configurations
+│   ├── aws/                 # AWS CDK infrastructure
+│   │   ├── stacks/         # CDK stack definitions
+│   │   └── constructs/     # Reusable components
+│   ├── docker/             # Docker configurations
+│   │   ├── compose/        # Docker Compose files
+│   │   └── dockerfiles/    # Custom Dockerfiles
+│   └── cloudflare/         # Tunnel configurations
+├── scripts/                 # Automation scripts
+│   ├── install.sh          # Universal installer
+│   ├── deploy.sh           # Deployment automation
+│   └── backup.sh           # Backup utilities
+├── config/                  # Configuration files
+│   ├── system.yaml         # Main configuration
+│   └── examples/           # Example configs
+├── monitoring/              # Monitoring configurations
+│   ├── dashboards/         # Grafana dashboards
+│   └── alerts/             # Alert rules
+├── docs/                    # Documentation
+└── tests/                   # Test suites
+```
+
+## 🔧 Configuration
+
+All deployments use a unified `system.yaml` configuration:
 
 ```yaml
+# config/system.yaml
+project:
+  name: "my-n8n"
+  deployment_type: "aws"  # or "docker", "cloudflare"
+
 environments:
-  dev:
-    account: "123456789012"
-    region: "us-east-1"
-    settings:
+  production:
+    n8n:
+      version: "1.94.1"
+      encryption_key: "{{ secrets.n8n_encryption_key }}"
+    
+    # AWS-specific settings
+    aws:
+      account: "123456789012"
+      region: "us-east-1"
       fargate:
-        cpu: 256        # 0.25 vCPU
-        memory: 512     # 0.5 GB
-        spot_percentage: 80
-      scaling:
-        min_tasks: 1
-        max_tasks: 3
-      database:
-        type: "sqlite"  # or "postgres"
+        cpu: 512
+        memory: 1024
+        spot_enabled: true
+    
+    # Docker-specific settings
+    docker:
+      compose_profile: "production"
+      postgres_enabled: true
+      redis_enabled: true
+    
+    # Cloudflare-specific settings
+    cloudflare:
+      tunnel_name: "n8n-production"
+      access_policy:
+        allowed_emails: ["admin@example.com"]
+        allowed_domains: ["example.com"]
 ```
 
-See [docs/configuration.md](docs/configuration.md) for detailed configuration options.
+## 📚 Documentation
 
-## 🎯 Deployment Options
+- **[Getting Started](docs/getting-started.md)** - Interactive deployment guide
+- **[Architecture Overview](docs/architecture.md)** - System design and components
+- **[Deployment Guide](docs/deployment-guide.md)** - Detailed deployment instructions
+- **[Cost Optimization](docs/cost-optimization.md)** - Save money on cloud deployments
+- **[Security Best Practices](docs/security.md)** - Hardening and compliance
+- **[Monitoring & Alerts](docs/monitoring.md)** - Observability setup
+- **[Disaster Recovery](docs/disaster-recovery.md)** - Backup and restore procedures
+- **[Local Development](docs/local-development.md)** - Development environment setup
+- **[Migration Guide](docs/migration.md)** - Migrate from other n8n deployments
 
-### Minimal ($5-10/month)
-Perfect for personal use or testing:
+## 💰 Cost Examples
+
+### Personal Use (AWS)
+- **Minimal**: ~$5-10/month (256 CPU, 512MB RAM, SQLite)
+- **Standard**: ~$15-20/month (512 CPU, 1GB RAM, PostgreSQL)
+
+### Team Use (AWS)
+- **Small Team**: ~$30-50/month (1024 CPU, 2GB RAM, RDS)
+- **Medium Team**: ~$75-100/month (2048 CPU, 4GB RAM, Aurora)
+
+### Enterprise (Hybrid)
+- **Cloudflare + AWS**: ~$50-100/month (High availability, zero-trust)
+- **On-premise + Cloudflare**: Infrastructure cost only
+
+## 🛠️ Development
+
 ```bash
-cdk deploy -c environment=dev -c stack_type=minimal
-```
-- SQLite database
-- Single Fargate task
-- No backups or monitoring
+# Setup development environment
+make install-dev
 
-### Standard ($15-30/month)
-Recommended for small teams:
-```bash
-cdk deploy -c environment=staging -c stack_type=standard
-```
-- PostgreSQL database
-- Auto-scaling (1-5 tasks)
-- Basic monitoring and backups
+# Run tests
+make test
 
-### Enterprise ($50-100/month)
-For production workloads:
-```bash
-cdk deploy -c environment=production -c stack_type=enterprise
-```
-- Aurora Serverless PostgreSQL
-- Multi-AZ deployment
-- Full monitoring, backups, and WAF
-
-## 💻 Local Development & On-Premise Deployment
-
-### Quick Start (Local/On-Premise)
-```bash
-# Setup local environment
-./scripts/local-setup.sh
-
-# Start n8n with Docker Compose
-./scripts/local-deploy.sh
-
-# Access at http://localhost:5678
-```
-
-### Development Options
-```bash
-# With PostgreSQL (recommended for production)
-./scripts/local-deploy.sh -p postgres
-
-# With monitoring stack (Prometheus + Grafana)
-./scripts/local-deploy.sh -m
-
-# With all features (PostgreSQL + Monitoring)
-./scripts/local-deploy.sh -p postgres -m
-
-# With Cloudflare Tunnel for secure remote access
-./scripts/local-deploy.sh -p cloudflare
-
-# View logs
-./scripts/local-deploy.sh -l
-
-# Stop all containers
-./scripts/local-deploy.sh -d
-```
-
-### Local Monitoring Stack
-When using the `-m` flag, you get:
-- **Prometheus**: http://localhost:9090 - Metrics collection and querying
-- **Grafana**: http://localhost:3000 - Dashboards and visualization
-  - Default login: admin / admin (check `.env` for custom password)
-  - Pre-configured n8n dashboard
-  - PostgreSQL and Redis metrics (when using respective profiles)
-
-### On-Premise Production Deployment
-```bash
-# Use production Docker Compose
-cd docker
-docker-compose -f docker-compose.prod.yml up -d
-
-# This includes:
-# - n8n with PostgreSQL database
-# - Nginx reverse proxy with SSL
-# - Redis for queue management
-# - Automated backups
-```
-
-## 🔐 Cloudflare Tunnel Setup (Zero-Trust Access)
-
-Cloudflare Tunnel provides secure, zero-trust access to n8n without exposing any public IPs or requiring load balancers:
-
-### Benefits
-- **Cost Savings**: Eliminate API Gateway ($3.50/million requests) and ALB ($16-25/month)
-- **Enhanced Security**: No exposed public endpoints, built-in DDoS protection
-- **Global Performance**: Cloudflare's 300+ PoPs worldwide
-- **Simple Setup**: No complex networking configuration required
-
-### Quick Setup
-
-1. **Create a Cloudflare Tunnel**:
-   ```bash
-   # Install cloudflared CLI
-   brew install cloudflared  # macOS
-   # Or download from: https://github.com/cloudflare/cloudflared/releases
-   
-   # Login to Cloudflare
-   cloudflared tunnel login
-   
-   # Create tunnel
-   cloudflared tunnel create n8n-production
-   ```
-
-2. **Store the Tunnel Token in AWS**:
-   ```bash
-   # Get the tunnel token
-   cloudflared tunnel token n8n-production
-   
-   # Store in AWS Secrets Manager
-   aws secretsmanager create-secret \
-     --name "n8n/production/cloudflare-tunnel-token" \
-     --secret-string "YOUR_TUNNEL_TOKEN_HERE"
-   ```
-
-3. **Configure system.yaml**:
-   ```yaml
-   environments:
-     production:
-       settings:
-         access:
-           type: "cloudflare"  # Use Cloudflare instead of API Gateway
-           cloudflare:
-             enabled: true
-             tunnel_token_secret_name: "n8n/production/cloudflare-tunnel-token"
-             tunnel_name: "n8n-production"
-             tunnel_domain: "n8n.yourdomain.com"
-             # Optional: Enable Cloudflare Access policies
-             access_enabled: true
-             access_allowed_emails:
-               - "admin@yourdomain.com"
-             access_allowed_domains:
-               - "yourdomain.com"
-   ```
-
-4. **Deploy with Cloudflare Tunnel**:
-   ```bash
-   cdk deploy -c environment=production
-   ```
-
-5. **Configure DNS**:
-   - In Cloudflare dashboard, add a CNAME record pointing to your tunnel
-   - Access n8n at: `https://n8n.yourdomain.com`
-
-### Token Rotation
-```bash
-# Rotate tunnel token with provided script
-./scripts/cloudflare-tunnel-rotate.sh -e production -r
-```
-
-See [docs/cloudflare-tunnel.md](docs/cloudflare-tunnel.md) for detailed setup instructions.
-
-## 💰 Cost Optimization
-
-| Component | Strategy | Savings |
-|-----------|----------|---------|
-| Compute | Fargate Spot instances | 70% |
-| Database | SQLite for <5K executions/day | 100% |
-| API | API Gateway vs ALB | $15/month |
-| Access | Cloudflare Tunnel vs API Gateway | $3.50/million requests |
-| Storage | EFS Lifecycle policies | 90% |
-
-See [docs/cost-optimization.md](docs/cost-optimization.md) for detailed strategies.
-
-## 📊 Monitoring
-
-The stack includes comprehensive monitoring:
-
-- **CloudWatch Dashboards**: CPU, memory, and custom metrics
-- **Alarms**: Automated alerts for issues
-- **Logs**: Centralized logging with search
-- **X-Ray** (Optional): Distributed tracing
-
-Access the dashboard:
-```bash
-# Get dashboard URL
-aws cloudformation describe-stacks \
-  --stack-name n8n-serverless-{env}-monitoring \
-  --query 'Stacks[0].Outputs[?OutputKey==`DashboardUrl`].OutputValue'
-```
-
-## 🔒 Security
-
-Built-in security features:
-
-- **Network Isolation**: VPC with private subnets
-- **Secrets Management**: AWS Secrets Manager integration
-- **Encryption**: At-rest and in-transit
-- **IAM Roles**: Least privilege access
-- **WAF** (Optional): Protection against common attacks
-- **Version Pinning**: All dependencies use specific versions
-- **Security Scanning**: Automated secrets and vulnerability scanning
-- **Compliance**: SOC2/HIPAA ready configurations available
-
-### Security Testing
-```bash
-# Run security tests
-pytest -m security
-
-# Scan for secrets
-make security-scan
-```
-
-## 🧪 Testing
-
-### Unit & Integration Tests
-```bash
-# Run all tests
-pytest
-
-# Run with coverage (80% minimum required)
-pytest --cov=n8n_aws_serverless
-
-# Run specific test categories
-pytest -m unit          # Unit tests only
-pytest -m integration   # Integration tests
-pytest -m security      # Security tests
-pytest -m performance   # Performance benchmarks
-```
-
-### Code Quality
-```bash
 # Run linting
-black --check .
-flake8 .
-isort --check-only .
+make lint
 
-# Auto-fix formatting
-make format
+# Start local development
+make local-up
 
-# Run all checks
-make check
-```
+# Deploy to AWS dev environment
+make deploy-dev
 
-### Performance Testing
-```bash
-# Run performance benchmarks
-./scripts/performance-test.sh -u https://n8n.example.com -t baseline
-
-# Load testing
-./scripts/performance-test.sh -u https://n8n.example.com -t load -c 50
+# View costs
+make costs environment=production
 ```
 
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### Development Setup
-```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
+### Development Process
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
 
-# Setup pre-commit hooks
-pre-commit install
-
-# Run tests before committing
-pytest
-```
-
-## 📖 Documentation
-
-### Getting Started
-- [Getting Started](docs/getting-started.md)
-- [Local Development](docs/local-development.md)
-- [Local Monitoring](docs/local-monitoring.md)
-
-### Deployment & Operations
-- [Architecture Overview](docs/architecture.md)
-- [Deployment Guide](docs/deployment-guide.md)
-- [Cloudflare Tunnel Setup](docs/cloudflare-tunnel.md)
-- [Configuration Reference](docs/configuration.md)
-- [Monitoring & Alerts](docs/monitoring.md)
-
-### Best Practices
-- [Cost Optimization](docs/cost-optimization.md)
-- [Security Best Practices](docs/security.md)
-- [Disaster Recovery](docs/disaster-recovery.md)
-- [Troubleshooting](docs/troubleshooting.md)
-
-## 🛟 Support
-
-- **Documentation**: See the [docs/](docs/) directory
-- **Issues**: [GitHub Issues](https://github.com/your-org/n8n-aws-serverless/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/n8n-aws-serverless/discussions)
-- **n8n Community**: [community.n8n.io](https://community.n8n.io)
-
-## 📜 License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- [n8n](https://n8n.io/) - The workflow automation tool
-- [AWS CDK](https://aws.amazon.com/cdk/) - Infrastructure as Code framework
-- [AWS Fargate](https://aws.amazon.com/fargate/) - Serverless container platform
+- [n8n](https://n8n.io/) - The fantastic workflow automation tool
+- [AWS CDK](https://aws.amazon.com/cdk/) - Infrastructure as code framework
+- [Cloudflare](https://www.cloudflare.com/) - Zero-trust networking
+- All our contributors and users
+
+## 🔗 Links
+
+- **Documentation**: [https://docs.n8n-deploy.dev](https://docs.n8n-deploy.dev)
+- **Issues**: [GitHub Issues](https://github.com/your-org/n8n-deploy/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/n8n-deploy/discussions)
+- **Blog**: [https://blog.n8n-deploy.dev](https://blog.n8n-deploy.dev)
 
 ---
 
-**Made with ❤️ by the community**
-
-*If you find this project useful, please ⭐ star it on GitHub!*
+<p align="center">
+  Made with ❤️ by the n8n Deploy community
+</p>

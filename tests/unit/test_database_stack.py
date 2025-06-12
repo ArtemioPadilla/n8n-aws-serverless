@@ -5,12 +5,12 @@ from aws_cdk import App, Environment, RemovalPolicy, Duration
 from aws_cdk.assertions import Template, Match
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_rds as rds
-from n8n_aws_serverless.config.models import (
+from n8n_deploy.config.models import (
     N8nConfig, EnvironmentConfig, EnvironmentSettings,
     DatabaseConfig, GlobalConfig
 )
-from n8n_aws_serverless.stacks.database_stack import DatabaseStack
-from n8n_aws_serverless.stacks.network_stack import NetworkStack
+from n8n_deploy.stacks.database_stack import DatabaseStack
+from n8n_deploy.stacks.network_stack import NetworkStack
 
 
 class TestDatabaseStack:

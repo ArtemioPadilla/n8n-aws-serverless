@@ -4,14 +4,14 @@ from unittest.mock import MagicMock, patch
 from aws_cdk import App
 from aws_cdk.assertions import Template, Match
 
-from n8n_aws_serverless.stacks.network_stack import NetworkStack
-from n8n_aws_serverless.config.models import NetworkingConfig
+from n8n_deploy.stacks.network_stack import NetworkStack
+from n8n_deploy.config.models import NetworkingConfig
 
 
 class TestNetworkStack:
     """Test network stack functionality."""
     
-    @patch('n8n_aws_serverless.stacks.network_stack.ec2.Vpc')
+    @patch('n8n_deploy.stacks.network_stack.ec2.Vpc')
     def test_create_new_vpc(self, mock_vpc_class, mock_app, test_config):
         """Test creating a new VPC."""
         # Configure test
@@ -47,7 +47,7 @@ class TestNetworkStack:
         assert call_kwargs['enable_dns_hostnames'] is True
         assert call_kwargs['enable_dns_support'] is True
     
-    @patch('n8n_aws_serverless.stacks.network_stack.ec2.Vpc.from_lookup')
+    @patch('n8n_deploy.stacks.network_stack.ec2.Vpc.from_lookup')
     def test_import_existing_vpc(self, mock_vpc_lookup, mock_app, test_config):
         """Test importing an existing VPC."""
         # Configure test
@@ -95,8 +95,8 @@ class TestNetworkStack:
                 environment="test"
             )
     
-    @patch('n8n_aws_serverless.stacks.network_stack.ec2.SecurityGroup')
-    @patch('n8n_aws_serverless.stacks.network_stack.ec2.Vpc')
+    @patch('n8n_deploy.stacks.network_stack.ec2.SecurityGroup')
+    @patch('n8n_deploy.stacks.network_stack.ec2.Vpc')
     def test_security_group_creation(self, mock_vpc_class, mock_sg_class, mock_app, test_config):
         """Test security group creation."""
         # Setup mocks
@@ -131,7 +131,7 @@ class TestNetworkStack:
         assert efs_sg_call[1]['description'] == "Security group for EFS mount targets"
         assert efs_sg_call[1]['allow_all_outbound'] is False
     
-    @patch('n8n_aws_serverless.stacks.network_stack.ec2.Vpc')
+    @patch('n8n_deploy.stacks.network_stack.ec2.Vpc')
     def test_max_azs_based_on_environment(self, mock_vpc_class, mock_app, test_config):
         """Test that max AZs is set based on environment."""
         # Test production environment
@@ -173,7 +173,7 @@ class TestNetworkStack:
         dev_vpc_call = mock_vpc_class.call_args_list[-1]
         assert dev_vpc_call[1]['max_azs'] == 1
     
-    @patch('n8n_aws_serverless.stacks.network_stack.ec2.Vpc')
+    @patch('n8n_deploy.stacks.network_stack.ec2.Vpc')
     def test_nat_gateway_configuration(self, mock_vpc_class, mock_app, test_config):
         """Test NAT gateway configuration."""
         # Test with NAT gateways
@@ -194,9 +194,9 @@ class TestNetworkStack:
         assert len(subnet_config) == 2  # Public and Private
         assert any(sc['name'] == 'Private' for sc in subnet_config)
     
-    @patch('n8n_aws_serverless.stacks.network_stack.CfnOutput')
-    @patch('n8n_aws_serverless.stacks.network_stack.ec2.SecurityGroup')
-    @patch('n8n_aws_serverless.stacks.network_stack.ec2.Vpc')
+    @patch('n8n_deploy.stacks.network_stack.CfnOutput')
+    @patch('n8n_deploy.stacks.network_stack.ec2.SecurityGroup')
+    @patch('n8n_deploy.stacks.network_stack.ec2.Vpc')
     def test_stack_outputs(self, mock_vpc_class, mock_sg_class, mock_output_class, mock_app, test_config):
         """Test that stack outputs are created correctly."""
         # Setup mocks

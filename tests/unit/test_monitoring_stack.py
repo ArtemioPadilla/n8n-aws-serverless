@@ -5,14 +5,14 @@ from aws_cdk import App, Environment, Duration
 from aws_cdk.assertions import Template, Match
 from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_ecs as ecs
-from n8n_aws_serverless.config.models import (
+from n8n_deploy.config.models import (
     N8nConfig, EnvironmentConfig, EnvironmentSettings,
     MonitoringConfig, GlobalConfig, ScalingConfig
 )
-from n8n_aws_serverless.stacks.monitoring_stack import MonitoringStack
-from n8n_aws_serverless.stacks.compute_stack import ComputeStack
-from n8n_aws_serverless.stacks.storage_stack import StorageStack
-from n8n_aws_serverless.stacks.database_stack import DatabaseStack
+from n8n_deploy.stacks.monitoring_stack import MonitoringStack
+from n8n_deploy.stacks.compute_stack import ComputeStack
+from n8n_deploy.stacks.storage_stack import StorageStack
+from n8n_deploy.stacks.database_stack import DatabaseStack
 
 
 class TestMonitoringStack:

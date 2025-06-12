@@ -4,10 +4,10 @@ import json
 from unittest.mock import Mock, patch
 from aws_cdk import App, Environment
 from aws_cdk.assertions import Template, Match
-from n8n_aws_serverless.config import ConfigLoader
-from n8n_aws_serverless.stacks.compute_stack import ComputeStack
-from n8n_aws_serverless.stacks.network_stack import NetworkStack
-from n8n_aws_serverless.stacks.storage_stack import StorageStack
+from n8n_deploy.config import ConfigLoader
+from n8n_deploy.stacks.compute_stack import ComputeStack
+from n8n_deploy.stacks.network_stack import NetworkStack
+from n8n_deploy.stacks.storage_stack import StorageStack
 
 
 @pytest.mark.security
@@ -140,7 +140,7 @@ class TestIAMPolicies:
             env=Environment(account="123456789012", region="us-east-1")
         )
         
-        from n8n_aws_serverless.stacks.database_stack import DatabaseStack
+        from n8n_deploy.stacks.database_stack import DatabaseStack
         database_stack = DatabaseStack(
             app, "test-database", config=test_config, environment="test",
             network_stack=network_stack,
@@ -209,7 +209,7 @@ class TestIAMPolicies:
             "use_existing": False
         }
         
-        from n8n_aws_serverless.stacks.database_stack import DatabaseStack
+        from n8n_deploy.stacks.database_stack import DatabaseStack
         database_stack = DatabaseStack(
             app, "test-database-enc", config=test_config, environment="test",
             network_stack=network_stack,
@@ -265,7 +265,7 @@ class TestIAMPolicies:
             env=Environment(account="123456789012", region="us-east-1")
         )
         
-        from n8n_aws_serverless.stacks.access_stack import AccessStack
+        from n8n_deploy.stacks.access_stack import AccessStack
         access_stack = AccessStack(
             app, "test-access", config=test_config, environment="test",
             compute_stack=compute_stack,
@@ -324,7 +324,7 @@ class TestIAMPolicies:
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         python_files = []
         
-        for root, dirs, files in os.walk(os.path.join(project_root, "n8n_aws_serverless")):
+        for root, dirs, files in os.walk(os.path.join(project_root, "n8n_deploy")):
             for file in files:
                 if file.endswith(".py"):
                     python_files.append(os.path.join(root, file))

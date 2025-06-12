@@ -6,8 +6,8 @@ import yaml
 from pathlib import Path
 from unittest.mock import patch
 from pydantic import ValidationError
-from n8n_aws_serverless.config import ConfigLoader
-from n8n_aws_serverless.config.models import N8nConfig
+from n8n_deploy.config import ConfigLoader
+from n8n_deploy.config.models import N8nConfig
 
 
 @pytest.mark.integration

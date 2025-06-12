@@ -1,299 +1,369 @@
-# Getting Started with n8n AWS Serverless
+# Getting Started with n8n Deploy
 
-This guide will help you get started with deploying n8n using AWS serverless infrastructure or running it locally/on-premise with Docker.
+Welcome to n8n Deploy! This guide will help you choose the best deployment option and get n8n running in under 5 minutes.
 
-## Prerequisites
+## 🎯 Quick Deployment Selector
 
-Before you begin, ensure you have the following installed:
+Answer these questions to find your ideal deployment:
 
-### For AWS Deployment:
-- **Python 3.8+**: Required for AWS CDK
-- **Node.js 16+**: Required for AWS CDK CLI
-- **AWS CLI**: For AWS account configuration
-- **AWS CDK CLI**: For deploying infrastructure
+<details>
+<summary><b>1. What's your primary goal?</b></summary>
 
-### For Local/On-Premise Deployment:
-- **Docker**: Required for running n8n
-- **Docker Compose**: For orchestrating services
-- **Make** (optional): For using the Makefile commands
+- **Just trying n8n** → [Docker Local](#docker-local-quick-start)
+- **Personal automation** → [AWS Minimal](#aws-minimal-deployment)
+- **Team collaboration** → [AWS Standard](#aws-standard-deployment)
+- **Enterprise deployment** → [AWS Enterprise](#aws-enterprise-deployment)
+- **Maximum security** → [Cloudflare Tunnel](#cloudflare-tunnel-deployment)
 
-### Install AWS CDK
+</details>
+
+<details>
+<summary><b>2. What's your budget?</b></summary>
+
+- **Free** → [Docker Local](#docker-local-quick-start)
+- **$5-10/month** → [AWS Minimal](#aws-minimal-deployment)
+- **$15-50/month** → [AWS Standard](#aws-standard-deployment)
+- **$50+/month** → [AWS Enterprise](#aws-enterprise-deployment)
+
+</details>
+
+<details>
+<summary><b>3. What's your technical expertise?</b></summary>
+
+- **Beginner** → [Docker Local](#docker-local-quick-start) or [AWS Minimal](#aws-minimal-deployment)
+- **Intermediate** → [AWS Standard](#aws-standard-deployment) or [Docker Production](#docker-production-deployment)
+- **Advanced** → [Any option with custom configuration](#advanced-configuration)
+
+</details>
+
+## 🚀 Deployment Options
+
+### Docker Local Quick Start
+
+**Perfect for**: Development, testing, learning n8n
 
 ```bash
+# One-command setup
+curl -sSL https://raw.githubusercontent.com/your-org/n8n-deploy/main/scripts/install.sh | bash -s -- --local
+
+# Or manual setup
+git clone https://github.com/your-org/n8n-deploy
+cd n8n-deploy
+make local-up
+```
+
+**What you get:**
+- n8n running on http://localhost:5678
+- SQLite database (upgradeable to PostgreSQL)
+- Persistent data in `./n8n-data`
+- Optional monitoring with Grafana
+
+[📖 Detailed Local Setup Guide →](local-development.md)
+
+### AWS Minimal Deployment
+
+**Perfect for**: Personal projects, cost-conscious users
+
+```bash
+# Prerequisites
 npm install -g aws-cdk
-```
-
-### AWS Account Setup
-
-1. Configure AWS credentials:
-```bash
-aws configure
-```
-
-2. Bootstrap CDK in your AWS account:
-```bash
-cdk bootstrap aws://ACCOUNT-ID/REGION
-```
-
-## Quick Start
-
-Choose your deployment method:
-
-- [Local/On-Premise Deployment](#local-on-premise-quick-start)
-- [AWS Cloud Deployment](#aws-cloud-quick-start)
-
-### Local/On-Premise Quick Start
-
-#### 1. Clone the Repository
-
-```bash
-git clone https://github.com/your-org/n8n-aws-serverless.git
-cd n8n-aws-serverless
-```
-
-#### 2. Setup Local Environment
-
-```bash
-# Make scripts executable
-chmod +x scripts/*.sh
-
-# Run setup script
-./scripts/local-setup.sh
-```
-
-#### 3. Start n8n Locally
-
-```bash
-# Basic setup with SQLite
-./scripts/local-deploy.sh
-
-# With PostgreSQL (recommended for production)
-./scripts/local-deploy.sh -p postgres
-
-# With full monitoring stack
-./scripts/local-deploy.sh -p postgres -m
-```
-
-#### 4. Access n8n
-
-- n8n UI: http://localhost:5678
-- Default credentials: Check `.env` file in docker directory
-
-### AWS Cloud Quick Start
-
-#### 1. Clone the Repository
-
-```bash
-git clone https://github.com/your-org/n8n-aws-serverless.git
-cd n8n-aws-serverless
-```
-
-#### 2. Setup Python Environment
-
-```bash
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
 pip install -r requirements.txt
-pip install -r requirements-dev.txt
+
+# Deploy
+cdk bootstrap  # First time only
+cdk deploy -c environment=production -c stack_type=minimal
 ```
 
-#### 3. Configure Your Deployment
+**What you get:**
+- ECS Fargate with Spot instances (256 CPU, 512MB RAM)
+- API Gateway endpoint
+- EFS storage with SQLite
+- ~$5-10/month cost
 
-Copy and edit the configuration file:
-```bash
-cp system.yaml.example system.yaml
+**Configuration** (`config/system.yaml`):
+```yaml
+environments:
+  production:
+    stack_type: minimal
+    n8n:
+      resources:
+        cpu: 256
+        memory: 512
+    database:
+      type: sqlite
 ```
 
-Update the following in `system.yaml`:
-- AWS account IDs
-- Regions
-- Domain names (if using custom domains)
-- Email addresses for alerts
+[📖 AWS Deployment Details →](deployment-guide.md#aws-minimal)
 
-#### 4. Deploy to AWS
+### AWS Standard Deployment
 
-Deploy to development environment:
-```bash
-cdk deploy -c environment=dev
-```
-
-Deploy to production:
-```bash
-cdk deploy -c environment=production
-```
-
-#### 5. Access n8n
-
-After deployment, you'll receive URLs to access n8n:
-- API Gateway URL: `https://xxx.execute-api.region.amazonaws.com`
-- CloudFront URL: `https://xxx.cloudfront.net` (if enabled)
-- Custom domain: `https://n8n.yourdomain.com` (if configured)
-
-## Local Development
-
-### 1. Setup Local Environment
+**Perfect for**: Small teams, production workloads
 
 ```bash
-./scripts/local-setup.sh
+# Deploy with monitoring and PostgreSQL
+cdk deploy -c environment=production -c stack_type=standard
 ```
 
-This script will:
-- Check prerequisites
-- Create necessary directories
-- Generate SSL certificates
-- Setup environment files
+**What you get:**
+- ECS Fargate (512 CPU, 1GB RAM)
+- RDS PostgreSQL database
+- CloudWatch monitoring
+- Auto-scaling enabled
+- ~$15-30/month cost
 
-### 2. Start n8n Locally
-
-#### Available Profiles
-- **default**: SQLite database (lightweight, good for testing)
-- **postgres**: PostgreSQL database (recommended for production-like environment)
-- **monitoring**: Adds Prometheus and Grafana for metrics
-- **scaling**: Adds Redis for queue management (can be combined with postgres)
-
-Basic setup (SQLite):
-```bash
-./scripts/local-deploy.sh
+**Configuration** (`config/system.yaml`):
+```yaml
+environments:
+  production:
+    stack_type: standard
+    n8n:
+      resources:
+        cpu: 512
+        memory: 1024
+    database:
+      type: postgresql
+      instance_class: db.t4g.micro
+    monitoring:
+      enabled: true
 ```
 
-With PostgreSQL:
-```bash
-./scripts/local-deploy.sh -p postgres
-```
+[📖 AWS Standard Setup →](deployment-guide.md#aws-standard)
 
-With monitoring only:
-```bash
-./scripts/local-deploy.sh -m
-```
+### AWS Enterprise Deployment
 
-With PostgreSQL and monitoring (recommended):
-```bash
-./scripts/local-deploy.sh -p postgres -m
-```
-
-### 3. Access Local Services
-
-#### n8n
-- URL: http://localhost:5678
-- Default credentials: Check `.env` file in docker directory
-- Basic Auth User: `admin` (default)
-- Basic Auth Password: Check `N8N_BASIC_AUTH_PASSWORD` in `.env`
-
-#### Monitoring Stack (when using -m flag)
-- **Prometheus**: http://localhost:9090
-  - Query metrics directly
-  - View targets status
-  - Explore available metrics
-  
-- **Grafana**: http://localhost:3000
-  - Default login: admin / admin
-  - Pre-configured dashboards for n8n
-  - Data source: Prometheus (pre-configured)
-
-### 4. Managing Your Local Deployment
+**Perfect for**: Large teams, high availability requirements
 
 ```bash
-# View logs
-./scripts/local-deploy.sh -l
-
-# Check container status
-./scripts/local-deploy.sh -s
-
-# Restart containers
-./scripts/local-deploy.sh -r
-
-# Stop and remove all containers
-./scripts/local-deploy.sh -d
+# Deploy with all features
+cdk deploy -c environment=production -c stack_type=enterprise
 ```
 
-### 5. Troubleshooting Local Deployment
-
-#### Containers not starting?
-1. Check if ports are already in use:
-   ```bash
-   lsof -i :5678  # n8n
-   lsof -i :9090  # Prometheus
-   lsof -i :3000  # Grafana
-   ```
-
-2. View container logs:
-   ```bash
-   ./scripts/local-deploy.sh -l
-   ```
-
-3. Reset everything:
-   ```bash
-   ./scripts/local-deploy.sh -d
-   docker volume prune -f
-   ./scripts/local-deploy.sh -p postgres -m
-   ```
-
-#### PostgreSQL connection issues?
-- Ensure the postgres service is healthy before n8n starts
-- Check credentials in `.env` file
-- Verify `DB_TYPE` is set correctly for your profile
-
-## Configuration Options
-
-### Environment Types
-
-- **local**: Docker-based local development
-- **dev**: Development AWS environment
-- **staging**: Staging AWS environment
-- **production**: Production AWS environment
-
-### Stack Types
-
-- **minimal**: Basic n8n deployment (lowest cost)
-- **standard**: Includes monitoring and backups
-- **enterprise**: Full features with high availability
-
-Example:
-```bash
-cdk deploy -c environment=dev -c stack_type=minimal
-```
-
-## Cost Optimization
-
-### Minimal Setup (~$5-10/month)
-- Fargate Spot instances
-- SQLite on EFS
-- No load balancer (API Gateway only)
-
-### Standard Setup (~$15-30/month)
-- Includes CloudFront
-- Basic monitoring
-- Automated backups
-
-### Enterprise Setup (~$50-100/month)
-- PostgreSQL (Aurora Serverless)
+**What you get:**
+- High-performance Fargate (2048 CPU, 4GB RAM)
+- Aurora PostgreSQL Serverless
 - Multi-AZ deployment
-- WAF protection
-- Comprehensive monitoring
+- Advanced monitoring and alerting
+- Backup and disaster recovery
+- ~$50-100/month cost
 
-## Next Steps
+[📖 Enterprise Setup Guide →](deployment-guide.md#aws-enterprise)
 
-1. Review the [Architecture Guide](architecture.md)
-2. Configure your [deployment settings](configuration.md)
-3. Set up [monitoring and alerts](monitoring.md)
-4. Review [security best practices](security.md)
+### Cloudflare Tunnel Deployment
 
-## Troubleshooting
+**Perfect for**: Zero-trust security, no public IPs
 
-If you encounter issues:
+```bash
+# Setup Cloudflare Tunnel with any backend
+./scripts/setup-cloudflare-tunnel.sh
 
-1. Check the [Troubleshooting Guide](troubleshooting.md)
-2. Review CloudWatch logs in AWS Console
-3. Run local tests: `./scripts/local-test.sh`
-4. Submit an issue on GitHub
+# Or use with AWS
+cdk deploy -c environment=production -c access_type=cloudflare
+```
 
-## Support
+**What you get:**
+- No exposed ports or public IPs
+- Global edge network
+- Built-in DDoS protection
+- Email/domain-based access control
+- Works with any backend (AWS, Docker, on-premise)
 
-- Documentation: [docs/](.)
-- Issues: [GitHub Issues](https://github.com/your-org/n8n-aws-serverless/issues)
-- n8n Community: [community.n8n.io](https://community.n8n.io)
+[📖 Cloudflare Tunnel Guide →](cloudflare-tunnel.md)
+
+### Docker Production Deployment
+
+**Perfect for**: On-premise, full control
+
+```bash
+# Deploy production Docker stack
+cd docker/production
+docker-compose up -d
+
+# With monitoring
+docker-compose --profile monitoring up -d
+```
+
+**What you get:**
+- Production-ready Docker stack
+- Nginx reverse proxy with SSL
+- PostgreSQL database
+- Automated backups
+- Optional monitoring stack
+
+[📖 Docker Production Guide →](deployment-guide.md#docker-production)
+
+## 📋 Pre-Deployment Checklist
+
+### For AWS Deployments
+
+- [ ] AWS Account with appropriate permissions
+- [ ] AWS CLI configured (`aws configure`)
+- [ ] Python 3.8+ installed
+- [ ] Node.js 16+ installed
+- [ ] Domain name (optional)
+
+### For Docker Deployments
+
+- [ ] Docker Engine installed
+- [ ] Docker Compose v2+
+- [ ] 2GB+ free disk space
+- [ ] Domain name (for production)
+
+### For Cloudflare Tunnel
+
+- [ ] Cloudflare account (free tier works)
+- [ ] Domain added to Cloudflare
+- [ ] Backend deployment ready
+
+## 🔧 Initial Configuration
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-org/n8n-deploy
+cd n8n-deploy
+```
+
+### 2. Configure Your Deployment
+
+```bash
+# Copy example configuration
+cp config/examples/system.yaml config/system.yaml
+
+# Edit with your settings
+nano config/system.yaml
+```
+
+### 3. Set Required Secrets
+
+#### For AWS:
+```bash
+# Create n8n encryption key
+aws secretsmanager create-secret \
+  --name /n8n/prod/encryption-key \
+  --secret-string $(openssl rand -base64 32)
+```
+
+#### For Docker:
+```bash
+# Create .env file
+cp .env.example .env
+nano .env
+
+# Generate encryption key
+echo "N8N_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
+```
+
+## 🎯 Post-Deployment Steps
+
+### 1. Access n8n
+
+- **Docker Local**: http://localhost:5678
+- **AWS**: Check CloudFormation outputs for URL
+- **Cloudflare**: https://your-domain.com
+
+### 2. Create Admin Account
+
+1. Navigate to n8n URL
+2. Click "Setup owner account"
+3. Enter email and password
+4. Save credentials securely
+
+### 3. Configure Workflows
+
+1. Import existing workflows (if any)
+2. Set up credentials for integrations
+3. Test a simple workflow
+
+### 4. Setup Monitoring
+
+#### AWS:
+```bash
+# View CloudWatch dashboard
+make view-dashboard environment=production
+```
+
+#### Docker:
+```bash
+# Access Grafana
+open http://localhost:3000
+# Default: admin/admin
+```
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+<details>
+<summary><b>Cannot access n8n</b></summary>
+
+1. Check container/task is running:
+   ```bash
+   # Docker
+   docker ps
+   
+   # AWS
+   aws ecs list-tasks --cluster n8n-prod
+   ```
+
+2. Check logs:
+   ```bash
+   # Docker
+   docker logs n8n
+   
+   # AWS
+   make logs environment=production
+   ```
+
+3. Verify security groups/firewall rules
+
+</details>
+
+<details>
+<summary><b>Database connection errors</b></summary>
+
+1. Verify database is running
+2. Check connection string in environment
+3. Ensure network connectivity
+4. Review database logs
+
+</details>
+
+<details>
+<summary><b>Workflows not persisting</b></summary>
+
+1. Check volume mounts (Docker)
+2. Verify EFS mount (AWS)
+3. Check file permissions
+4. Review n8n logs for errors
+
+</details>
+
+## 📚 Next Steps
+
+### Essential Reading
+
+1. [Architecture Overview](architecture.md) - Understand the system design
+2. [Security Best Practices](security.md) - Harden your deployment
+3. [Backup & Recovery](disaster-recovery.md) - Protect your data
+
+### Advanced Topics
+
+1. [Cost Optimization](cost-optimization.md) - Reduce your AWS bill
+2. [Monitoring Setup](monitoring.md) - Deep observability
+3. [Scaling Guide](scaling.md) - Handle growth
+4. [CI/CD Integration](ci-cd.md) - Automate deployments
+
+### Get Help
+
+- 📖 [Full Documentation](https://docs.n8n-deploy.dev)
+- 💬 [GitHub Discussions](https://github.com/your-org/n8n-deploy/discussions)
+- 🐛 [Report Issues](https://github.com/your-org/n8n-deploy/issues)
+- 📧 [Email Support](mailto:support@n8n-deploy.dev)
+
+## 🎉 You're Ready!
+
+Congratulations! You now have n8n running with enterprise features. Start building your automation workflows and join our community for tips and best practices.
+
+---
+
+**Pro Tip**: Star the repository to stay updated with new features and improvements! ⭐

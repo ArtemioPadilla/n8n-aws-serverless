@@ -67,7 +67,7 @@ repos:
     rev: 1.7.5
     hooks:
       - id: bandit
-        args: ['-r', 'n8n_aws_serverless', '-ll']
+        args: ['-r', 'n8n_deploy', '-ll']
         exclude: '^tests/'
 
   # Markdown linting

@@ -7,7 +7,7 @@ from aws_cdk import aws_efs as efs
 from aws_cdk import aws_secretsmanager as secretsmanager
 from unittest.mock import MagicMock, patch
 
-from n8n_aws_serverless.config.models import (
+from n8n_deploy.config.models import (
     N8nConfig,
     GlobalConfig,
     EnvironmentConfig,

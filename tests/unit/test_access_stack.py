@@ -5,13 +5,13 @@ from aws_cdk import App, Environment, Duration
 from aws_cdk.assertions import Template, Match
 from aws_cdk import aws_apigatewayv2 as apigatewayv2
 from aws_cdk import aws_cloudfront as cloudfront
-from n8n_aws_serverless.config.models import (
+from n8n_deploy.config.models import (
     N8nConfig, EnvironmentConfig, EnvironmentSettings,
     AccessConfig, GlobalConfig
 )
-from n8n_aws_serverless.stacks.access_stack import AccessStack
-from n8n_aws_serverless.stacks.compute_stack import ComputeStack
-from n8n_aws_serverless.stacks.network_stack import NetworkStack
+from n8n_deploy.stacks.access_stack import AccessStack
+from n8n_deploy.stacks.compute_stack import ComputeStack
+from n8n_deploy.stacks.network_stack import NetworkStack
 
 
 class TestAccessStack:
@@ -473,7 +473,7 @@ class TestAccessStack:
         with patch.object(AccessStack, 'get_shared_resource') as mock_shared:
             mock_shared.return_value = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
             
-            with patch('n8n_aws_serverless.stacks.access_stack.acm.Certificate.from_certificate_arn') as mock_cert:
+            with patch('n8n_deploy.stacks.access_stack.acm.Certificate.from_certificate_arn') as mock_cert:
                 mock_cert_instance = Mock()
                 mock_cert.return_value = mock_cert_instance
                 

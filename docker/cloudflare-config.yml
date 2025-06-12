@@ -1,0 +1,7 @@
+tunnel: ${CLOUDFLARE_TUNNEL_ID}
+credentials-file: /home/nonroot/.cloudflared/${CLOUDFLARE_TUNNEL_ID}.json
+
+ingress:
+  - hostname: n8n.secid.mx
+    service: http://n8n-local:5678
+  - service: http_status:404

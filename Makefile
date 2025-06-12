@@ -54,15 +54,15 @@ update: ## Update dependencies
 # Development
 lint: ## Run linting checks
 	@echo "$(YELLOW)Running linting checks...$(NC)"
-	$(ACTIVATE) && $(BLACK) --check n8n_aws_serverless tests
-	$(ACTIVATE) && $(FLAKE8) n8n_aws_serverless tests
-	$(ACTIVATE) && $(ISORT) --check-only n8n_aws_serverless tests
+	$(ACTIVATE) && $(BLACK) --check n8n_deploy tests
+	$(ACTIVATE) && $(FLAKE8) n8n_deploy tests
+	$(ACTIVATE) && $(ISORT) --check-only n8n_deploy tests
 	@echo "$(GREEN)✓ Linting passed$(NC)"
 
 format: ## Format code
 	@echo "$(YELLOW)Formatting code...$(NC)"
-	$(ACTIVATE) && $(BLACK) n8n_aws_serverless tests
-	$(ACTIVATE) && $(ISORT) n8n_aws_serverless tests
+	$(ACTIVATE) && $(BLACK) n8n_deploy tests
+	$(ACTIVATE) && $(ISORT) n8n_deploy tests
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 
 test: ## Run tests
@@ -71,7 +71,7 @@ test: ## Run tests
 
 test-cov: ## Run tests with coverage
 	@echo "$(YELLOW)Running tests with coverage...$(NC)"
-	$(ACTIVATE) && $(PYTEST) --cov=n8n_aws_serverless --cov-report=html --cov-report=term
+	$(ACTIVATE) && $(PYTEST) --cov=n8n_deploy --cov-report=html --cov-report=term
 
 test-watch: ## Run tests in watch mode
 	$(ACTIVATE) && $(PYTEST) -f
@@ -169,7 +169,7 @@ show-config: ## Show current configuration
 
 validate-config: ## Validate configuration
 	@echo "$(YELLOW)Validating configuration...$(NC)"
-	$(ACTIVATE) && $(PYTHON) -c "from n8n_aws_serverless.config import ConfigLoader; ConfigLoader().validate_config_file()"
+	$(ACTIVATE) && $(PYTHON) -c "from n8n_deploy.config import ConfigLoader; ConfigLoader().validate_config_file()"
 	@echo "$(GREEN)✓ Configuration valid$(NC)"
 
 # AWS Commands

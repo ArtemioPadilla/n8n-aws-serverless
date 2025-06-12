@@ -3,7 +3,7 @@ import pytest
 from aws_cdk import App, Stack, Tags, RemovalPolicy
 from aws_cdk.assertions import Template
 
-from n8n_aws_serverless.stacks.base_stack import N8nBaseStack
+from n8n_deploy.stacks.base_stack import N8nBaseStack
 
 
 class TestBaseStack:
@@ -123,7 +123,7 @@ class TestBaseStack:
     def test_get_shared_resource(self, mock_app, test_config):
         """Test shared resource retrieval."""
         # Add shared resources to config
-        from n8n_aws_serverless.config.models import SharedResources
+        from n8n_deploy.config.models import SharedResources
         test_config.shared_resources = SharedResources(
             security={
                 "kms_key_arn": "arn:aws:kms:us-east-1:123:key/test",

@@ -6,22 +6,22 @@ Successfully implemented Cloudflare Tunnel support for the n8n-aws-serverless pr
 ## Key Changes Made
 
 ### 1. Core Implementation Files
-- **`n8n_aws_serverless/constructs/cloudflare_tunnel.py`**: Created new constructs for Cloudflare Tunnel
+- **`n8n_deploy/constructs/cloudflare_tunnel.py`**: Created new constructs for Cloudflare Tunnel
   - `CloudflareTunnelConfiguration`: Manages tunnel config and secrets
   - `CloudflareTunnelSidecar`: ECS sidecar container running cloudflared
 
 ### 2. Configuration Updates
-- **`n8n_aws_serverless/config/models.py`**: 
+- **`n8n_deploy/config/models.py`**: 
   - Added `AccessType` enum with `API_GATEWAY` and `CLOUDFLARE` options
   - Created `CloudflareConfig` model with validation
   - Enhanced `AccessConfig` to support both access types
 
 ### 3. Stack Modifications
-- **`n8n_aws_serverless/stacks/compute_stack.py`**: 
+- **`n8n_deploy/stacks/compute_stack.py`**: 
   - Added Cloudflare Tunnel sidecar when access type is CLOUDFLARE
   - No inbound security group rules needed
   
-- **`n8n_aws_serverless/stacks/access_stack.py`**: 
+- **`n8n_deploy/stacks/access_stack.py`**: 
   - Conditionally creates API Gateway resources based on access type
   - Skips VPC link, API Gateway, and CloudFront when using Cloudflare
 

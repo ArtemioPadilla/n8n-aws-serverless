@@ -1,5 +1,5 @@
 [run]
-source = n8n_aws_serverless
+source = n8n_deploy
 branch = True
 parallel = True
 omit =

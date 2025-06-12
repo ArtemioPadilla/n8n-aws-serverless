@@ -4,17 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a configuration-driven AWS CDK (Cloud Development Kit) Python project for deploying n8n workflow automation tool using serverless infrastructure on AWS. The project provides a cost-effective deployment solution that scales from $5/month for personal use to enterprise-grade deployments.
+**n8n Deploy** is a comprehensive deployment platform for n8n workflow automation that supports multiple deployment targets:
+- **AWS Serverless**: Cost-optimized cloud deployment using ECS Fargate, API Gateway, and managed services
+- **Docker**: Local development and on-premise production deployments
+- **Cloudflare Tunnel**: Zero-trust access layer that works with any backend
+- **Hybrid**: Combinations like AWS + Cloudflare or Docker + Cloudflare
+
+The platform provides enterprise-grade features at costs ranging from free (local Docker) to $5-100/month (AWS), making it suitable for everything from personal projects to enterprise deployments.
 
 ## Key Features
 
-- **Configuration-driven deployment** via `system.yaml`
-- **Multi-environment support** (local, dev, staging, production)
-- **Cost-optimized architecture** using Fargate Spot, API Gateway, and EFS
-- **Zero-trust access** with Cloudflare Tunnel option (no public IPs needed)
-- **Local development** with Docker Compose
-- **Comprehensive testing** with pytest and coverage reporting
-- **CI/CD ready** with GitHub Actions
+- **Multi-deployment support**: AWS, Docker, Kubernetes, Cloudflare Tunnel
+- **Configuration-driven**: Single `system.yaml` controls all deployment types
+- **Cost-optimized**: From free (Docker) to $5/month (AWS minimal) to enterprise
+- **Zero-trust security**: Optional Cloudflare Tunnel with no public IPs
+- **Production-ready**: Monitoring, backups, auto-scaling, disaster recovery
+- **Developer-friendly**: Local development, hot-reload, comprehensive testing
+- **CI/CD ready**: GitHub Actions, automated testing, multi-environment deployments
 
 ## Development Commands
 
@@ -57,45 +63,67 @@ make format                # Format code
 
 ### Directory Structure
 ```
-n8n-aws-serverless/
-├── n8n_aws_serverless/
-│   ├── config/           # Configuration management
-│   │   ├── config_loader.py
-│   │   └── models.py     # Pydantic models
-│   ├── stacks/          # CDK stack definitions
-│   │   ├── base_stack.py
-│   │   ├── network_stack.py
-│   │   ├── storage_stack.py
-│   │   ├── compute_stack.py
-│   │   ├── database_stack.py
-│   │   ├── access_stack.py
-│   │   └── monitoring_stack.py
-│   └── constructs/      # Reusable CDK constructs
-│       └── fargate_n8n.py
-├── docker/              # Local development
-├── scripts/             # Utility scripts
-├── tests/               # Test suite
-├── docs/                # Documentation
-└── system.yaml          # Main configuration file
+n8n-deploy/
+├── deployments/              # Deployment configurations
+│   ├── aws/                 # AWS CDK infrastructure
+│   │   ├── stacks/         # CDK stack definitions
+│   │   │   ├── base_stack.py
+│   │   │   ├── network_stack.py
+│   │   │   ├── storage_stack.py
+│   │   │   ├── compute_stack.py
+│   │   │   ├── database_stack.py
+│   │   │   ├── access_stack.py
+│   │   │   └── monitoring_stack.py
+│   │   └── constructs/     # Reusable CDK constructs
+│   ├── docker/             # Docker configurations
+│   │   ├── local/         # Development setup
+│   │   ├── production/    # Production deployment
+│   │   └── compose/       # Docker Compose files
+│   └── cloudflare/        # Tunnel configurations
+├── config/                  # Configuration management
+│   ├── system.yaml         # Main configuration
+│   └── examples/           # Example configs
+├── scripts/                # Automation scripts
+├── tests/                  # Test suite
+├── docs/                   # Documentation
+└── monitoring/             # Dashboards and alerts
 ```
 
 ### Configuration-Driven Architecture
 
-The entire infrastructure is configured via `system.yaml`:
+All deployment types use the unified `system.yaml`:
 
 ```yaml
+project:
+  name: "my-n8n"
+  deployment_type: "aws"  # or "docker", "cloudflare"
+
 environments:
-  dev:
-    account: "123456789012"
-    region: "us-east-1"
-    settings:
+  production:
+    # Common settings
+    n8n:
+      version: "1.94.1"
+      encryption_key: "{{ secrets.n8n_encryption_key }}"
+    
+    # AWS-specific
+    aws:
+      account: "123456789012"
+      region: "us-east-1"
       fargate:
-        cpu: 256
-        memory: 512
-        spot_percentage: 80
-      scaling:
-        min_tasks: 1
-        max_tasks: 3
+        cpu: 512
+        memory: 1024
+        spot_enabled: true
+    
+    # Docker-specific
+    docker:
+      compose_profile: "production"
+      postgres_enabled: true
+    
+    # Cloudflare-specific
+    cloudflare:
+      tunnel_name: "n8n-production"
+      access_policy:
+        allowed_emails: ["admin@example.com"]
 ```
 
 ### Stack Dependencies
@@ -235,3 +263,28 @@ access:
 # Rotate Cloudflare tunnel token
 ./scripts/cloudflare-tunnel-rotate.sh -e production -r
 ```
+
+## Project Evolution
+
+This project has evolved from a simple AWS serverless deployment tool into a comprehensive n8n deployment platform. Key additions include:
+
+### Multi-Platform Support
+- **AWS Serverless**: Original focus, now enhanced with more options
+- **Docker Local**: Full development environment with monitoring
+- **Docker Production**: Enterprise-ready on-premise deployment
+- **Cloudflare Tunnel**: Zero-trust networking for any backend
+
+### Advanced Features
+- **Unified Configuration**: One `system.yaml` for all deployment types
+- **Cost Tiers**: From free to enterprise with clear pricing
+- **Security Options**: Basic auth to zero-trust with Cloudflare
+- **Monitoring**: Built-in Prometheus/Grafana for all deployments
+- **Backup/Recovery**: Automated across all platforms
+
+### Use Cases
+- **Personal**: Free local or $5/month AWS
+- **Startup**: $15-30/month with auto-scaling
+- **Enterprise**: $50-100/month with HA and compliance
+- **Hybrid**: Mix platforms (e.g., AWS + Cloudflare)
+
+The name "n8n Deploy" better reflects this expanded scope as a complete deployment solution rather than just an AWS tool.

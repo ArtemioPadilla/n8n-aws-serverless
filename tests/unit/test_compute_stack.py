@@ -5,14 +5,14 @@ from aws_cdk import App, Environment, Duration
 from aws_cdk.assertions import Template, Match
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_autoscaling as autoscaling
-from n8n_aws_serverless.config.models import (
+from n8n_deploy.config.models import (
     N8nConfig, EnvironmentConfig, EnvironmentSettings,
     ScalingConfig, MonitoringConfig, GlobalConfig, 
     FargateConfig, BackupConfig
 )
-from n8n_aws_serverless.stacks.compute_stack import ComputeStack
-from n8n_aws_serverless.stacks.network_stack import NetworkStack
-from n8n_aws_serverless.stacks.storage_stack import StorageStack
+from n8n_deploy.stacks.compute_stack import ComputeStack
+from n8n_deploy.stacks.network_stack import NetworkStack
+from n8n_deploy.stacks.storage_stack import StorageStack
 
 
 class TestComputeStack:
@@ -139,7 +139,7 @@ class TestComputeStack:
             }]
         })
     
-    @patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService')
+    @patch('n8n_deploy.stacks.compute_stack.N8nFargateService')
     def test_fargate_service_creation(self, mock_fargate_service, app, test_config, 
                                     network_stack_mock, storage_stack_mock):
         """Test Fargate service is created with correct parameters."""
@@ -174,7 +174,7 @@ class TestComputeStack:
         test_config.environments["test"].settings.scaling.min_tasks = 1
         test_config.environments["test"].settings.scaling.max_tasks = 5
         
-        with patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService') as mock_fargate:
+        with patch('n8n_deploy.stacks.compute_stack.N8nFargateService') as mock_fargate:
             # Set up mock service with auto-scaling capabilities
             mock_service = Mock()
             mock_scalable_target = Mock()
@@ -208,7 +208,7 @@ class TestComputeStack:
         test_config.environments["test"].settings.scaling.min_tasks = 1
         test_config.environments["test"].settings.scaling.max_tasks = 1
         
-        with patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService') as mock_fargate:
+        with patch('n8n_deploy.stacks.compute_stack.N8nFargateService') as mock_fargate:
             mock_service = Mock()
             mock_fargate.return_value = mock_service
             
@@ -238,7 +238,7 @@ class TestComputeStack:
             )
         )
         
-        with patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService') as mock_fargate:
+        with patch('n8n_deploy.stacks.compute_stack.N8nFargateService') as mock_fargate:
             mock_service = Mock()
             mock_scalable_target = Mock()
             mock_service.service.auto_scale_task_count.return_value = mock_scalable_target
@@ -264,7 +264,7 @@ class TestComputeStack:
         """Test compute stack with database integration."""
         mock_secret = Mock()
         
-        with patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService') as mock_fargate:
+        with patch('n8n_deploy.stacks.compute_stack.N8nFargateService') as mock_fargate:
             stack = ComputeStack(
                 app,
                 "TestComputeStack",
@@ -284,7 +284,7 @@ class TestComputeStack:
     
     def test_stack_outputs(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test stack outputs are created correctly."""
-        with patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService') as mock_fargate:
+        with patch('n8n_deploy.stacks.compute_stack.N8nFargateService') as mock_fargate:
             # Set up mock service
             mock_service = Mock()
             mock_service.service.service_name = "test-n8n-service"
@@ -344,7 +344,7 @@ class TestComputeStack:
     
     def test_service_property_accessors(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test property accessors for service and security group."""
-        with patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService') as mock_fargate:
+        with patch('n8n_deploy.stacks.compute_stack.N8nFargateService') as mock_fargate:
             mock_service = Mock()
             mock_fargate_service = Mock()
             mock_service.service = mock_fargate_service
@@ -372,7 +372,7 @@ class TestComputeStack:
         test_config.environments["test"].settings.scaling.scale_in_cooldown = 600
         test_config.environments["test"].settings.scaling.scale_out_cooldown = 120
         
-        with patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService') as mock_fargate:
+        with patch('n8n_deploy.stacks.compute_stack.N8nFargateService') as mock_fargate:
             mock_service = Mock()
             mock_scalable_target = Mock()
             mock_service.service.auto_scale_task_count.return_value = mock_scalable_target
@@ -410,7 +410,7 @@ class TestComputeStack:
             }
         )
         
-        with patch('n8n_aws_serverless.stacks.compute_stack.N8nFargateService') as mock_fargate:
+        with patch('n8n_deploy.stacks.compute_stack.N8nFargateService') as mock_fargate:
             mock_service = Mock()
             mock_fargate.return_value = mock_service
             
