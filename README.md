@@ -7,7 +7,7 @@
 [![AWS CDK](https://img.shields.io/badge/aws--cdk-2.0+-orange.svg)](https://aws.amazon.com/cdk/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![n8n](https://img.shields.io/badge/n8n-1.94.1-red.svg)](https://n8n.io/)
-[![Tests](https://github.com/your-org/n8n-deploy/actions/workflows/test.yml/badge.svg)](https://github.com/your-org/n8n-deploy/actions/workflows/test.yml)
+[![Tests](https://github.com/ArtemioPadilla/n8n-deploy/actions/workflows/test.yml/badge.svg)](https://github.com/ArtemioPadilla/n8n-deploy/actions/workflows/test.yml)
 
 **n8n Deploy** is a comprehensive deployment platform for [n8n](https://n8n.io/) workflow automation. Whether you need a $5/month personal instance, a scalable cloud deployment, or an on-premise solution with zero-trust security, n8n Deploy has you covered.
 
@@ -75,11 +75,8 @@ Enterprise security without complexity. No public IPs, built-in DDoS protection.
 ### AWS Serverless Deployment
 
 ```bash
-# Install and deploy in one command
-curl -sSL https://n8n-deploy.dev/install.sh | bash -s -- --aws
-
-# Or use the manual approach
-git clone https://github.com/your-org/n8n-deploy
+# Clone and deploy
+git clone https://github.com/ArtemioPadilla/n8n-deploy
 cd n8n-deploy
 make install
 make deploy-aws environment=production
@@ -88,25 +85,22 @@ make deploy-aws environment=production
 ### Docker Local Deployment
 
 ```bash
-# Development environment with UI
-curl -sSL https://n8n-deploy.dev/install.sh | bash -s -- --docker
-
-# Or use docker-compose directly
-git clone https://github.com/your-org/n8n-deploy
+# Clone and run locally
+git clone https://github.com/ArtemioPadilla/n8n-deploy
 cd n8n-deploy
 make local-up
+
+# Or use docker-compose directly
+docker-compose up -d
 ```
 
 ### Cloudflare Tunnel Deployment
 
 ```bash
-# Deploy with zero-trust access
-curl -sSL https://n8n-deploy.dev/install.sh | bash -s -- --cloudflare
-
-# Or manual setup
-git clone https://github.com/your-org/n8n-deploy
+# Clone and setup tunnel
+git clone https://github.com/ArtemioPadilla/n8n-deploy
 cd n8n-deploy
-./scripts/setup-cloudflare-tunnel.sh
+./scripts/cloudflare-tunnel-rotate.sh -e production
 ```
 
 ## 📋 Features
@@ -143,24 +137,19 @@ cd n8n-deploy
 
 ```
 n8n-deploy/
-├── deployments/              # Deployment configurations
-│   ├── aws/                 # AWS CDK infrastructure
-│   │   ├── stacks/         # CDK stack definitions
-│   │   └── constructs/     # Reusable components
-│   ├── docker/             # Docker configurations
-│   │   ├── compose/        # Docker Compose files
-│   │   └── dockerfiles/    # Custom Dockerfiles
-│   └── cloudflare/         # Tunnel configurations
+├── n8n_deploy/              # Main Python package
+│   ├── stacks/             # CDK stack definitions
+│   ├── constructs/         # Reusable components
+│   └── config/             # Configuration management
+├── docker/                  # Docker configurations
+│   ├── grafana/            # Grafana dashboards
+│   └── workflows/          # Example workflows
 ├── scripts/                 # Automation scripts
-│   ├── install.sh          # Universal installer
-│   ├── deploy.sh           # Deployment automation
-│   └── backup.sh           # Backup utilities
+│   ├── local-deploy.sh     # Local deployment
+│   ├── local-setup.sh      # Environment setup
+│   └── cloudflare-tunnel-rotate.sh  # Tunnel management
 ├── config/                  # Configuration files
-│   ├── system.yaml         # Main configuration
-│   └── examples/           # Example configs
-├── monitoring/              # Monitoring configurations
-│   ├── dashboards/         # Grafana dashboards
-│   └── alerts/             # Alert rules
+│   └── system.yaml         # Main configuration
 ├── docs/                    # Documentation
 └── tests/                   # Test suites
 ```
@@ -276,10 +265,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- **Documentation**: [https://docs.n8n-deploy.dev](https://docs.n8n-deploy.dev)
-- **Issues**: [GitHub Issues](https://github.com/your-org/n8n-deploy/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/n8n-deploy/discussions)
-- **Blog**: [https://blog.n8n-deploy.dev](https://blog.n8n-deploy.dev)
+- **Repository**: [https://github.com/ArtemioPadilla/n8n-deploy](https://github.com/ArtemioPadilla/n8n-deploy)
+- **Issues**: [GitHub Issues](https://github.com/ArtemioPadilla/n8n-deploy/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ArtemioPadilla/n8n-deploy/discussions)
 
 ---
 
