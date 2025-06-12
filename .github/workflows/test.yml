@@ -129,6 +129,8 @@ jobs:
         export N8N_ENCRYPTION_KEY=test-encryption-key
         export N8N_BASIC_AUTH_USER=test-user
         export N8N_BASIC_AUTH_PASSWORD=test-password
+        export POSTGRES_USER=test-postgres-user
+        export POSTGRES_PASSWORD=test-postgres-password
         docker compose config
         docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 
@@ -140,6 +142,8 @@ jobs:
         export N8N_ENCRYPTION_KEY=test-encryption-key
         export N8N_BASIC_AUTH_USER=test-user
         export N8N_BASIC_AUTH_PASSWORD=test-password
+        export POSTGRES_USER=test-postgres-user
+        export POSTGRES_PASSWORD=test-postgres-password
         docker compose build --no-cache
 
   security-scan:
