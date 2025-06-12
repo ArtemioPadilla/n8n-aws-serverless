@@ -40,10 +40,6 @@ class N8nBaseStack(Stack):
 
         # Set stack properties
         stack_props = {
-            "env": {
-                "account": self.env_config.account,
-                "region": self.env_config.region,
-            },
             "description": f"n8n Serverless - {construct_id} - {environment}",
             "termination_protection": environment == "production",
         }
