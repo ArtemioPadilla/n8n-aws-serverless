@@ -24,7 +24,9 @@
       "Bash(pip install:*)",
       "Bash(rg:*)",
       "Bash(mv:*)",
-      "Bash(black:*)"
+      "Bash(black:*)",
+      "Bash(python -m black:*)",
+      "Bash(python3 -m black:*)"
     ],
     "deny": []
   }

@@ -7,7 +7,13 @@ from aws_cdk import aws_apigatewayv2 as apigatewayv2
 from aws_cdk import aws_cloudfront as cloudfront
 from aws_cdk.assertions import Match, Template
 
-from n8n_deploy.config.models import AccessConfig, EnvironmentConfig, EnvironmentSettings, GlobalConfig, N8nConfig
+from n8n_deploy.config.models import (
+    AccessConfig,
+    EnvironmentConfig,
+    EnvironmentSettings,
+    GlobalConfig,
+    N8nConfig,
+)
 from n8n_deploy.stacks.access_stack import AccessStack
 from n8n_deploy.stacks.compute_stack import ComputeStack
 from n8n_deploy.stacks.network_stack import NetworkStack

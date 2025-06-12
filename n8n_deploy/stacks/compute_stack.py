@@ -10,7 +10,10 @@ from aws_cdk import aws_secretsmanager as secretsmanager
 from constructs import Construct
 
 from ..config.models import AccessType, N8nConfig
-from ..constructs.cloudflare_tunnel import CloudflareTunnelConfiguration, CloudflareTunnelSidecar
+from ..constructs.cloudflare_tunnel import (
+    CloudflareTunnelConfiguration,
+    CloudflareTunnelSidecar,
+)
 from ..constructs.fargate_n8n import N8nFargateService
 from .base_stack import N8nBaseStack
 from .network_stack import NetworkStack

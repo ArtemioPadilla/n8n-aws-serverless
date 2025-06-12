@@ -8,8 +8,17 @@ import pytest
 from aws_cdk import App, Stack
 from aws_cdk.assertions import Match, Template
 
-from n8n_deploy.config.models import AccessConfig, AccessType, CloudflareConfig, EnvironmentConfig, EnvironmentSettings
-from n8n_deploy.constructs.cloudflare_tunnel import CloudflareTunnelConfiguration, CloudflareTunnelSidecar
+from n8n_deploy.config.models import (
+    AccessConfig,
+    AccessType,
+    CloudflareConfig,
+    EnvironmentConfig,
+    EnvironmentSettings,
+)
+from n8n_deploy.constructs.cloudflare_tunnel import (
+    CloudflareTunnelConfiguration,
+    CloudflareTunnelSidecar,
+)
 
 
 class TestCloudflareConfig:

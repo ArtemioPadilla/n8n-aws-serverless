@@ -7,7 +7,13 @@ from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_rds as rds
 from aws_cdk.assertions import Match, Template
 
-from n8n_deploy.config.models import DatabaseConfig, EnvironmentConfig, EnvironmentSettings, GlobalConfig, N8nConfig
+from n8n_deploy.config.models import (
+    DatabaseConfig,
+    EnvironmentConfig,
+    EnvironmentSettings,
+    GlobalConfig,
+    N8nConfig,
+)
 from n8n_deploy.stacks.database_stack import DatabaseStack
 from n8n_deploy.stacks.network_stack import NetworkStack
 
