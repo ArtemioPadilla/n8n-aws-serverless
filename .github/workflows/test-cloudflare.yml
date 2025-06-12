@@ -1,0 +1,160 @@
+name: Test Cloudflare Tunnel
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'n8n_aws_serverless/constructs/cloudflare_tunnel.py'
+      - 'n8n_aws_serverless/config/models.py'
+      - 'n8n_aws_serverless/stacks/compute_stack.py'
+      - 'n8n_aws_serverless/stacks/access_stack.py'
+      - 'tests/**/test_cloudflare*.py'
+      - 'docker/docker-compose*.yml'
+      - '.github/workflows/test-cloudflare.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'n8n_aws_serverless/constructs/cloudflare_tunnel.py'
+      - 'n8n_aws_serverless/config/models.py'
+      - 'n8n_aws_serverless/stacks/compute_stack.py'
+      - 'n8n_aws_serverless/stacks/access_stack.py'
+      - 'tests/**/test_cloudflare*.py'
+      - 'docker/docker-compose*.yml'
+      - '.github/workflows/test-cloudflare.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          .venv
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+
+    - name: Run Cloudflare-specific tests
+      run: |
+        pytest tests/unit/test_cloudflare_config.py tests/integration/test_cloudflare_integration.py -v --cov=n8n_aws_serverless --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: cloudflare
+        name: cloudflare-${{ matrix.python-version }}
+
+  docker-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Test Docker Compose with Cloudflare profile
+      run: |
+        cd docker
+        # Create test .env file
+        cat > .env << EOF
+        # n8n configuration
+        N8N_BASIC_AUTH_USER=test
+        N8N_BASIC_AUTH_PASSWORD=test123
+        N8N_ENCRYPTION_KEY=test-encryption-key
+        
+        # Cloudflare configuration
+        CLOUDFLARE_TUNNEL_TOKEN=test-token
+        EOF
+        
+        # Validate Docker Compose files
+        docker-compose -f docker-compose.yml config --profiles cloudflare
+        docker-compose -f docker-compose.prod.yml config
+
+    - name: Test Cloudflare tunnel script
+      run: |
+        # Make script executable
+        chmod +x scripts/cloudflare-tunnel-rotate.sh
+        
+        # Test help output
+        ./scripts/cloudflare-tunnel-rotate.sh -h
+
+  integration-test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install AWS CDK
+      run: |
+        npm install -g aws-cdk@2
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Configure AWS credentials (mock)
+      run: |
+        mkdir -p ~/.aws
+        echo "[default]" > ~/.aws/credentials
+        echo "aws_access_key_id = test" >> ~/.aws/credentials
+        echo "aws_secret_access_key = test" >> ~/.aws/credentials
+        echo "[default]" > ~/.aws/config
+        echo "region = us-east-1" >> ~/.aws/config
+
+    - name: Test CDK synthesis with Cloudflare
+      run: |
+        # Create test configuration
+        cat > test-system.yaml << EOF
+        global:
+          project_name: "n8n-test"
+          organization: "test"
+        
+        environments:
+          test:
+            account: "123456789012"
+            region: "us-east-1"
+            settings:
+              access:
+                type: "cloudflare"
+                cloudflare:
+                  enabled: true
+                  tunnel_token_secret_name: "test-secret"
+                  tunnel_name: "test-tunnel"
+                  tunnel_domain: "test.example.com"
+        EOF
+        
+        # Test CDK synthesis
+        cdk synth -c environment=test -c config_path=test-system.yaml --quiet

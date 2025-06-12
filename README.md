@@ -16,6 +16,7 @@ Deploy [n8n](https://n8n.io/), the workflow automation tool, on AWS using a cost
 - **🔧 Flexible Deployment**: Support for SQLite (small workloads) or PostgreSQL (production)
 - **🚀 Auto-Scaling**: Automatic scaling based on CPU/memory utilization
 - **🔒 Secure by Default**: VPC isolation, secrets management, IAM roles
+- **🌐 Cloudflare Tunnel Support**: Zero-trust access with no public IPs or load balancers
 - **🌍 Multi-Environment**: Separate dev, staging, and production deployments
 - **📊 Full Monitoring**: CloudWatch dashboards, alarms, and log aggregation
 - **🐳 Local Development**: Docker Compose setup for local testing and on-premise deployments
@@ -41,6 +42,7 @@ Deploy [n8n](https://n8n.io/), the workflow automation tool, on AWS using a cost
 
 ## 🏗 Architecture
 
+### Option 1: Traditional API Gateway Architecture
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │ CloudFront  │────▶│ API Gateway │────▶│   Fargate   │
@@ -54,8 +56,24 @@ Deploy [n8n](https://n8n.io/), the workflow automation tool, on AWS using a cost
                     └─────────────┘     └─────────────┘
 ```
 
+### Option 2: Cloudflare Tunnel Architecture (Zero-Trust)
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│    User     │────▶│ Cloudflare  │────▶│  Cloudflare │
+│             │     │    Edge     │     │   Tunnel    │
+└─────────────┘     └─────────────┘     └─────┬───────┘
+                                              │ (Outbound)
+                                              ▼
+                    ┌─────────────┐     ┌─────────────┐
+                    │   Fargate   │────▶│     EFS     │
+                    │  + Tunnel   │     │  (Storage)  │
+                    └─────────────┘     └─────────────┘
+```
+
 ### Key Components:
-- **API Gateway HTTP API**: Cost-effective alternative to ALB ( \$1/million requests vs \$16/month)
+- **Access Methods**:
+  - **API Gateway HTTP API**: Cost-effective alternative to ALB ($1/million requests vs $16/month)
+  - **Cloudflare Tunnel**: Zero-trust access with no public IPs ($0/month for basic use)
 - **ECS Fargate**: Serverless containers with Spot instance support (70% cost savings)
 - **EFS**: Shared persistent storage for workflows and SQLite database
 - **RDS/Aurora** (Optional): PostgreSQL for production workloads
@@ -109,8 +127,9 @@ cdk deploy -c environment=production
 
 ### 4. Access n8n
 After deployment completes, you'll get URLs to access n8n:
-- API Gateway: `https://xxxxxx.execute-api.region.amazonaws.com`
-- CloudFront (if enabled): `https://xxxxxx.cloudfront.net`
+- API Gateway: `https://xxxxxx.execute-api.region.amazonaws.com` (when using api_gateway)
+- CloudFront (if enabled): `https://xxxxxx.cloudfront.net` (when using api_gateway with CloudFront)
+- Cloudflare Tunnel: `https://n8n.yourdomain.com` (when using cloudflare - no public IPs needed!)
 
 ## ⚙️ Configuration
 
@@ -188,6 +207,9 @@ cdk deploy -c environment=production -c stack_type=enterprise
 # With all features (PostgreSQL + Monitoring)
 ./scripts/local-deploy.sh -p postgres -m
 
+# With Cloudflare Tunnel for secure remote access
+./scripts/local-deploy.sh -p cloudflare
+
 # View logs
 ./scripts/local-deploy.sh -l
 
@@ -216,6 +238,79 @@ docker-compose -f docker-compose.prod.yml up -d
 # - Automated backups
 ```
 
+## 🔐 Cloudflare Tunnel Setup (Zero-Trust Access)
+
+Cloudflare Tunnel provides secure, zero-trust access to n8n without exposing any public IPs or requiring load balancers:
+
+### Benefits
+- **Cost Savings**: Eliminate API Gateway ($3.50/million requests) and ALB ($16-25/month)
+- **Enhanced Security**: No exposed public endpoints, built-in DDoS protection
+- **Global Performance**: Cloudflare's 300+ PoPs worldwide
+- **Simple Setup**: No complex networking configuration required
+
+### Quick Setup
+
+1. **Create a Cloudflare Tunnel**:
+   ```bash
+   # Install cloudflared CLI
+   brew install cloudflared  # macOS
+   # Or download from: https://github.com/cloudflare/cloudflared/releases
+   
+   # Login to Cloudflare
+   cloudflared tunnel login
+   
+   # Create tunnel
+   cloudflared tunnel create n8n-production
+   ```
+
+2. **Store the Tunnel Token in AWS**:
+   ```bash
+   # Get the tunnel token
+   cloudflared tunnel token n8n-production
+   
+   # Store in AWS Secrets Manager
+   aws secretsmanager create-secret \
+     --name "n8n/production/cloudflare-tunnel-token" \
+     --secret-string "YOUR_TUNNEL_TOKEN_HERE"
+   ```
+
+3. **Configure system.yaml**:
+   ```yaml
+   environments:
+     production:
+       settings:
+         access:
+           type: "cloudflare"  # Use Cloudflare instead of API Gateway
+           cloudflare:
+             enabled: true
+             tunnel_token_secret_name: "n8n/production/cloudflare-tunnel-token"
+             tunnel_name: "n8n-production"
+             tunnel_domain: "n8n.yourdomain.com"
+             # Optional: Enable Cloudflare Access policies
+             access_enabled: true
+             access_allowed_emails:
+               - "admin@yourdomain.com"
+             access_allowed_domains:
+               - "yourdomain.com"
+   ```
+
+4. **Deploy with Cloudflare Tunnel**:
+   ```bash
+   cdk deploy -c environment=production
+   ```
+
+5. **Configure DNS**:
+   - In Cloudflare dashboard, add a CNAME record pointing to your tunnel
+   - Access n8n at: `https://n8n.yourdomain.com`
+
+### Token Rotation
+```bash
+# Rotate tunnel token with provided script
+./scripts/cloudflare-tunnel-rotate.sh -e production -r
+```
+
+See [docs/cloudflare-tunnel.md](docs/cloudflare-tunnel.md) for detailed setup instructions.
+
 ## 💰 Cost Optimization
 
 | Component | Strategy | Savings |
@@ -223,6 +318,7 @@ docker-compose -f docker-compose.prod.yml up -d
 | Compute | Fargate Spot instances | 70% |
 | Database | SQLite for <5K executions/day | 100% |
 | API | API Gateway vs ALB | $15/month |
+| Access | Cloudflare Tunnel vs API Gateway | $3.50/million requests |
 | Storage | EFS Lifecycle policies | 90% |
 
 See [docs/cost-optimization.md](docs/cost-optimization.md) for detailed strategies.
@@ -332,6 +428,7 @@ pytest
 ### Deployment & Operations
 - [Architecture Overview](docs/architecture.md)
 - [Deployment Guide](docs/deployment-guide.md)
+- [Cloudflare Tunnel Setup](docs/cloudflare-tunnel.md)
 - [Configuration Reference](docs/configuration.md)
 - [Monitoring & Alerts](docs/monitoring.md)
 

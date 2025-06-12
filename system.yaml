@@ -34,6 +34,14 @@ environments:
         compose_file: "docker/docker-compose.yml"
         image: "n8nio/n8n:1.94.1"  # Pinned version
         port: 5678
+        profiles:
+          - cloudflare  # Optional: Enable Cloudflare Tunnel for remote access
+      access:
+        type: "cloudflare"  # Use Cloudflare Tunnel for local development
+        cloudflare:
+          enabled: true
+          tunnel_name: "n8n-local"
+          tunnel_domain: "n8n-local.example.com"
       auth:
         basic_auth_enabled: true
         oauth_enabled: false
@@ -56,8 +64,13 @@ environments:
         use_existing_vpc: false
         vpc_cidr: "10.0.0.0/16"
       access:
-        cloudfront_enabled: false
-        api_gateway_throttle: 100
+        type: "cloudflare"  # Use Cloudflare Tunnel instead of API Gateway
+        cloudflare:
+          enabled: true
+          tunnel_token_secret_name: "n8n/dev/cloudflare-tunnel-token"
+          tunnel_name: "n8n-dev"
+          tunnel_domain: "n8n-dev.example.com"
+          access_enabled: false  # No Cloudflare Access policies for dev
       auth:
         basic_auth_enabled: true
         oauth_enabled: false
@@ -126,13 +139,19 @@ environments:
           - "subnet-prod-1b"
           - "subnet-prod-1c"
       access:
+        type: "cloudflare"  # Use Cloudflare Tunnel for zero-trust access
         domain_name: "n8n.company.com"
-        cloudfront_enabled: true
-        waf_enabled: true
-        api_gateway_throttle: 10000
-        ip_whitelist:
-          - "1.2.3.4/32"  # Office IP
-          - "5.6.7.8/32"  # VPN endpoint
+        cloudflare:
+          enabled: true
+          tunnel_token_secret_name: "n8n/production/cloudflare-tunnel-token"
+          tunnel_name: "n8n-production"
+          tunnel_domain: "n8n.company.com"
+          access_enabled: true  # Enable Cloudflare Access for authentication
+          access_allowed_emails:
+            - "admin@company.com"
+            - "devops@company.com"
+          access_allowed_domains:
+            - "company.com"
       database:
         type: "postgres"
         use_existing: false
@@ -238,3 +257,43 @@ shared_resources:
   storage:
     # Central S3 bucket for cross-environment artifacts
     artifacts_bucket: "mycompany-n8n-artifacts"
+
+# Access Configuration Options
+# ============================
+#
+# Option 1: API Gateway (Traditional)
+# -----------------------------------
+# access:
+#   type: "api_gateway"
+#   cloudfront_enabled: true
+#   waf_enabled: true
+#   api_gateway_throttle: 10000
+#   domain_name: "n8n.example.com"
+#
+# Option 2: Cloudflare Tunnel (Zero-Trust)
+# ----------------------------------------
+# access:
+#   type: "cloudflare"
+#   cloudflare:
+#     enabled: true
+#     tunnel_token_secret_name: "n8n/prod/cf-tunnel-token"  # AWS Secrets Manager
+#     tunnel_name: "n8n-production"
+#     tunnel_domain: "n8n.example.com"
+#     access_enabled: true  # Enable Cloudflare Access policies
+#     access_allowed_emails:
+#       - "admin@example.com"
+#     access_allowed_domains:
+#       - "example.com"
+#
+# Note: After deployment, you must configure the tunnel route in Cloudflare dashboard:
+# 1. Go to Zero Trust > Access > Tunnels
+# 2. Find your tunnel and click Configure
+# 3. Add a public hostname pointing to http://localhost:5678 (for ECS)
+#    or http://n8n:5678 (for Docker Compose)
+#
+# Benefits of Cloudflare Tunnel:
+# - No public IP or load balancer needed
+# - Built-in DDoS protection
+# - Zero-trust security model
+# - Lower cost (no API Gateway or ALB charges)
+# - Global edge network for better performance

@@ -1,0 +1,119 @@
+# Example configuration for n8n with Cloudflare Tunnel
+# This demonstrates a cost-optimized setup using Cloudflare for zero-trust access
+
+global:
+  project_name: "n8n-serverless"
+  organization: "mycompany"
+  tags:
+    Project: "n8n"
+    ManagedBy: "CDK"
+
+environments:
+  # Development environment with Cloudflare Tunnel
+  dev:
+    account: "123456789012"  # Your AWS account ID
+    region: "us-east-1"
+    settings:
+      # Minimal compute resources for dev
+      fargate:
+        cpu: 256
+        memory: 512
+        spot_percentage: 100  # Use 100% spot for dev to save costs
+      
+      # No scaling for dev
+      scaling:
+        min_tasks: 1
+        max_tasks: 1
+      
+      # Cloudflare Tunnel for access (no API Gateway needed!)
+      access:
+        type: "cloudflare"
+        cloudflare:
+          enabled: true
+          tunnel_token_secret_name: "n8n/dev/cloudflare-tunnel-token"
+          tunnel_name: "n8n-dev"
+          tunnel_domain: "n8n-dev.yourdomain.com"
+          access_enabled: false  # No access policies for dev
+      
+      # SQLite database (free!)
+      database:
+        type: "sqlite"
+      
+      # Basic auth for dev
+      auth:
+        basic_auth_enabled: true
+        basic_auth_users:
+          - username: "admin"
+            password_secret_name: "n8n/dev/admin-password"
+
+  # Production environment with Cloudflare Tunnel
+  production:
+    account: "123456789012"  # Your AWS account ID
+    region: "us-east-1"
+    settings:
+      # Production-ready compute
+      fargate:
+        cpu: 1024
+        memory: 2048
+        spot_percentage: 50  # Mix of spot and on-demand
+      
+      # Auto-scaling for production
+      scaling:
+        min_tasks: 2
+        max_tasks: 10
+        target_cpu_utilization: 70
+      
+      # Cloudflare Tunnel with Access policies
+      access:
+        type: "cloudflare"
+        cloudflare:
+          enabled: true
+          tunnel_token_secret_name: "n8n/production/cloudflare-tunnel-token"
+          tunnel_name: "n8n-production"
+          tunnel_domain: "n8n.yourdomain.com"
+          access_enabled: true  # Enable Cloudflare Access
+          access_allowed_emails:
+            - "admin@yourdomain.com"
+            - "team@yourdomain.com"
+          access_allowed_domains:
+            - "yourdomain.com"
+      
+      # PostgreSQL for production
+      database:
+        type: "postgres"
+        instance_class: "db.t4g.micro"  # Start small
+        multi_az: false  # Enable for high availability
+        backup_retention_days: 7
+      
+      # OAuth for production
+      auth:
+        basic_auth_enabled: false
+        oauth_enabled: true
+        oauth_provider: "google"
+        oauth_client_id_secret: "n8n/production/oauth-client-id"
+        oauth_client_secret_secret: "n8n/production/oauth-client-secret"
+      
+      # Enhanced monitoring
+      monitoring:
+        enabled: true
+        log_retention_days: 30
+        alarm_email: "alerts@yourdomain.com"
+
+# Quick Start Instructions:
+# 1. Create Cloudflare Tunnel:
+#    cloudflared tunnel create n8n-production
+#    cloudflared tunnel token n8n-production
+#
+# 2. Store token in AWS Secrets Manager:
+#    aws secretsmanager create-secret \
+#      --name "n8n/production/cloudflare-tunnel-token" \
+#      --secret-string "YOUR_TUNNEL_TOKEN"
+#
+# 3. Deploy:
+#    cdk deploy -c environment=production
+#
+# 4. Configure tunnel in Cloudflare dashboard:
+#    - Add public hostname: n8n.yourdomain.com → http://localhost:5678
+#    - Configure Access policies if enabled
+#
+# 5. Access n8n at https://n8n.yourdomain.com

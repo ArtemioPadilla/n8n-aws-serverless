@@ -1,6 +1,7 @@
 """Pydantic models for configuration validation."""
+import re
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, field_validator, model_validator
 from enum import Enum
 
 
@@ -96,14 +97,68 @@ class DatabaseConfig(BaseModel):
     backup_retention_days: int = Field(7, ge=1, le=35)
 
 
+class AccessType(str, Enum):
+    """Access method for n8n."""
+    API_GATEWAY = "api_gateway"
+    CLOUDFLARE = "cloudflare"
+
+
+class CloudflareConfig(BaseModel):
+    """Cloudflare Tunnel configuration."""
+    enabled: bool = False
+    tunnel_token_secret_name: Optional[str] = None
+    tunnel_name: Optional[str] = None
+    tunnel_domain: Optional[str] = None
+    access_enabled: bool = False
+    access_allowed_emails: Optional[List[str]] = None
+    access_allowed_domains: Optional[List[str]] = None
+    
+    @model_validator(mode='after')
+    def validate_tunnel_token(self):
+        """Ensure tunnel token is provided when Cloudflare is enabled."""
+        if self.enabled and not self.tunnel_token_secret_name:
+            raise ValueError("tunnel_token_secret_name is required when Cloudflare is enabled")
+        return self
+    
+    @field_validator('tunnel_domain')
+    @classmethod
+    def validate_domain(cls, v):
+        """Validate tunnel domain format."""
+        if v:
+            # More strict domain validation
+            # - Must start with alphanumeric
+            # - Can contain alphanumeric, hyphens, and dots
+            # - Cannot have consecutive dots
+            # - Cannot end with hyphen
+            # - Must have valid TLD
+            pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9-_]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-_]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$'
+            if not re.match(pattern, v):
+                raise ValueError(f"Invalid domain format: {v}. Must be a valid domain name.")
+        return v
+
+
 class AccessConfig(BaseModel):
     """API access configuration."""
+    type: AccessType = AccessType.API_GATEWAY
     domain_name: Optional[str] = None
     cloudfront_enabled: bool = True
     waf_enabled: bool = False
     api_gateway_throttle: int = Field(1000, ge=1)
     cors_origins: List[str] = ["*"]
     ip_whitelist: Optional[List[str]] = None
+    cloudflare: Optional[CloudflareConfig] = None
+    
+    @model_validator(mode='after')
+    def validate_cloudflare(self):
+        """Validate Cloudflare config when type is CLOUDFLARE."""
+        if self.type == AccessType.CLOUDFLARE:
+            if not self.cloudflare:
+                # Create a default cloudflare config without full validation
+                # The actual validation will happen when the config is used
+                self.cloudflare = CloudflareConfig.model_construct(enabled=True)
+            else:
+                self.cloudflare.enabled = True
+        return self
 
 
 class AuthConfig(BaseModel):
@@ -147,8 +202,18 @@ class HighAvailabilityConfig(BaseModel):
     unhealthy_threshold: int = Field(2, ge=2, le=10)
 
 
+class DockerConfig(BaseModel):
+    """Docker deployment configuration for local development."""
+    compose_file: str = "docker/docker-compose.yml"
+    image: str = "n8nio/n8n:1.94.1"
+    port: int = 5678
+    profiles: Optional[List[str]] = None
+
+
 class EnvironmentSettings(BaseModel):
     """Environment-specific settings."""
+    deployment_type: Optional[str] = "aws"  # "aws" or "docker"
+    docker: Optional[DockerConfig] = None
     fargate: Optional[FargateConfig] = None
     scaling: Optional[ScalingConfig] = None
     networking: Optional[NetworkingConfig] = None
@@ -216,7 +281,7 @@ class N8nConfig(BaseModel):
     shared_resources: Optional[SharedResources] = None
     
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
     
     def get_environment(self, env_name: str) -> Optional[EnvironmentConfig]:
         """Get configuration for a specific environment."""

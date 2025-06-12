@@ -61,6 +61,24 @@ class StorageStack(N8nBaseStack):
         efs_config = self.config.defaults.efs if self.config.defaults and self.config.defaults.efs else {}
         lifecycle_days = efs_config.get("lifecycle_days", 30)
         
+        # Map lifecycle days to available policies
+        lifecycle_policy_map = {
+            1: efs.LifecyclePolicy.AFTER_1_DAY,
+            7: efs.LifecyclePolicy.AFTER_7_DAYS,
+            14: efs.LifecyclePolicy.AFTER_14_DAYS,
+            30: efs.LifecyclePolicy.AFTER_30_DAYS,
+            60: efs.LifecyclePolicy.AFTER_60_DAYS,
+            90: efs.LifecyclePolicy.AFTER_90_DAYS,
+            180: efs.LifecyclePolicy.AFTER_180_DAYS,
+            270: efs.LifecyclePolicy.AFTER_270_DAYS,
+            365: efs.LifecyclePolicy.AFTER_365_DAYS,
+        }
+        
+        # Find the closest matching policy
+        closest_days = min(lifecycle_policy_map.keys(), 
+                          key=lambda x: abs(x - lifecycle_days))
+        lifecycle_policy = lifecycle_policy_map[closest_days]
+        
         # Create file system
         file_system = efs.FileSystem(
             self,
@@ -71,7 +89,7 @@ class StorageStack(N8nBaseStack):
             security_group=self.network_stack.efs_security_group,
             encrypted=True,
             enable_automatic_backups=self.is_production(),
-            lifecycle_policy=efs.LifecyclePolicy.AFTER_N_DAYS(lifecycle_days),
+            lifecycle_policy=lifecycle_policy,
             performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
             throughput_mode=efs.ThroughputMode.BURSTING,
             removal_policy=self.removal_policy,

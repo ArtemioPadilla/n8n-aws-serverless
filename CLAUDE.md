@@ -11,6 +11,7 @@ This is a configuration-driven AWS CDK (Cloud Development Kit) Python project fo
 - **Configuration-driven deployment** via `system.yaml`
 - **Multi-environment support** (local, dev, staging, production)
 - **Cost-optimized architecture** using Fargate Spot, API Gateway, and EFS
+- **Zero-trust access** with Cloudflare Tunnel option (no public IPs needed)
 - **Local development** with Docker Compose
 - **Comprehensive testing** with pytest and coverage reporting
 - **CI/CD ready** with GitHub Actions
@@ -103,7 +104,7 @@ environments:
 2. **StorageStack**: EFS for persistent storage (depends on Network)
 3. **DatabaseStack**: Optional RDS/Aurora (depends on Network)
 4. **ComputeStack**: ECS Fargate service (depends on Network, Storage)
-5. **AccessStack**: API Gateway + CloudFront (depends on Compute)
+5. **AccessStack**: API Gateway + CloudFront OR Cloudflare Tunnel (depends on Compute)
 6. **MonitoringStack**: CloudWatch dashboards and alarms (depends on all)
 
 ## Testing Strategy
@@ -129,8 +130,9 @@ The project is designed for cost efficiency:
 
 1. **Fargate Spot**: 70% cost reduction
 2. **API Gateway**: $1/million requests (vs $16/month for ALB)
-3. **SQLite on EFS**: Free database for small workloads
-4. **Auto-scaling**: Scale down during low usage
+3. **Cloudflare Tunnel**: $0/month (free tier) vs API Gateway + ALB costs
+4. **SQLite on EFS**: Free database for small workloads
+5. **Auto-scaling**: Scale down during low usage
 
 ## Security Considerations
 
@@ -157,6 +159,9 @@ The project is designed for cost efficiency:
 
 # With monitoring
 ./scripts/local-deploy.sh -m
+
+# With Cloudflare Tunnel
+./scripts/local-deploy.sh -p cloudflare
 ```
 
 ## Deployment Patterns
@@ -197,3 +202,36 @@ The project is designed for cost efficiency:
    - Use Spot instances for non-production
    - Enable auto-scaling
    - Set up cost alerts
+   - Consider Cloudflare Tunnel for zero-cost access
+
+## Cloudflare Tunnel Support
+
+The project supports Cloudflare Tunnel as an alternative to API Gateway:
+
+### Benefits
+- **Zero cost**: Free tier supports up to 50 users
+- **No public IPs**: Outbound-only connections
+- **Built-in DDoS protection**: Cloudflare's global network
+- **Zero-trust security**: Email/domain-based access policies
+
+### Configuration
+```yaml
+access:
+  type: "cloudflare"  # Instead of "api_gateway"
+  cloudflare:
+    enabled: true
+    tunnel_token_secret_name: "n8n/prod/cloudflare-tunnel-token"
+    tunnel_name: "n8n-production"
+    tunnel_domain: "n8n.example.com"
+    access_enabled: true
+    access_allowed_emails:
+      - "admin@example.com"
+    access_allowed_domains:
+      - "example.com"
+```
+
+### Token Rotation
+```bash
+# Rotate Cloudflare tunnel token
+./scripts/cloudflare-tunnel-rotate.sh -e production -r
+```

@@ -3,6 +3,7 @@ from typing import Optional, Dict, Any, List
 from aws_cdk import (
     Duration,
     RemovalPolicy,
+    Stack,
 )
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ec2 as ec2
@@ -83,11 +84,33 @@ class N8nFargateService(Construct):
     
     def _create_log_group(self) -> logs.LogGroup:
         """Create CloudWatch log group for n8n."""
-        retention_days = logs.RetentionDays.ONE_MONTH
-        if self.env_config.settings.monitoring:
-            retention_days = logs.RetentionDays(
-                f"DAYS_{self.env_config.settings.monitoring.log_retention_days}"
-            )
+        # Map numeric days to RetentionDays enum
+        retention_map = {
+            1: logs.RetentionDays.ONE_DAY,
+            3: logs.RetentionDays.THREE_DAYS,
+            5: logs.RetentionDays.FIVE_DAYS,
+            7: logs.RetentionDays.ONE_WEEK,
+            14: logs.RetentionDays.TWO_WEEKS,
+            30: logs.RetentionDays.ONE_MONTH,
+            60: logs.RetentionDays.TWO_MONTHS,
+            90: logs.RetentionDays.THREE_MONTHS,
+            120: logs.RetentionDays.FOUR_MONTHS,
+            150: logs.RetentionDays.FIVE_MONTHS,
+            180: logs.RetentionDays.SIX_MONTHS,
+            365: logs.RetentionDays.ONE_YEAR,
+            400: logs.RetentionDays.THIRTEEN_MONTHS,
+            545: logs.RetentionDays.EIGHTEEN_MONTHS,
+            731: logs.RetentionDays.TWO_YEARS,
+            1096: logs.RetentionDays.THREE_YEARS,
+            1827: logs.RetentionDays.FIVE_YEARS,
+        }
+        
+        retention_days = logs.RetentionDays.ONE_MONTH  # Default
+        if self.env_config.settings.monitoring and self.env_config.settings.monitoring.log_retention_days:
+            requested_days = self.env_config.settings.monitoring.log_retention_days
+            # Find the closest matching retention period
+            closest_days = min(retention_map.keys(), key=lambda x: abs(x - requested_days))
+            retention_days = retention_map[closest_days]
         
         return logs.LogGroup(
             self,
@@ -145,8 +168,8 @@ class N8nFargateService(Construct):
         
         # Get n8n version from config, default to 1.94.1
         n8n_version = "1.94.1"
-        if env_config.settings and env_config.settings.fargate:
-            n8n_version = env_config.settings.fargate.n8n_version
+        if self.env_config.settings and self.env_config.settings.fargate:
+            n8n_version = self.env_config.settings.fargate.n8n_version or "1.94.1"
         
         # Add container
         container = self.task_definition.add_container(
@@ -345,19 +368,25 @@ class N8nFargateService(Construct):
     
     def _setup_service_discovery(self) -> None:
         """Set up service discovery for internal communication."""
-        # Create namespace if it doesn't exist
-        namespace = self.cluster.add_default_cloud_map_namespace(
-            name=f"n8n-{self.environment}.local",
-            type=servicediscovery.NamespaceType.DNS_PRIVATE,
-            vpc=self.vpc,
-        ) if not hasattr(self.cluster, 'default_cloud_map_namespace') else self.cluster.default_cloud_map_namespace
+        # Check if namespace already exists on the cluster
+        namespace = None
+        if hasattr(self.cluster, 'default_cloud_map_namespace'):
+            namespace = self.cluster.default_cloud_map_namespace
+        else:
+            # Create new namespace
+            namespace = self.cluster.add_default_cloud_map_namespace(
+                name=f"n8n-{self.environment}.local",
+                type=servicediscovery.NamespaceType.DNS_PRIVATE,
+                vpc=self.vpc,
+            )
         
-        # Associate service with service discovery
-        self.service.enable_cloud_map(
-            name="n8n",
-            dns_record_type=servicediscovery.DnsRecordType.A,
-            dns_ttl=Duration.seconds(10),
-        )
+        # Associate service with service discovery if namespace exists
+        if namespace:
+            self.service.enable_cloud_map(
+                name="n8n",
+                dns_record_type=servicediscovery.DnsRecordType.A,
+                dns_ttl=Duration.seconds(10),
+            )
     
     def _add_n8n_permissions(self, role: iam.IRole) -> None:
         """Add required IAM permissions for n8n."""
@@ -400,7 +429,7 @@ class N8nFargateService(Construct):
                     "ssm:GetParameters",
                 ],
                 resources=[
-                    f"arn:aws:ssm:{self.service.env.region}:{self.service.env.account}:parameter/n8n/{self.environment}/*",
+                    f"arn:aws:ssm:{Stack.of(self).region}:{Stack.of(self).account}:parameter/n8n/{self.environment}/*",
                 ],
             )
         )

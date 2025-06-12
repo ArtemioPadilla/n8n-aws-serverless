@@ -202,6 +202,36 @@ services:
       - monitoring
       - scaling
 
+  # Cloudflare Tunnel for secure remote access
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: n8n-cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
+    networks:
+      - n8n_network
+    depends_on:
+      - n8n
+    profiles:
+      - cloudflare
+
+  # Cloudflare Tunnel for PostgreSQL profile
+  cloudflared-postgres:
+    image: cloudflare/cloudflared:latest
+    container_name: n8n-cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
+    networks:
+      - n8n_network
+    depends_on:
+      - n8n-postgres
+    profiles:
+      - cloudflare-postgres
+
 volumes:
   n8n_data:
     name: n8n_data

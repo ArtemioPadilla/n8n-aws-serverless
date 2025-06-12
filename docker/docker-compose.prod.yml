@@ -182,6 +182,34 @@ services:
     profiles:
       - monitoring
 
+  # Cloudflare Tunnel for secure zero-trust access
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: n8n-cloudflared-prod
+    restart: always
+    command: tunnel --metrics 0.0.0.0:2000 run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
+      - TUNNEL_METRICS=0.0.0.0:2000
+    networks:
+      - n8n_network
+    depends_on:
+      - n8n
+    healthcheck:
+      test: ["CMD", "cloudflared", "tunnel", "info"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    profiles:
+      - cloudflare
+      - monitoring  # Also available when monitoring is enabled
+
 volumes:
   n8n_data:
     name: n8n_prod_data

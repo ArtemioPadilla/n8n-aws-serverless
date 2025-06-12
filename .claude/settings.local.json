@@ -12,7 +12,16 @@
       "Bash(docker exec:*)",
       "Bash(docker logs:*)",
       "Bash(docker restart:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python -m pytest tests/unit/test_cloudflare_config.py -v)",
+      "Bash(ls:*)",
+      "Bash(source:*)",
+      "Bash(make:*)",
+      "Bash(.venv/bin/python -m pytest tests/unit/test_cloudflare_config.py -v)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(rm:*)",
+      "Bash(git --no-pager diff)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }

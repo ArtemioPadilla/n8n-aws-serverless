@@ -129,6 +129,11 @@ scrape_configs:
   - job_name: 'redis'
     static_configs:
       - targets: ['redis-exporter:9121']
+      
+  - job_name: 'cloudflared'
+    static_configs:
+      - targets: ['cloudflared:2000']
+    metrics_path: '/metrics'
 EOF
     
     print_success "Prometheus configuration created"
@@ -218,6 +223,71 @@ EOF
     print_success "Grafana dashboard created"
 }
 
+# Setup Cloudflare Tunnel configuration
+setup_cloudflare_tunnel() {
+    print_info "Checking Cloudflare Tunnel configuration..."
+    
+    # Check if user wants to set up Cloudflare Tunnel
+    echo
+    read -p "Do you want to configure Cloudflare Tunnel for secure remote access? (y/N): " -n 1 -r
+    echo
+    
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        print_info "Setting up Cloudflare Tunnel configuration..."
+        
+        echo
+        echo "To use Cloudflare Tunnel, you need to:"
+        echo "1. Create a tunnel in your Cloudflare Zero Trust dashboard"
+        echo "2. Copy the tunnel token"
+        echo
+        
+        read -p "Do you have a Cloudflare Tunnel token? (y/N): " -n 1 -r
+        echo
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            read -p "Enter your Cloudflare Tunnel token: " TUNNEL_TOKEN
+            
+            if [ ! -z "$TUNNEL_TOKEN" ]; then
+                # Validate token format (base64-like string, typically 40+ characters)
+                if [[ ! "$TUNNEL_TOKEN" =~ ^[a-zA-Z0-9_-]{40,}$ ]]; then
+                    print_error "Invalid token format. Cloudflare Tunnel tokens are typically long base64-like strings."
+                    echo "Please check your token and try again."
+                    return 1
+                fi
+                
+                # Update .env file with the token
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    # macOS
+                    sed -i '' "s/CLOUDFLARE_TUNNEL_TOKEN=$/CLOUDFLARE_TUNNEL_TOKEN=$TUNNEL_TOKEN/" "$DOCKER_DIR/.env"
+                else
+                    # Linux
+                    sed -i "s/CLOUDFLARE_TUNNEL_TOKEN=$/CLOUDFLARE_TUNNEL_TOKEN=$TUNNEL_TOKEN/" "$DOCKER_DIR/.env"
+                fi
+                
+                print_success "Cloudflare Tunnel token configured"
+                echo
+                echo "To use Cloudflare Tunnel, run:"
+                echo "  ./scripts/local-deploy.sh -p cloudflare"
+                echo
+            else
+                print_error "No token provided. Skipping Cloudflare Tunnel configuration."
+            fi
+        else
+            print_info "You can add the token later by editing $DOCKER_DIR/.env"
+            echo
+            echo "Instructions:"
+            echo "1. Go to https://one.dash.cloudflare.com/"
+            echo "2. Navigate to Access > Tunnels"
+            echo "3. Create a new tunnel or use an existing one"
+            echo "4. Copy the tunnel token"
+            echo "5. Add it to CLOUDFLARE_TUNNEL_TOKEN in $DOCKER_DIR/.env"
+            echo
+        fi
+    else
+        print_info "Skipping Cloudflare Tunnel configuration"
+    fi
+}
+
 # Main setup
 main() {
     echo "🚀 n8n Local Development Setup"
@@ -231,6 +301,7 @@ main() {
     create_prometheus_config
     create_grafana_datasource
     create_grafana_dashboard
+    setup_cloudflare_tunnel
     
     echo
     print_success "Local setup completed successfully!"

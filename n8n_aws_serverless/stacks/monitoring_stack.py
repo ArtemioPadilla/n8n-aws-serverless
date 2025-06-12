@@ -13,7 +13,7 @@ from .base_stack import N8nBaseStack
 from .compute_stack import ComputeStack
 from .storage_stack import StorageStack
 from .database_stack import DatabaseStack
-from ..config.models import N8nConfig
+from ..config.models import N8nConfig, AccessType
 
 
 class MonitoringStack(N8nBaseStack):
@@ -58,6 +58,11 @@ class MonitoringStack(N8nBaseStack):
             self._create_storage_alarms()
         if database_stack:
             self._create_database_alarms()
+        
+        # Create Cloudflare Tunnel alarms if enabled
+        if (self.env_config.settings.access and 
+            self.env_config.settings.access.type == AccessType.CLOUDFLARE):
+            self._create_cloudflare_tunnel_alarms()
         
         # Create dashboard
         self.dashboard = self._create_dashboard()
@@ -222,6 +227,79 @@ class MonitoringStack(N8nBaseStack):
             # Aurora Serverless v2 metrics are different
             pass
     
+    def _create_cloudflare_tunnel_alarms(self) -> None:
+        """Create alarms for Cloudflare Tunnel health."""
+        alarm_action = cloudwatch_actions.SnsAction(self.alarm_topic)
+        
+        # Create custom metric namespace for Cloudflare
+        cf_namespace = "Cloudflare/Tunnel"
+        
+        # Tunnel health metric filter
+        logs.MetricFilter(
+            self,
+            "CloudflareTunnelHealthMetric",
+            log_group=self.compute_stack.n8n_service.log_group,
+            metric_name="TunnelHealthy",
+            metric_namespace=cf_namespace,
+            metric_value="1",
+            filter_pattern=logs.FilterPattern.literal('[timestamp, request_id, container="cloudflare-tunnel", level="info", message="Tunnel status*healthy*"]'),
+            default_value=0,
+        )
+        
+        # Tunnel connection errors metric filter
+        logs.MetricFilter(
+            self,
+            "CloudflareTunnelErrorMetric",
+            log_group=self.compute_stack.n8n_service.log_group,
+            metric_name="TunnelConnectionErrors",
+            metric_namespace=cf_namespace,
+            metric_value="1",
+            filter_pattern=logs.FilterPattern.literal('[timestamp, request_id, container="cloudflare-tunnel", level="error", message="*connection*" || message="*tunnel*"]'),
+            default_value=0,
+        )
+        
+        # Tunnel metrics from container health check
+        tunnel_health_alarm = cloudwatch.Alarm(
+            self,
+            "CloudflareTunnelHealthAlarm",
+            alarm_name=f"{self.stack_prefix}-cloudflare-tunnel-unhealthy",
+            alarm_description="Cloudflare Tunnel is unhealthy",
+            metric=cloudwatch.Metric(
+                namespace="AWS/ECS",
+                metric_name="ContainerHealthCheck",
+                dimensions_map={
+                    "ServiceName": self.compute_stack.n8n_service.service.service_name,
+                    "ClusterName": self.compute_stack.cluster.cluster_name,
+                    "ContainerName": "cloudflare-tunnel",
+                },
+                statistic="Average",
+            ),
+            threshold=1,
+            evaluation_periods=3,
+            datapoints_to_alarm=2,
+            comparison_operator=cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
+            treat_missing_data=cloudwatch.TreatMissingData.BREACHING,
+        )
+        tunnel_health_alarm.add_alarm_action(alarm_action)
+        
+        # Connection error rate alarm
+        tunnel_error_alarm = cloudwatch.Alarm(
+            self,
+            "CloudflareTunnelErrorAlarm",
+            alarm_name=f"{self.stack_prefix}-cloudflare-tunnel-errors-high",
+            alarm_description="High Cloudflare Tunnel error rate",
+            metric=cloudwatch.Metric(
+                namespace=cf_namespace,
+                metric_name="TunnelConnectionErrors",
+                statistic="Sum",
+            ),
+            threshold=10,  # More than 10 errors in evaluation period
+            evaluation_periods=2,
+            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+            treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+        )
+        tunnel_error_alarm.add_alarm_action(alarm_action)
+    
     def _create_dashboard(self) -> cloudwatch.Dashboard:
         """Create CloudWatch dashboard."""
         dashboard = cloudwatch.Dashboard(
@@ -340,6 +418,47 @@ class MonitoringStack(N8nBaseStack):
                 ),
             )
         
+        # Add Cloudflare Tunnel metrics if enabled
+        if (self.env_config.settings.access and 
+            self.env_config.settings.access.type == AccessType.CLOUDFLARE):
+            dashboard.add_widgets(
+                cloudwatch.GraphWidget(
+                    title="Cloudflare Tunnel Health",
+                    left=[
+                        cloudwatch.Metric(
+                            namespace="Cloudflare/Tunnel",
+                            metric_name="TunnelHealthy",
+                            statistic="Average",
+                            label="Tunnel Health Status",
+                            color=cloudwatch.Color.GREEN,
+                        ),
+                    ],
+                    right=[
+                        cloudwatch.Metric(
+                            namespace="Cloudflare/Tunnel",
+                            metric_name="TunnelConnectionErrors",
+                            statistic="Sum",
+                            label="Connection Errors",
+                            color=cloudwatch.Color.RED,
+                        ),
+                    ],
+                    width=12,
+                    height=6,
+                ),
+                cloudwatch.LogQueryWidget(
+                    title="Cloudflare Tunnel Logs",
+                    log_group_names=[self.compute_stack.n8n_service.log_group.log_group_name],
+                    width=12,
+                    height=6,
+                    query_lines=[
+                        "fields @timestamp, @message",
+                        'filter @logStream like /cloudflare/',
+                        "sort @timestamp desc",
+                        "limit 20",
+                    ],
+                ),
+            )
+        
         return dashboard
     
     def _create_custom_n8n_metrics(self) -> None:
@@ -434,10 +553,7 @@ class MonitoringStack(N8nBaseStack):
             metric_name="AuthenticationErrors",
             metric_namespace=namespace,
             metric_value="1",
-            filter_pattern=logs.FilterPattern.any(
-                logs.FilterPattern.literal("Authentication failed"),
-                logs.FilterPattern.literal("Unauthorized access"),
-            ),
+            filter_pattern=logs.FilterPattern.literal("Authentication failed || Unauthorized access"),
             default_value=0,
         )
         

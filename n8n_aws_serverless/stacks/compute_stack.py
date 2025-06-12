@@ -14,7 +14,8 @@ from .base_stack import N8nBaseStack
 from .network_stack import NetworkStack
 from .storage_stack import StorageStack
 from ..constructs.fargate_n8n import N8nFargateService
-from ..config.models import N8nConfig
+from ..constructs.cloudflare_tunnel import CloudflareTunnelSidecar, CloudflareTunnelConfiguration
+from ..config.models import N8nConfig, AccessType
 
 
 class ComputeStack(N8nBaseStack):
@@ -68,6 +69,12 @@ class ComputeStack(N8nBaseStack):
             database_endpoint=database_endpoint,
             database_secret=database_secret,
         )
+        
+        # Add Cloudflare Tunnel if configured
+        if (self.env_config.settings.access and 
+            self.env_config.settings.access.type == AccessType.CLOUDFLARE and
+            self.env_config.settings.access.cloudflare):
+            self._setup_cloudflare_tunnel()
         
         # Set up auto-scaling if enabled
         if (self.env_config.settings.scaling and 
@@ -182,6 +189,48 @@ class ComputeStack(N8nBaseStack):
             "CIRCUIT_BREAKER_FUNCTION", self.resilient_n8n.get_circuit_breaker_function_name()
         )
     
+    def _setup_cloudflare_tunnel(self) -> None:
+        """Set up Cloudflare Tunnel for zero-trust access."""
+        cf_config = self.env_config.settings.access.cloudflare
+        
+        # Create Cloudflare tunnel configuration
+        tunnel_name = cf_config.tunnel_name or f"n8n-{self.environment}"
+        tunnel_domain = cf_config.tunnel_domain or f"n8n-{self.environment}.example.com"
+        
+        # Create tunnel configuration
+        self.cloudflare_config = CloudflareTunnelConfiguration(
+            self,
+            "CloudflareConfig",
+            tunnel_name=tunnel_name,
+            tunnel_domain=tunnel_domain,
+            service_url="http://localhost:5678",
+            environment=self.environment,
+            tunnel_secret_name=cf_config.tunnel_token_secret_name,
+            access_config={
+                "enabled": cf_config.access_enabled,
+                "allowed_emails": cf_config.access_allowed_emails,
+                "allowed_domains": cf_config.access_allowed_domains,
+            } if cf_config.access_enabled else None,
+        )
+        
+        # Add Cloudflare tunnel sidecar to the task definition
+        self.cloudflare_sidecar = CloudflareTunnelSidecar(
+            self,
+            "CloudflareSidecar",
+            task_definition=self.n8n_service.task_definition,
+            tunnel_secret=self.cloudflare_config.tunnel_secret,
+            tunnel_config={
+                "tunnel_name": tunnel_name,
+                "tunnel_domain": tunnel_domain,
+            },
+            log_group=self.n8n_service.log_group,
+            environment=self.environment,
+        )
+        
+        # With Cloudflare Tunnel, no inbound rules are needed
+        # The tunnel establishes an outbound-only connection
+        # Security group already allows all outbound traffic by default
+    
     def _add_outputs(self) -> None:
         """Add stack outputs."""
         # Cluster outputs
@@ -231,6 +280,28 @@ class ComputeStack(N8nBaseStack):
             value=self.n8n_service.log_group.log_group_name,
             description="CloudWatch log group name"
         )
+        
+        # Cloudflare outputs if enabled
+        if (self.env_config.settings.access and 
+            self.env_config.settings.access.type == AccessType.CLOUDFLARE and
+            hasattr(self, 'cloudflare_config')):
+            self.add_output(
+                "CloudflareTunnelName",
+                value=self.cloudflare_config.tunnel_name,
+                description="Cloudflare tunnel name"
+            )
+            
+            self.add_output(
+                "CloudflareTunnelDomain",
+                value=self.cloudflare_config.tunnel_domain,
+                description="Cloudflare tunnel domain"
+            )
+            
+            self.add_output(
+                "CloudflareTunnelSecretArn",
+                value=self.cloudflare_config.tunnel_secret.secret_arn,
+                description="Cloudflare tunnel token secret ARN"
+            )
     
     @property
     def service(self) -> ecs.FargateService:

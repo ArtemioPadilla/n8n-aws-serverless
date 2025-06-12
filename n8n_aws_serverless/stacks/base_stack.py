@@ -33,7 +33,7 @@ class N8nBaseStack(Stack):
         """
         # Get environment config
         self.config = config
-        self.environment = environment
+        self._environment = environment
         self.env_config = config.get_environment(environment)
         
         if not self.env_config:
@@ -214,6 +214,11 @@ class N8nBaseStack(Stack):
         
         components = self.env_config.settings.features.get("components", [])
         return component in components
+    
+    @property
+    def environment(self) -> str:
+        """Get the environment name."""
+        return self._environment
     
     @property
     def stack_prefix(self) -> str:
