@@ -29,7 +29,8 @@
       "Bash(python3 -m black:*)",
       "Bash(sed:*)",
       "Bash(python:*)",
-      "Bash(flake8:*)"
+      "Bash(flake8:*)",
+      "Bash(isort:*)"
     ],
     "deny": []
   }

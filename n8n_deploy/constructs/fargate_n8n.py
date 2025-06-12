@@ -11,7 +11,12 @@ from aws_cdk import aws_secretsmanager as secretsmanager
 from aws_cdk import aws_servicediscovery as servicediscovery
 from constructs import Construct
 
-from ..config.models import DatabaseConfig, DatabaseType, EnvironmentConfig, FargateConfig
+from ..config.models import (
+    DatabaseConfig,
+    DatabaseType,
+    EnvironmentConfig,
+    FargateConfig,
+)
 
 
 class N8nFargateService(Construct):

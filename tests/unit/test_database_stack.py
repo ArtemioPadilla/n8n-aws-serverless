@@ -5,7 +5,13 @@ import pytest
 from aws_cdk import App, Environment, RemovalPolicy
 from aws_cdk.assertions import Match, Template
 
-from n8n_deploy.config.models import DatabaseConfig, EnvironmentConfig, EnvironmentSettings, GlobalConfig, N8nConfig
+from n8n_deploy.config.models import (
+    DatabaseConfig,
+    EnvironmentConfig,
+    EnvironmentSettings,
+    GlobalConfig,
+    N8nConfig,
+)
 from n8n_deploy.stacks.database_stack import DatabaseStack
 from n8n_deploy.stacks.network_stack import NetworkStack
 
