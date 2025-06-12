@@ -131,7 +131,9 @@ jobs:
         export N8N_BASIC_AUTH_PASSWORD=test-password
         export POSTGRES_USER=test-postgres-user
         export POSTGRES_PASSWORD=test-postgres-password
-        docker compose config
+        # Test base config with default profile
+        docker compose --profile default config
+        # Test production config (prod file extends base file)
         docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 
     - name: Build Docker images
@@ -144,7 +146,8 @@ jobs:
         export N8N_BASIC_AUTH_PASSWORD=test-password
         export POSTGRES_USER=test-postgres-user
         export POSTGRES_PASSWORD=test-postgres-password
-        docker compose build --no-cache
+        # Build with default profile
+        docker compose --profile default build --no-cache
 
   security-scan:
     name: Security Scan
