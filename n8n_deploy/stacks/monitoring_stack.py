@@ -6,6 +6,7 @@ from aws_cdk import (
 )
 from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_sns as sns
+from aws_cdk import aws_sns_subscriptions as sns_subscriptions
 from aws_cdk import aws_cloudwatch_actions as cloudwatch_actions
 from aws_cdk import aws_logs as logs
 from constructs import Construct
@@ -85,7 +86,7 @@ class MonitoringStack(N8nBaseStack):
         # Add email subscription if configured
         if self.monitoring_config and self.monitoring_config.alarm_email:
             topic.add_subscription(
-                sns.subscriptions.EmailSubscription(self.monitoring_config.alarm_email)
+                sns_subscriptions.EmailSubscription(self.monitoring_config.alarm_email)
             )
         
         return topic
