@@ -129,7 +129,8 @@ services:
       - ./ssl:/etc/nginx/ssl:ro
       - nginx_logs:/var/log/nginx
     depends_on:
-      - n8n
+      n8n:
+        condition: service_healthy
     networks:
       - n8n_network
     healthcheck:
@@ -192,7 +193,8 @@ services:
     networks:
       - n8n_network
     depends_on:
-      - n8n
+      n8n:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "cloudflared", "tunnel", "info"]
       interval: 30s

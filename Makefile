@@ -56,12 +56,12 @@ lint: ## Run linting checks
 	@echo "$(YELLOW)Running linting checks...$(NC)"
 	$(ACTIVATE) && $(BLACK) --check n8n_deploy tests
 	$(ACTIVATE) && $(FLAKE8) n8n_deploy tests
-	$(ACTIVATE) && $(ISORT) --check-only --profile=black n8n_deploy tests
+	$(ACTIVATE) && $(ISORT) --check-only n8n_deploy tests
 	@echo "$(GREEN)✓ Linting passed$(NC)"
 
 format: ## Format code
 	@echo "$(YELLOW)Formatting code...$(NC)"
-	$(ACTIVATE) && $(ISORT) --profile=black n8n_deploy tests
+	$(ACTIVATE) && $(ISORT) n8n_deploy tests
 	$(ACTIVATE) && $(BLACK) n8n_deploy tests
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 

@@ -49,7 +49,7 @@ jobs:
         flake8 n8n_deploy tests
         
         # isort import sorting check
-        isort --check-only --profile=black n8n_deploy tests
+        isort --check-only n8n_deploy tests
 
     - name: Run type checking
       run: |
