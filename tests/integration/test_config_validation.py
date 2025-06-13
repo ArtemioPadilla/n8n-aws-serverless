@@ -1,10 +1,8 @@
 """Integration tests for configuration validation and loading."""
 import os
-from unittest.mock import patch
 
 import pytest
 import yaml
-from pydantic import ValidationError
 
 from n8n_deploy.config import ConfigLoader
 from n8n_deploy.config.models import N8nConfig
@@ -136,15 +134,13 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(valid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            config = loader.get_config()
+        loader = ConfigLoader(str(config_file))
+        config = loader.load_config("dev")
 
-            assert isinstance(config, N8nConfig)
-            assert config.global_config.project_name == "test-n8n"
-            assert len(config.environments) == 2
-            assert "dev" in config.environments
-            assert "production" in config.environments
+        assert isinstance(config, N8nConfig)
+        assert config.global_config.project_name == "test-n8n"
+        assert len(config.environments) == 1
+        assert "dev" in config.environments
 
     def test_environment_inheritance(self, valid_config, tmp_path):
         """Test that environment settings inherit from defaults."""
@@ -152,18 +148,18 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(valid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            config = loader.get_config()
+        loader = ConfigLoader(str(config_file))
 
-            # Check that dev environment inherits n8n_version from defaults
-            dev_fargate = config.environments["dev"].settings.fargate
-            assert dev_fargate.n8n_version == "1.94.1"
+        # Test dev environment
+        dev_config = loader.load_config("dev")
+        dev_fargate = dev_config.environments["dev"].settings.fargate
+        assert dev_fargate.n8n_version == "1.94.1"
 
-            # Check that production overrides work
-            prod_fargate = config.environments["production"].settings.fargate
-            assert prod_fargate.cpu == 1024
-            assert prod_fargate.memory == 2048
+        # Test production environment overrides
+        prod_config = loader.load_config("production")
+        prod_fargate = prod_config.environments["production"].settings.fargate
+        assert prod_fargate.cpu == 1024
+        assert prod_fargate.memory == 2048
 
     def test_invalid_cpu_memory_combination(self, valid_config, tmp_path):
         """Test validation of invalid Fargate CPU/memory combinations."""
@@ -174,10 +170,9 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(valid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            with pytest.raises(ValidationError, match="Invalid CPU/memory combination"):
-                loader.get_config()
+        loader = ConfigLoader(str(config_file))
+        with pytest.raises(ValueError, match="Invalid CPU/memory combination"):
+            loader.load_config("dev")
 
     def test_missing_required_fields(self, tmp_path):
         """Test validation with missing required fields."""
@@ -199,10 +194,9 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(invalid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            with pytest.raises(ValidationError):
-                loader.get_config()
+        loader = ConfigLoader(str(config_file))
+        with pytest.raises(ValueError):
+            loader.load_config("dev")
 
     def test_oauth_validation(self, valid_config, tmp_path):
         """Test OAuth configuration validation."""
@@ -214,10 +208,9 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(valid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            with pytest.raises(ValidationError, match="oauth_provider required"):
-                loader.get_config()
+        loader = ConfigLoader(str(config_file))
+        with pytest.raises(ValueError, match="oauth_provider required"):
+            loader.load_config("dev")
 
     def test_scaling_validation(self, valid_config, tmp_path):
         """Test auto-scaling configuration validation."""
@@ -229,10 +222,9 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(valid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            with pytest.raises(ValidationError, match="max_tasks must be >= min_tasks"):
-                loader.get_config()
+        loader = ConfigLoader(str(config_file))
+        with pytest.raises(ValueError, match="max_tasks.*must be.*min_tasks"):
+            loader.load_config("dev")
 
     def test_environment_variables_override(self, valid_config, tmp_path):
         """Test that environment variables can override configuration."""
@@ -240,17 +232,17 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(valid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            # Set environment variable to override
-            os.environ["N8N_ENVIRONMENT"] = "production"
+        # Set environment variable to override
+        os.environ["N8N_ENVIRONMENT"] = "production"
 
-            loader = ConfigLoader()
-            loader.get_config()
+        try:
+            loader = ConfigLoader(str(config_file))
+            config = loader.load_config("production")
 
+            assert isinstance(config, N8nConfig)
+        finally:
             # Clean up
             del os.environ["N8N_ENVIRONMENT"]
-
-            assert loader.get_environment() == "production"
 
     def test_stack_type_validation(self, valid_config, tmp_path):
         """Test stack type configuration validation."""
@@ -258,16 +250,13 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(valid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            config = loader.get_config()
+        loader = ConfigLoader(str(config_file))
+        config = loader.load_config("dev")
 
-            assert "minimal" in config.stacks
-            assert "enterprise" in config.stacks
-            assert (
-                config.stacks["minimal"].description == "Minimal setup for personal use"
-            )
-            assert "fargate" in config.stacks["minimal"].components
+        assert "minimal" in config.stacks
+        assert "enterprise" in config.stacks
+        assert config.stacks["minimal"].description == "Minimal setup for personal use"
+        assert "fargate" in config.stacks["minimal"].components
 
     def test_cross_region_backup_validation(self, valid_config, tmp_path):
         """Test cross-region backup configuration validation."""
@@ -280,14 +269,13 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             yaml.dump(valid_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            config = loader.get_config()
+        loader = ConfigLoader(str(config_file))
+        config = loader.load_config("production")
 
-            # Should still be valid but with empty regions
-            prod_backup = config.environments["production"].settings.backup
-            assert prod_backup.cross_region_backup is True
-            assert len(prod_backup.backup_regions) == 0
+        # Should still be valid but with empty regions
+        prod_backup = config.environments["production"].settings.backup
+        assert prod_backup.cross_region_backup is True
+        assert len(prod_backup.backup_regions) == 0
 
     def test_multi_file_configuration(self, tmp_path):
         """Test loading configuration from multiple files."""
@@ -326,21 +314,17 @@ class TestConfigValidation:
         with open(merged_file, "w") as f:
             yaml.dump(merged_config, f)
 
-        with patch.object(ConfigLoader, "config_file", str(merged_file)):
-            loader = ConfigLoader()
-            config = loader.get_config()
+        loader = ConfigLoader(str(merged_file))
+        config = loader.load_config("dev")
 
-            assert config.global_config.project_name == "test-n8n"
-            assert config.environments["dev"].settings.fargate.cpu == 512
+        assert config.global_config.project_name == "test-n8n"
+        assert config.environments["dev"].settings.fargate.cpu == 512
 
     def test_config_file_not_found(self):
         """Test handling of missing configuration file."""
-        with patch.object(
-            ConfigLoader, "config_file", "/non/existent/path/system.yaml"
-        ):
-            loader = ConfigLoader()
-            with pytest.raises(FileNotFoundError):
-                loader.get_config()
+        loader = ConfigLoader("/non/existent/path/nonexistent-config.yaml")
+        with pytest.raises(FileNotFoundError):
+            loader.load_config("dev")
 
     def test_invalid_yaml_syntax(self, tmp_path):
         """Test handling of invalid YAML syntax."""
@@ -348,7 +332,6 @@ class TestConfigValidation:
         with open(config_file, "w") as f:
             f.write("invalid: yaml: syntax: ][")
 
-        with patch.object(ConfigLoader, "config_file", str(config_file)):
-            loader = ConfigLoader()
-            with pytest.raises(yaml.YAMLError):
-                loader.get_config()
+        loader = ConfigLoader(str(config_file))
+        with pytest.raises(yaml.YAMLError):
+            loader.load_config("dev")

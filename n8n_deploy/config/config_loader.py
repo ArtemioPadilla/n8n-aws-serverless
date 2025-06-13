@@ -122,20 +122,18 @@ class ConfigLoader:
         modified_config = env_config.copy(deep=True)
 
         # Apply stack settings
-        if stack_config.settings:
-            # Update components list if specified
-            if "components" in stack_config.settings:
-                # This would be used by the CDK app to determine which stacks to create
-                modified_config.settings.features = (
-                    modified_config.settings.features or {}
-                )
-                modified_config.settings.features["components"] = stack_config.settings[
-                    "components"
-                ]
+        # Update components list if specified
+        if stack_config.components:
+            # This would be used by the CDK app to determine which stacks to create
+            modified_config.settings.features = (
+                modified_config.settings.features or {}
+            )
+            modified_config.settings.features["components"] = stack_config.components
 
-            # Apply other settings
+        # Apply other stack settings
+        if stack_config.settings:
             for key, value in stack_config.settings.items():
-                if key != "components" and hasattr(modified_config.settings, key):
+                if hasattr(modified_config.settings, key):
                     setattr(modified_config.settings, key, value)
 
         return modified_config
