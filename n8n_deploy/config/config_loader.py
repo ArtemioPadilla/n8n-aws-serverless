@@ -125,9 +125,7 @@ class ConfigLoader:
         # Update components list if specified
         if stack_config.components:
             # This would be used by the CDK app to determine which stacks to create
-            modified_config.settings.features = (
-                modified_config.settings.features or {}
-            )
+            modified_config.settings.features = modified_config.settings.features or {}
             modified_config.settings.features["components"] = stack_config.components
 
         # Apply other stack settings

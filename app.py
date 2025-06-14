@@ -11,7 +11,6 @@ Usage:
     cdk deploy -c environment=production
     cdk deploy -c environment=dev -c stack_type=minimal
 """
-import os
 import sys
 from typing import Optional
 
@@ -27,9 +26,11 @@ from n8n_deploy.stacks import (
 from n8n_deploy.config.models import DatabaseType
 
 
-def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = None) -> None:
+def create_stacks(
+    app: cdk.App, environment: str, stack_type: Optional[str] = None
+) -> None:
     """Create all stacks for the specified environment.
-    
+
     Args:
         app: CDK application
         environment: Environment name from system.yaml
@@ -41,20 +42,22 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
         config = config_loader.load_config(environment, stack_type)
     except FileNotFoundError:
         print("Error: system.yaml not found. Please create a system.yaml file.")
-        print("You can use 'python -m n8n_deploy.config.config_loader' to generate an example.")
+        print(
+            "You can use 'python -m n8n_deploy.config.config_loader' to generate an example."
+        )
         sys.exit(1)
     except ValueError as e:
         print(f"Error loading configuration: {e}")
         sys.exit(1)
-    
+
     env_config = config.get_environment(environment)
     if not env_config:
         print(f"Error: Environment '{environment}' not found in configuration")
         sys.exit(1)
-    
+
     # Create stack name prefix
     stack_prefix = f"{config.global_config.project_name}-{environment}"
-    
+
     # Determine which components to create
     components = []
     if env_config.settings.features and "components" in env_config.settings.features:
@@ -62,17 +65,17 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
     else:
         # Default components based on configuration
         components = ["network", "storage", "compute", "access"]
-        if env_config.settings.database and env_config.settings.database.type == DatabaseType.POSTGRES:
+        if (
+            env_config.settings.database
+            and env_config.settings.database.type == DatabaseType.POSTGRES
+        ):
             components.append("database")
         if env_config.settings.monitoring:
             components.append("monitoring")
-    
+
     # Create CDK environment
-    cdk_env = cdk.Environment(
-        account=env_config.account,
-        region=env_config.region
-    )
-    
+    cdk_env = cdk.Environment(account=env_config.account, region=env_config.region)
+
     # Create network stack
     network_stack = None
     if "network" in components or env_config.settings.networking:
@@ -83,7 +86,7 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             environment=environment,
             env=cdk_env,
         )
-    
+
     # Create storage stack
     storage_stack = None
     if "storage" in components or "efs" in components:
@@ -97,19 +100,21 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             network_stack=network_stack,
             env=cdk_env,
         )
-    
+
     # Create database stack if needed
     database_stack = None
     database_endpoint = None
     database_secret = None
-    if "database" in components or (env_config.settings.database and 
-                                   env_config.settings.database.type == DatabaseType.POSTGRES):
+    if "database" in components or (
+        env_config.settings.database
+        and env_config.settings.database.type == DatabaseType.POSTGRES
+    ):
         # Import DatabaseStack when needed
         from n8n_deploy.stacks import DatabaseStack
-        
+
         if not network_stack:
             raise ValueError("Database stack requires network stack")
-        
+
         database_stack = DatabaseStack(
             app,
             f"{stack_prefix}-database",
@@ -120,13 +125,13 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
         )
         database_endpoint = database_stack.endpoint
         database_secret = database_stack.secret
-    
+
     # Create compute stack
     compute_stack = None
     if "compute" in components or "fargate" in components:
         if not network_stack or not storage_stack:
             raise ValueError("Compute stack requires network and storage stacks")
-        
+
         compute_stack = ComputeStack(
             app,
             f"{stack_prefix}-compute",
@@ -138,13 +143,13 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             database_secret=database_secret,
             env=cdk_env,
         )
-    
+
     # Create access stack
     if "access" in components or "api_gateway" in components:
         if not compute_stack:
             raise ValueError("Access stack requires compute stack")
-        
-        access_stack = AccessStack(
+
+        AccessStack(
             app,
             f"{stack_prefix}-access",
             config=config,
@@ -152,13 +157,13 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             compute_stack=compute_stack,
             env=cdk_env,
         )
-    
+
     # Create monitoring stack if enabled
     if "monitoring" in components:
         # Import MonitoringStack when needed
         from n8n_deploy.stacks import MonitoringStack
-        
-        monitoring_stack = MonitoringStack(
+
+        MonitoringStack(
             app,
             f"{stack_prefix}-monitoring",
             config=config,
@@ -168,12 +173,12 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
             database_stack=database_stack,
             env=cdk_env,
         )
-    
+
     # Add tags to all stacks
     cdk.Tags.of(app).add("Environment", environment)
     cdk.Tags.of(app).add("Project", config.global_config.project_name)
     cdk.Tags.of(app).add("ManagedBy", "CDK")
-    
+
     if stack_type:
         cdk.Tags.of(app).add("StackType", stack_type)
 
@@ -181,31 +186,31 @@ def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = No
 def main():
     """Main entry point for the CDK application."""
     app = cdk.App()
-    
+
     # Get environment from context
     environment = app.node.try_get_context("environment")
     if not environment:
         print("Error: Please specify environment using -c environment=<env>")
         print("Available environments are defined in system.yaml")
         print("Example: cdk deploy -c environment=dev")
-        
+
         # Try to list available environments
         try:
             config_loader = ConfigLoader()
             environments = config_loader.get_available_environments()
             if environments:
                 print(f"\nAvailable environments: {', '.join(environments)}")
-        except:
+        except Exception:
             pass
-        
+
         sys.exit(1)
-    
+
     # Get optional stack type
     stack_type = app.node.try_get_context("stack_type")
-    
+
     # Create stacks
     create_stacks(app, environment, stack_type)
-    
+
     app.synth()
 
 
