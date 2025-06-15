@@ -203,6 +203,7 @@ environments:
 - **[Monitoring & Alerts](docs/monitoring.md)** - Observability setup
 - **[Disaster Recovery](docs/disaster-recovery.md)** - Backup and restore procedures
 - **[Local Development](docs/local-development.md)** - Development environment setup
+- **[Local CI Testing](docs/local-ci-testing.md)** - Test GitHub Actions locally with act
 - **[Migration Guide](docs/migration.md)** - Migrate from other n8n deployments
 
 ## 💰 Cost Examples
@@ -239,6 +240,9 @@ make deploy-dev
 
 # View costs
 make costs environment=production
+
+# Test GitHub Actions locally
+./scripts/act-test.sh
 ```
 
 ## 🤝 Contributing

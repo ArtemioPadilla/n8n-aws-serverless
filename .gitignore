@@ -68,6 +68,7 @@ Desktop.ini
 .env
 .env.local
 .env.*.local
+.env.act
 docker/.env
 !docker/.env.example
 

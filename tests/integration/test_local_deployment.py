@@ -1,4 +1,5 @@
 """Integration tests for local Docker deployment."""
+
 import os
 import subprocess
 import time
@@ -114,9 +115,11 @@ class TestLocalDeployment:
             capture_output=True,
             text=True,
             cwd=str(docker_dir),
-            env={**os.environ,
-                 "COMPOSE_PROJECT_NAME": "n8n-local-test",
-                 "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation"},
+            env={
+                **os.environ,
+                "COMPOSE_PROJECT_NAME": "n8n-local-test",
+                "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation",
+            },
         )
 
         assert result.returncode == 0
@@ -143,7 +146,11 @@ class TestLocalDeployment:
         subprocess.run(
             ["docker", "compose", "down"],
             cwd=str(docker_dir),
-            env={**os.environ, "COMPOSE_PROJECT_NAME": "n8n-local-test", "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation"},
+            env={
+                **os.environ,
+                "COMPOSE_PROJECT_NAME": "n8n-local-test",
+                "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation",
+            },
         )
 
     def test_environment_variables(self, project_root):
@@ -225,7 +232,11 @@ class TestLocalDeployment:
             ["docker", "compose", "up", "-d", "n8n"],
             capture_output=True,
             cwd=str(docker_dir),
-            env={**os.environ, "COMPOSE_PROJECT_NAME": "n8n-local-health-test", "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation"},
+            env={
+                **os.environ,
+                "COMPOSE_PROJECT_NAME": "n8n-local-health-test",
+                "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation",
+            },
         )
 
         # Wait for service to be ready
@@ -246,7 +257,11 @@ class TestLocalDeployment:
         subprocess.run(
             ["docker", "compose", "down"],
             cwd=str(docker_dir),
-            env={**os.environ, "COMPOSE_PROJECT_NAME": "n8n-local-health-test", "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation"},
+            env={
+                **os.environ,
+                "COMPOSE_PROJECT_NAME": "n8n-local-health-test",
+                "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation",
+            },
         )
 
         assert healthy, "n8n health check failed"

@@ -1,0 +1,14 @@
+# Act configuration for local GitHub Actions testing
+# Use images with Node.js pre-installed
+-P ubuntu-latest=catthehacker/ubuntu:full-latest
+-P ubuntu-22.04=catthehacker/ubuntu:full-22.04
+-P ubuntu-20.04=catthehacker/ubuntu:full-20.04
+
+# Default platform
+--platform ubuntu-latest=catthehacker/ubuntu:full-latest
+
+# Reuse containers for better performance
+--reuse
+
+# Use local .env file for secrets
+--env-file .env.act
