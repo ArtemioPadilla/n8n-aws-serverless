@@ -43,7 +43,7 @@ cdk diff -c environment=dev -c stack_type=minimal
 Al final del despliegue verás:
 ```
 Outputs:
-n8n-serverless-dev-access.ApiUrl = https://xxxxx.execute-api.us-east-1.amazonaws.com
+n8n-deploy-dev-access.ApiUrl = https://xxxxx.execute-api.us-east-1.amazonaws.com
 ```
 
 Abre esa URL en tu navegador. Las credenciales por defecto son:

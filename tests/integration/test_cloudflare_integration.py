@@ -22,14 +22,14 @@ class TestCloudflareIntegration:
     def cloudflare_config(self, tmp_path):
         """Create a test configuration with Cloudflare enabled."""
         config_content = """
-project_name: n8n-serverless
+project_name: n8n-deploy
 aws_region: us-east-1
 default_tags:
-  Project: n8n-serverless-test
+  Project: n8n-deploy-test
   ManagedBy: CDK
 
 global:
-  project_name: n8n-serverless
+  project_name: n8n-deploy
   organization: test-org
 
 environments:
@@ -211,11 +211,11 @@ environments:
         """Test switching from API Gateway to Cloudflare Tunnel."""
         # First deploy with API Gateway
         api_config_content = """
-project_name: n8n-serverless
+project_name: n8n-deploy
 aws_region: us-east-1
 
 global:
-  project_name: n8n-serverless
+  project_name: n8n-deploy
   organization: test-org
 
 environments:
@@ -271,11 +271,11 @@ environments:
 
         # Now switch to Cloudflare
         cloudflare_config_content = """
-project_name: n8n-serverless
+project_name: n8n-deploy
 aws_region: us-east-1
 
 global:
-  project_name: n8n-serverless
+  project_name: n8n-deploy
   organization: test-org
 
 environments:

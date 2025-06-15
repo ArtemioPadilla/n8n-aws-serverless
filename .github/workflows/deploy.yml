@@ -116,13 +116,13 @@ jobs:
         
         # Get API URL
         API_URL=$(aws cloudformation describe-stacks \
-          --stack-name "n8n-serverless-${ENVIRONMENT}-access" \
+          --stack-name "n8n-deploy-${ENVIRONMENT}-access" \
           --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
           --output text 2>/dev/null || echo "Not found")
         
         # Get CloudFront URL
         CF_URL=$(aws cloudformation describe-stacks \
-          --stack-name "n8n-serverless-${ENVIRONMENT}-access" \
+          --stack-name "n8n-deploy-${ENVIRONMENT}-access" \
           --query 'Stacks[0].Outputs[?OutputKey==`DistributionUrl`].OutputValue' \
           --output text 2>/dev/null || echo "Not found")
         

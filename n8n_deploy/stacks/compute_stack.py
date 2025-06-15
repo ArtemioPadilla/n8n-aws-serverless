@@ -2,7 +2,7 @@
 from typing import Optional
 
 from aws_cdk import Duration
-from aws_cdk import aws_autoscaling as autoscaling
+from aws_cdk import aws_applicationautoscaling as autoscaling
 from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecs as ecs
@@ -52,6 +52,10 @@ class ComputeStack(N8nBaseStack):
 
         self.network_stack = network_stack
         self.storage_stack = storage_stack
+
+        # Add explicit dependencies
+        self.add_dependency(network_stack)
+        self.add_dependency(storage_stack)
 
         # Create ECS cluster
         self.cluster = self._create_ecs_cluster()

@@ -38,7 +38,14 @@
       "Bash(docker:*)",
       "Bash(/dev/null)",
       "Bash([ -f .env ])",
-      "Bash(CLOUDFLARE_TUNNEL_TOKEN=dummy docker compose -f docker-compose.yml --profile default config 2 >& 1)"
+      "Bash(CLOUDFLARE_TUNNEL_TOKEN=dummy docker compose -f docker-compose.yml --profile default config 2 >& 1)",
+      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest tests/integration/test_stack_deployment.py::TestStackDeployment::test_minimal_stack_deployment -xvs)",
+      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest tests/integration/ -xvs -k \"not slow\")",
+      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 make test)",
+      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest tests/integration/test_stack_deployment.py::TestStackDeployment::test_full_stack_deployment -xvs)",
+      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest tests/integration/test_stack_deployment.py -k \"test_minimal\" -v)",
+      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest -k \"not test_full_stack_deployment\")",
+      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest --tb=short)"
     ],
     "deny": []
   }

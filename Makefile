@@ -185,7 +185,7 @@ aws-status: ## Show status of deployed resources
 	@echo "$(YELLOW)Checking resource status...$(NC)"
 	@ENV=$${ENVIRONMENT:-dev}; \
 	aws cloudformation describe-stacks \
-		--stack-name n8n-serverless-$$ENV-compute \
+		--stack-name n8n-deploy-$$ENV-compute \
 		--query 'Stacks[0].StackStatus' \
 		--output text 2>/dev/null || echo "Stack not found"
 

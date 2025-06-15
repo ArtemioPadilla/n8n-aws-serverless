@@ -215,7 +215,7 @@ class ConfigLoader:
         """
         example_config = {
             "global": {
-                "project_name": "n8n-serverless",
+                "project_name": "n8n-deploy",
                 "organization": "mycompany",
                 "tags": {
                     "Project": "n8n",

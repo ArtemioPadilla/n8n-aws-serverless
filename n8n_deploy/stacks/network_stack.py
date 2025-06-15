@@ -216,13 +216,14 @@ class NetworkStack(N8nBaseStack):
             description="Security group ID for EFS",
         )
 
-        # Availability zones
-        azs = [subnet.availability_zone for subnet in self.subnets]
-        self.add_output(
-            "AvailabilityZones",
-            value=Fn.join(",", list(set(azs))),
-            description="Availability zones used",
-        )
+        # Availability zones (only for created VPCs, not imported ones)
+        if not self.network_config.use_existing_vpc:
+            azs = [subnet.availability_zone for subnet in self.subnets]
+            self.add_output(
+                "AvailabilityZones",
+                value=Fn.join(",", list(set(azs))),
+                description="Availability zones used",
+            )
 
     @staticmethod
     def import_from_outputs(

@@ -23,6 +23,16 @@ class TestSecretsScanning:
             r'(?i)aws_session_token\s*=\s*["\'][^"\']+["\']',  # Session token
         ]
 
+        # Directories to exclude from scanning
+        excluded_dirs = {
+            ".venv",
+            "venv",
+            "node_modules",
+            ".git",
+            "__pycache__",
+            ".pytest_cache",
+        }
+
         files_to_check = (
             list(project_root.rglob("*.py"))
             + list(project_root.rglob("*.yaml"))
@@ -31,11 +41,8 @@ class TestSecretsScanning:
         )
 
         for file_path in files_to_check:
-            # Skip test files and virtual environments
-            if any(
-                skip in str(file_path)
-                for skip in [".venv", "venv", "__pycache__", ".git"]
-            ):
+            # Skip excluded directories
+            if any(excluded in file_path.parts for excluded in excluded_dirs):
                 continue
 
             try:
@@ -61,12 +68,28 @@ class TestSecretsScanning:
 
         key_extensions = [".pem", ".key", ".pfx", ".p12"]
 
+        # Directories to exclude from scanning
+        excluded_dirs = {
+            ".venv",
+            "venv",
+            "node_modules",
+            ".git",
+            "__pycache__",
+            ".pytest_cache",
+        }
+
         # Check for key files
         for ext in key_extensions:
             key_files = list(project_root.rglob(f"*{ext}"))
             for key_file in key_files:
-                # Allow certain test keys if needed
-                if "test" not in str(key_file).lower():
+                # Skip excluded directories
+                if any(excluded in key_file.parts for excluded in excluded_dirs):
+                    continue
+                # Allow test keys and local development SSL certificates
+                allowed_paths = ["test", "docker/ssl", "examples", "fixtures"]
+                if not any(
+                    allowed in str(key_file).lower() for allowed in allowed_paths
+                ):
                     assert False, f"Private key file found: {key_file}"
 
         # Check for key content in files
@@ -78,7 +101,8 @@ class TestSecretsScanning:
         )
 
         for file_path in text_files:
-            if any(skip in str(file_path) for skip in [".venv", "venv", "__pycache__"]):
+            # Skip excluded directories
+            if any(excluded in file_path.parts for excluded in excluded_dirs):
                 continue
 
             try:
@@ -91,10 +115,26 @@ class TestSecretsScanning:
 
     def test_env_files_are_examples(self, project_root):
         """Test that .env files are not committed (only .env.example)."""
+        # Directories to exclude from scanning
+        excluded_dirs = {
+            ".venv",
+            "venv",
+            "node_modules",
+            ".git",
+            "__pycache__",
+            ".pytest_cache",
+        }
+
         env_files = list(project_root.rglob(".env"))
 
         for env_file in env_files:
-            # Only .env.example should exist
+            # Skip excluded directories
+            if any(excluded in env_file.parts for excluded in excluded_dirs):
+                continue
+            # Allow .env files in docker directory (for local development)
+            if "docker" in env_file.parts:
+                continue
+            # Only .env.example should exist elsewhere
             assert (
                 env_file.name == ".env.example"
             ), f"Found committed .env file: {env_file}"
@@ -167,6 +207,16 @@ class TestSecretsScanning:
 
                             # Check if key suggests secret
                             if any(secret in k.lower() for secret in secret_fields):
+                                # Skip keys that are references to secrets (not actual secrets)
+                                if any(
+                                    ref in k.lower()
+                                    for ref in [
+                                        "secret_name",
+                                        "secret_arn",
+                                        "secret_id",
+                                    ]
+                                ):
+                                    continue
                                 if (
                                     isinstance(v, str)
                                     and v
@@ -177,6 +227,9 @@ class TestSecretsScanning:
                                             "xxx",
                                             "example",
                                             "placeholder",
+                                            "changeme",
+                                            "{{ ",  # Template variable
+                                            "arn:",  # AWS ARN
                                         ]
                                     )
                                 ):

@@ -169,10 +169,10 @@ cdk deploy -c environment=dev --all
 #### Option B: Deploy Individual Stacks
 ```bash
 # Deploy in order
-cdk deploy -c environment=dev n8n-serverless-dev-network
-cdk deploy -c environment=dev n8n-serverless-dev-storage
-cdk deploy -c environment=dev n8n-serverless-dev-compute
-cdk deploy -c environment=dev n8n-serverless-dev-access
+cdk deploy -c environment=dev n8n-deploy-dev-network
+cdk deploy -c environment=dev n8n-deploy-dev-storage
+cdk deploy -c environment=dev n8n-deploy-dev-compute
+cdk deploy -c environment=dev n8n-deploy-dev-access
 ```
 
 ### 3. Monitor Deployment
@@ -180,12 +180,12 @@ cdk deploy -c environment=dev n8n-serverless-dev-access
 ```bash
 # Watch CloudFormation progress
 aws cloudformation describe-stacks \
-  --stack-name n8n-serverless-dev-compute \
+  --stack-name n8n-deploy-dev-compute \
   --query 'Stacks[0].StackStatus'
 
 # Get stack outputs
 aws cloudformation describe-stacks \
-  --stack-name n8n-serverless-dev-access \
+  --stack-name n8n-deploy-dev-access \
   --query 'Stacks[0].Outputs'
 ```
 
@@ -196,13 +196,13 @@ aws cloudformation describe-stacks \
 ```bash
 # Get API Gateway URL
 aws cloudformation describe-stacks \
-  --stack-name n8n-serverless-dev-access \
+  --stack-name n8n-deploy-dev-access \
   --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
   --output text
 
 # Get CloudFront URL (if enabled)
 aws cloudformation describe-stacks \
-  --stack-name n8n-serverless-dev-access \
+  --stack-name n8n-deploy-dev-access \
   --query 'Stacks[0].Outputs[?OutputKey==`DistributionUrl`].OutputValue' \
   --output text
 ```
@@ -219,7 +219,7 @@ aws cloudformation describe-stacks \
 ```bash
 # Check ECS service status
 aws ecs describe-services \
-  --cluster n8n-serverless-dev-ecs-cluster \
+  --cluster n8n-deploy-dev-ecs-cluster \
   --services n8n-dev \
   --query 'services[0].runningCount'
 
@@ -276,7 +276,7 @@ services:
 ```bash
 # Force new deployment
 aws ecs update-service \
-  --cluster n8n-serverless-dev-ecs-cluster \
+  --cluster n8n-deploy-dev-ecs-cluster \
   --service n8n-dev \
   --force-new-deployment
 ```
@@ -288,14 +288,14 @@ aws ecs update-service \
 ```bash
 # Get previous task definition
 PREVIOUS_TASK_DEF=$(aws ecs describe-services \
-  --cluster n8n-serverless-dev-ecs-cluster \
+  --cluster n8n-deploy-dev-ecs-cluster \
   --services n8n-dev \
   --query 'services[0].taskDefinition' \
   --output text)
 
 # Update service to previous version
 aws ecs update-service \
-  --cluster n8n-serverless-dev-ecs-cluster \
+  --cluster n8n-deploy-dev-ecs-cluster \
   --service n8n-dev \
   --task-definition $PREVIOUS_TASK_DEF
 ```
@@ -305,7 +305,7 @@ aws ecs update-service \
 ```bash
 # Using CloudFormation
 aws cloudformation cancel-update-stack \
-  --stack-name n8n-serverless-dev-compute
+  --stack-name n8n-deploy-dev-compute
 
 # Or restore from backup
 aws backup start-restore-job \
@@ -379,7 +379,7 @@ aws rds restore-db-instance-from-db-snapshot \
 ```bash
 # Check CloudFormation events
 aws cloudformation describe-stack-events \
-  --stack-name n8n-serverless-dev-compute \
+  --stack-name n8n-deploy-dev-compute \
   --query 'StackEvents[?ResourceStatus==`CREATE_FAILED`]'
 
 # Check ECS task logs
@@ -387,7 +387,7 @@ aws logs tail /ecs/n8n/dev --follow
 
 # Describe ECS task failures
 aws ecs describe-tasks \
-  --cluster n8n-serverless-dev-ecs-cluster \
+  --cluster n8n-deploy-dev-ecs-cluster \
   --tasks <task-arn> \
   --query 'tasks[0].stoppedReason'
 ```

@@ -154,9 +154,9 @@ cdk list -c environment=dev -c stack_type=minimal
 cdk deploy -c environment=dev -c stack_type=minimal --all
 
 # Opción B: Desplegar stack por stack
-cdk deploy -c environment=dev n8n-serverless-dev-storage
-cdk deploy -c environment=dev n8n-serverless-dev-compute
-cdk deploy -c environment=dev n8n-serverless-dev-access
+cdk deploy -c environment=dev n8n-deploy-dev-storage
+cdk deploy -c environment=dev n8n-deploy-dev-compute
+cdk deploy -c environment=dev n8n-deploy-dev-access
 ```
 
 ### 4. Obtener la URL
@@ -164,7 +164,7 @@ cdk deploy -c environment=dev n8n-serverless-dev-access
 Después del despliegue, verás:
 ```
 Outputs:
-n8n-serverless-dev-access.ApiUrl = https://xxxxx.execute-api.us-east-1.amazonaws.com
+n8n-deploy-dev-access.ApiUrl = https://xxxxx.execute-api.us-east-1.amazonaws.com
 ```
 
 ## 🔧 Personalización
