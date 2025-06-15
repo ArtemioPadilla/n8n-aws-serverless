@@ -187,7 +187,11 @@ class ConfigLoader:
             self._load_raw_config()
             self._validate_config()
 
-        return list(self._config.stacks.keys()) if self._config and self._config.stacks else []
+        return (
+            list(self._config.stacks.keys())
+            if self._config and self._config.stacks
+            else []
+        )
 
     def validate_config_file(self) -> bool:
         """Validate the configuration file without loading specific environment.
