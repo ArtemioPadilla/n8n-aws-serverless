@@ -67,7 +67,7 @@ class N8nBaseStack(Stack):
                 Tags.of(self).add(key, tag_value)
 
         # Environment-specific tags
-        if self.env_config.tags:
+        if self.env_config and self.env_config.tags:
             for key, value in self.env_config.tags.items():
                 Tags.of(self).add(key, value)
 
@@ -225,7 +225,11 @@ class N8nBaseStack(Stack):
     @property
     def is_spot_enabled(self) -> bool:
         """Check if Spot instances should be used."""
-        if self.env_config.settings.fargate:
+        if (
+            self.env_config
+            and self.env_config.settings
+            and self.env_config.settings.fargate
+        ):
             return self.env_config.settings.fargate.spot_percentage > 0
         return False
 

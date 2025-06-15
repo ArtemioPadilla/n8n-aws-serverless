@@ -75,7 +75,13 @@ class TestLocalDeployment:
 
         # Validate docker-compose.yml
         result = subprocess.run(
-            ["docker-compose", "-f", str(docker_dir / "docker-compose.yml"), "config"],
+            [
+                "docker",
+                "compose",
+                "-f",
+                str(docker_dir / "docker-compose.yml"),
+                "config",
+            ],
             capture_output=True,
             text=True,
             cwd=str(docker_dir),

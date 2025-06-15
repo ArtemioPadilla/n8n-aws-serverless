@@ -12,7 +12,6 @@ from aws_cdk import aws_servicediscovery as servicediscovery
 from constructs import Construct
 
 from ..config.models import (
-    DatabaseConfig,
     DatabaseType,
     EnvironmentConfig,
     FargateConfig,
@@ -68,7 +67,7 @@ class N8nFargateService(Construct):
 
         # Get configurations
         self.fargate_config = env_config.settings.fargate or FargateConfig()
-        self.database_config = env_config.settings.database or DatabaseConfig()
+        self.database_config = env_config.settings.database
 
         # Create log group
         self.log_group = self._create_log_group()
