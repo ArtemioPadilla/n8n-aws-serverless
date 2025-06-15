@@ -11,11 +11,7 @@ from aws_cdk import aws_secretsmanager as secretsmanager
 from aws_cdk import aws_servicediscovery as servicediscovery
 from constructs import Construct
 
-from ..config.models import (
-    DatabaseType,
-    EnvironmentConfig,
-    FargateConfig,
-)
+from ..config.models import DatabaseType, EnvironmentConfig, FargateConfig
 
 
 class N8nFargateService(Construct):
@@ -244,7 +240,11 @@ class N8nFargateService(Construct):
         }
 
         # Database configuration
-        if self.database_config.type == DatabaseType.POSTGRES and database_endpoint:
+        if (
+            self.database_config
+            and self.database_config.type == DatabaseType.POSTGRES
+            and database_endpoint
+        ):
             env_vars.update(
                 {
                     "DB_TYPE": "postgresdb",
@@ -297,7 +297,11 @@ class N8nFargateService(Construct):
         }
 
         # Database credentials
-        if database_secret and self.database_config.type == DatabaseType.POSTGRES:
+        if (
+            database_secret
+            and self.database_config
+            and self.database_config.type == DatabaseType.POSTGRES
+        ):
             secrets.update(
                 {
                     "DB_POSTGRESDB_USER": ecs.Secret.from_secrets_manager(
