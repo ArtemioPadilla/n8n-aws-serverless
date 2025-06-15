@@ -73,27 +73,59 @@ class TestLocalDeployment:
     def test_docker_compose_validation(self, project_root, docker_client):
         """Test Docker Compose configuration validation."""
         docker_dir = project_root / "docker"
+        compose_file = docker_dir / "docker-compose.yml"
+        prod_compose_file = docker_dir / "docker-compose.prod.yml"
 
-        # Validate docker-compose.yml with default profile
-        result = subprocess.run(
-            [
-                "docker",
-                "compose",
-                "-f",
-                str(docker_dir / "docker-compose.yml"),
-                "--profile",
-                "default",
-                "config",
-            ],
-            capture_output=True,
-            text=True,
-            cwd=str(docker_dir),
-            env={**os.environ, "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation"},
-        )
+        # Temporarily rename prod file to prevent auto-loading
+        prod_backup = None
+        if prod_compose_file.exists():
+            prod_backup = prod_compose_file.with_suffix('.yml.bak')
+            if prod_backup.exists():
+                prod_backup.unlink()
+            prod_compose_file.rename(prod_backup)
 
-        assert result.returncode == 0
-        assert "n8n:" in result.stdout
-        assert "image: n8nio/n8n:1.94.1" in result.stdout
+        try:
+            # Ensure we're only loading the specific compose file
+            env = os.environ.copy()
+            env["CLOUDFLARE_TUNNEL_TOKEN"] = "dummy-token-for-validation"
+            # Explicitly set COMPOSE_FILE to prevent loading other files
+            env.pop("COMPOSE_FILE", None)
+            env.pop("COMPOSE_PATH_SEPARATOR", None)
+            
+            # First, let's verify the file exists and is readable
+            assert compose_file.exists(), f"Compose file not found: {compose_file}"
+
+            # Validate with default profile
+            result = subprocess.run(
+                [
+                    "docker",
+                    "compose",
+                    "--project-name",
+                    "test-validation",
+                    "-f",
+                    str(compose_file),
+                    "--profile",
+                    "default",
+                    "config",
+                ],
+                capture_output=True,
+                text=True,
+                cwd=str(docker_dir),
+                env=env,
+            )
+
+            if result.returncode != 0:
+                print(f"Docker compose config failed with error:\n{result.stderr}")
+                print(f"stdout:\n{result.stdout}")
+            
+            assert result.returncode == 0, f"Docker compose config failed: {result.stderr}"
+            assert "n8n:" in result.stdout
+            assert "image: n8nio/n8n:1.94.1" in result.stdout
+            
+        finally:
+            # Restore prod file
+            if prod_backup and prod_backup.exists():
+                prod_backup.rename(prod_compose_file)
 
     @pytest.mark.slow
     def test_n8n_container_startup(

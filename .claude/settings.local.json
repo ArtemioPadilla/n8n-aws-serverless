@@ -36,7 +36,9 @@
       "Bash(docker compose:*)",
       "Bash(pytest:*)",
       "Bash(docker:*)",
-      "Bash(/dev/null)"
+      "Bash(/dev/null)",
+      "Bash([ -f .env ])",
+      "Bash(CLOUDFLARE_TUNNEL_TOKEN=dummy docker compose -f docker-compose.yml --profile default config 2 >& 1)"
     ],
     "deny": []
   }
