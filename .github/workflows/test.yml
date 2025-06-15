@@ -70,7 +70,7 @@ jobs:
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
-        token: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ secrets.CODECOV_TOKEN || '' }}
 
     - name: Upload coverage HTML report
       uses: actions/upload-artifact@v4
@@ -98,7 +98,7 @@ jobs:
 
     - name: Install AWS CDK
       run: |
-        npm install -g aws-cdk
+        npm install -g aws-cdk@2 --force
 
     - name: Install Python dependencies
       run: |

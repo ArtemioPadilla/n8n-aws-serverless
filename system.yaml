@@ -86,6 +86,8 @@ environments:
       fargate:
         cpu: 256
         memory: 512
+        spot_percentage: 80
+        n8n_version: "1.94.1"
       scaling:
         min_tasks: 1
         max_tasks: 1
@@ -95,10 +97,19 @@ environments:
       access:
         type: "api_gateway"
         domain_name: "n8n-test.example.com"
+        cloudfront_enabled: false
+        api_gateway_throttle: 1000
+      database:
+        type: "sqlite"
       auth:
         basic_auth_enabled: true
+        oauth_enabled: false
       features:
         webhooks_enabled: true
+        external_api_access: true
+      monitoring:
+        log_retention_days: 7
+        enable_container_insights: false
 
   staging:
     account: "123456789013"

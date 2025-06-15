@@ -118,7 +118,7 @@ jobs:
 
     - name: Install AWS CDK
       run: |
-        npm install -g aws-cdk@2
+        npm install -g aws-cdk@2 --force
 
     - name: Install dependencies
       run: |
@@ -142,12 +142,31 @@ jobs:
         global:
           project_name: "n8n-test"
           organization: "test"
+          tags:
+            Environment: "test"
+            ManagedBy: "CDK"
+        
+        defaults:
+          fargate:
+            cpu: 256
+            memory: 512
+            spot_percentage: 80
+            n8n_version: "1.94.1"
         
         environments:
           test:
             account: "123456789012"
             region: "us-east-1"
             settings:
+              fargate:
+                cpu: 256
+                memory: 512
+              scaling:
+                min_tasks: 1
+                max_tasks: 1
+              networking:
+                use_existing_vpc: false
+                vpc_cidr: "10.99.0.0/16"
               access:
                 type: "cloudflare"
                 cloudflare:
@@ -155,6 +174,12 @@ jobs:
                   tunnel_token_secret_name: "test-secret"
                   tunnel_name: "test-tunnel"
                   tunnel_domain: "test.example.com"
+              auth:
+                basic_auth_enabled: true
+              features:
+                webhooks_enabled: true
+              monitoring:
+                log_retention_days: 7
         EOF
         
         # Copy test config to expected location

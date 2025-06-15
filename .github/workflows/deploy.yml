@@ -54,7 +54,7 @@ jobs:
 
     - name: Install AWS CDK
       run: |
-        npm install -g aws-cdk
+        npm install -g aws-cdk@2 --force
 
     - name: Install dependencies
       run: |

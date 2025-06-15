@@ -75,10 +75,12 @@ class ConfigLoader:
         if self._config.defaults:
             config_dict["defaults"] = self._config.defaults.dict()
         if self._config.stacks:
-            config_dict["stacks"] = {k: v.dict() for k, v in self._config.stacks.items()}
+            config_dict["stacks"] = {
+                k: v.dict() for k, v in self._config.stacks.items()
+            }
         if self._config.shared_resources:
             config_dict["shared_resources"] = self._config.shared_resources.dict()
-        
+
         selected_config = N8nConfig(**config_dict)
 
         return selected_config
