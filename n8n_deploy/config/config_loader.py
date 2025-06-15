@@ -68,20 +68,22 @@ class ConfigLoader:
             env_config = self._apply_overrides(env_config, overrides)
 
         # Create a new config with only the selected environment
+        # We need to recreate from dictionaries to create a new instance
         config_dict = {
-            "global": self._config.global_config.dict(),
-            "environments": {environment: env_config.dict()},
+            "global": self._config.global_config.model_dump(),
+            "environments": {environment: env_config.model_dump()},
         }
         if self._config.defaults:
-            config_dict["defaults"] = self._config.defaults.dict()
+            config_dict["defaults"] = self._config.defaults.model_dump()
         if self._config.stacks:
             config_dict["stacks"] = {
-                k: v.dict() for k, v in self._config.stacks.items()
+                k: v.model_dump() for k, v in self._config.stacks.items()
             }
         if self._config.shared_resources:
-            config_dict["shared_resources"] = self._config.shared_resources.dict()
+            config_dict["shared_resources"] = self._config.shared_resources.model_dump()
 
-        selected_config = N8nConfig(**config_dict)
+        # Create new config from the dictionary
+        selected_config = N8nConfig.model_validate(config_dict)
 
         return selected_config
 
@@ -107,7 +109,9 @@ class ConfigLoader:
     def _validate_config(self) -> None:
         """Validate configuration against Pydantic models."""
         try:
-            self._config = N8nConfig(**self._raw_config)
+            if not self._raw_config:
+                raise ValueError("No configuration loaded")
+            self._config = N8nConfig.model_validate(self._raw_config)
         except ValidationError as e:
             raise ValueError(f"Configuration validation failed: {e}")
 
@@ -130,7 +134,7 @@ class ConfigLoader:
             raise ValueError(f"Stack type '{stack_type}' not found in configuration")
 
         # Create a copy to avoid modifying original
-        modified_config = env_config.copy(deep=True)
+        modified_config = env_config.model_copy(deep=True)
 
         # Apply stack settings
         # Update components list if specified
@@ -160,7 +164,7 @@ class ConfigLoader:
             Modified environment configuration
         """
         # Create a copy to avoid modifying original
-        modified_config = env_config.copy(deep=True)
+        modified_config = env_config.model_copy(deep=True)
 
         # Apply overrides
         for key, value in overrides.items():
@@ -183,7 +187,7 @@ class ConfigLoader:
             self._load_raw_config()
             self._validate_config()
 
-        return list(self._config.stacks.keys()) if self._config.stacks else []
+        return list(self._config.stacks.keys()) if self._config and self._config.stacks else []
 
     def validate_config_file(self) -> bool:
         """Validate the configuration file without loading specific environment.
