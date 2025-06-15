@@ -107,7 +107,7 @@ class TestLocalDeployment:
 
         # Start n8n container
         result = subprocess.run(
-            ["docker-compose", "up", "-d", "n8n"],
+            ["docker", "compose", "up", "-d", "n8n"],
             capture_output=True,
             text=True,
             cwd=str(docker_dir),
@@ -136,7 +136,7 @@ class TestLocalDeployment:
 
         # Stop container
         subprocess.run(
-            ["docker-compose", "down"],
+            ["docker", "compose", "down"],
             cwd=str(docker_dir),
             env={**os.environ, "COMPOSE_PROJECT_NAME": "n8n-local-test"},
         )
@@ -217,7 +217,7 @@ class TestLocalDeployment:
 
         # Start container
         subprocess.run(
-            ["docker-compose", "up", "-d", "n8n"],
+            ["docker", "compose", "up", "-d", "n8n"],
             capture_output=True,
             cwd=str(docker_dir),
             env={**os.environ, "COMPOSE_PROJECT_NAME": "n8n-local-health-test"},
@@ -239,7 +239,7 @@ class TestLocalDeployment:
 
         # Clean up
         subprocess.run(
-            ["docker-compose", "down"],
+            ["docker", "compose", "down"],
             cwd=str(docker_dir),
             env={**os.environ, "COMPOSE_PROJECT_NAME": "n8n-local-health-test"},
         )
@@ -253,7 +253,8 @@ class TestLocalDeployment:
         # Test basic profile
         result = subprocess.run(
             [
-                "docker-compose",
+                "docker",
+                "compose",
                 "-f",
                 str(docker_compose),
                 "config",

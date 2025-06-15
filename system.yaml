@@ -79,6 +79,27 @@ environments:
         webhooks_enabled: true
         external_api_access: true
 
+  test:
+    account: "123456789012"
+    region: "us-east-1"
+    settings:
+      fargate:
+        cpu: 256
+        memory: 512
+      scaling:
+        min_tasks: 1
+        max_tasks: 1
+      networking:
+        use_existing_vpc: false
+        vpc_cidr: "10.99.0.0/16"
+      access:
+        type: "api_gateway"
+        domain_name: "n8n-test.example.com"
+      auth:
+        basic_auth_enabled: true
+      features:
+        webhooks_enabled: true
+
   staging:
     account: "123456789013"
     region: "us-east-1"
