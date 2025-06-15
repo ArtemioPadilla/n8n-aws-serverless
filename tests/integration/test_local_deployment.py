@@ -73,13 +73,15 @@ class TestLocalDeployment:
         """Test Docker Compose configuration validation."""
         docker_dir = project_root / "docker"
 
-        # Validate docker-compose.yml
+        # Validate docker-compose.yml with default profile
         result = subprocess.run(
             [
                 "docker",
                 "compose",
                 "-f",
                 str(docker_dir / "docker-compose.yml"),
+                "--profile",
+                "default",
                 "config",
             ],
             capture_output=True,
