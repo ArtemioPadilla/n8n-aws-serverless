@@ -87,6 +87,7 @@ class TestLocalDeployment:
             capture_output=True,
             text=True,
             cwd=str(docker_dir),
+            env={**os.environ, "CLOUDFLARE_TUNNEL_TOKEN": "dummy-token-for-validation"},
         )
 
         assert result.returncode == 0
