@@ -62,9 +62,7 @@ class TestLocalDeployment:
         assert os.access(setup_script, os.X_OK)
 
         # Test script in dry-run mode if possible
-        result = subprocess.run(
-            [str(setup_script), "--check"], capture_output=True, text=True
-        )
+        result = subprocess.run([str(setup_script), "--check"], capture_output=True, text=True)
 
         # Script should at least run without major errors
         assert result.returncode in [0, 1]  # 0 for success, 1 for missing dependencies
@@ -118,9 +116,7 @@ class TestLocalDeployment:
                 print(f"Docker compose config failed with error:\n{result.stderr}")
                 print(f"stdout:\n{result.stdout}")
 
-            assert (
-                result.returncode == 0
-            ), f"Docker compose config failed: {result.stderr}"
+            assert result.returncode == 0, f"Docker compose config failed: {result.stderr}"
             assert "n8n:" in result.stdout
             assert "image: n8nio/n8n:1.94.1" in result.stdout
 
@@ -130,9 +126,7 @@ class TestLocalDeployment:
                 prod_backup.rename(prod_compose_file)
 
     @pytest.mark.slow
-    def test_n8n_container_startup(
-        self, project_root, docker_client, cleanup_containers
-    ):
+    def test_n8n_container_startup(self, project_root, docker_client, cleanup_containers):
         """Test n8n container starts successfully."""
         docker_dir = project_root / "docker"
 
@@ -161,9 +155,7 @@ class TestLocalDeployment:
         # Wait for container to be ready
         container = None
         for _ in range(30):  # 30 second timeout
-            containers = docker_client.containers.list(
-                filters={"label": "com.docker.compose.service=n8n"}
-            )
+            containers = docker_client.containers.list(filters={"label": "com.docker.compose.service=n8n"})
             if containers:
                 container = containers[0]
                 if container.status == "running":
@@ -248,9 +240,7 @@ class TestLocalDeployment:
             assert "X-Real-IP" in content
 
     @pytest.mark.slow
-    def test_health_check_endpoint(
-        self, project_root, docker_client, cleanup_containers
-    ):
+    def test_health_check_endpoint(self, project_root, docker_client, cleanup_containers):
         """Test n8n health check endpoint."""
         docker_dir = project_root / "docker"
 

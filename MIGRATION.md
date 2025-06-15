@@ -6,7 +6,8 @@ This guide helps existing users migrate from `n8n-aws-serverless` to the new `n8
 
 The project has evolved from a single-purpose AWS deployment tool to a comprehensive multi-platform deployment solution. The new name "n8n Deploy" better reflects this expanded scope.
 
-### Key Changes:
+### Key Changes
+
 - **Project name**: `n8n-aws-serverless` → `n8n-deploy`
 - **Python module**: `n8n_aws_serverless` → `n8n_deploy`
 - **Expanded capabilities**: Now supports Docker, Cloudflare Tunnel, and hybrid deployments
@@ -64,7 +65,7 @@ environments:
     docker:
       compose_profile: "production"
       postgres_enabled: true
-      
+
 # New: Add Cloudflare Tunnel (optional)
 environments:
   production:
@@ -107,7 +108,7 @@ If you have GitHub Actions or other CI/CD pipelines:
 - name: Install dependencies
   run: |
     pip install -r requirements.txt
-    
+
 # New (same command, but in new repo)
 - name: Install dependencies
   run: |
@@ -148,14 +149,16 @@ make deploy-hybrid   # Deploy AWS + Cloudflare
 
 ## 🔄 Backward Compatibility
 
-### What's Preserved:
+### What's Preserved
+
 - ✅ All existing AWS deployments continue to work
 - ✅ Your `system.yaml` configuration is compatible
 - ✅ CDK commands remain the same
 - ✅ Stack names and resource naming unchanged
 - ✅ CloudFormation stacks don't need updates
 
-### What's New (Optional):
+### What's New (Optional)
+
 - 🆕 Docker deployment options
 - 🆕 Cloudflare Tunnel support
 - 🆕 Enhanced monitoring with Grafana
@@ -179,6 +182,7 @@ Error: This stack uses assets, so the toolkit stack must be deployed
 ```
 
 **Solution**: Re-run CDK bootstrap:
+
 ```bash
 cdk bootstrap aws://ACCOUNT-ID/REGION
 ```
@@ -230,6 +234,6 @@ echo "Run 'make test' to verify everything works."
 - **Migration Support**: [GitHub Discussions](https://github.com/your-org/n8n-deploy/discussions)
 - **Issues**: [GitHub Issues](https://github.com/your-org/n8n-deploy/issues)
 
-## 🎉 Welcome to n8n Deploy!
+## 🎉 Welcome to n8n Deploy
 
 You now have access to a much more powerful platform that can deploy n8n anywhere. Explore the new features and let us know if you need any help with the migration!

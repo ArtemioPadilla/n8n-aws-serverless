@@ -5,12 +5,14 @@ The local monitoring stack is now fully configured and integrated with n8n.
 ## What's Working
 
 ### ✅ Services Running
-- **n8n**: http://localhost:5678 (with metrics enabled)
+
+- **n8n**: <http://localhost:5678> (with metrics enabled)
 - **PostgreSQL**: Database backend
-- **Prometheus**: http://localhost:9090 (collecting metrics)
-- **Grafana**: http://localhost:3000 (visualizing metrics)
+- **Prometheus**: <http://localhost:9090> (collecting metrics)
+- **Grafana**: <http://localhost:3000> (visualizing metrics)
 
 ### ✅ Dashboards Available
+
 1. **n8n Complete Monitoring** - Comprehensive n8n metrics including:
    - Workflow execution rates and success percentages
    - CPU and memory usage
@@ -24,14 +26,16 @@ The local monitoring stack is now fully configured and integrated with n8n.
    - Query performance
 
 ### ✅ Metrics Collection
-- n8n is exposing metrics at http://localhost:5678/metrics
+
+- n8n is exposing metrics at <http://localhost:5678/metrics>
 - Prometheus is successfully scraping these metrics
 - Over 100+ n8n-specific metrics are available
 
 ## How to Access
 
 ### Grafana Dashboards
-1. Open http://localhost:3000
+
+1. Open <http://localhost:3000>
 2. Login with:
    - Username: `admin`
    - Password: `secure-grafana-password` (from your .env file)
@@ -39,8 +43,9 @@ The local monitoring stack is now fully configured and integrated with n8n.
 4. Open either dashboard
 
 ### Prometheus Metrics
-1. Open http://localhost:9090
-2. Check targets status: http://localhost:9090/targets
+
+1. Open <http://localhost:9090>
+2. Check targets status: <http://localhost:9090/targets>
 3. Query metrics using the Expression browser
 
 ## Key Metrics to Monitor
@@ -62,6 +67,7 @@ pg_stat_database_numbackends{datname="n8n"}
 ## Files Created/Modified
 
 ### New Files
+
 - `docker/grafana/dashboards/n8n-complete-dashboard.json`
 - `docker/grafana/dashboards/postgres-dashboard.json`
 - `docs/local-monitoring.md`
@@ -69,6 +75,7 @@ pg_stat_database_numbackends{datname="n8n"}
 - `docs/monitoring-quickstart.md`
 
 ### Modified Files
+
 - `docker/docker-compose.yml` - Added monitoring services and fixed profiles
 - `docker/prometheus.yml` - Updated target to n8n-local
 - `docker/grafana/dashboards/provider.yml` - Enhanced provisioning config
@@ -79,10 +86,11 @@ pg_stat_database_numbackends{datname="n8n"}
 ## Troubleshooting
 
 If dashboards show "No Data":
+
 1. Wait 1-2 minutes for metrics to accumulate
 2. Create and execute a test workflow in n8n
 3. Check time range in Grafana (top-right corner)
-4. Verify targets at http://localhost:9090/targets
+4. Verify targets at <http://localhost:9090/targets>
 
 ## Next Steps
 

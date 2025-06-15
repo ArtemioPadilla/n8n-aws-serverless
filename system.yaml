@@ -11,7 +11,7 @@ defaults:
     cpu: 256
     memory: 512
     spot_percentage: 80
-    n8n_version: "1.94.1"  # Pinned version for security and stability
+    n8n_version: "1.94.1" # Pinned version for security and stability
   efs:
     lifecycle_days: 30
     backup_retention_days: 7
@@ -26,21 +26,21 @@ defaults:
 
 environments:
   local:
-    account: "000000000000"  # Local/mock account
+    account: "000000000000" # Local/mock account
     region: "us-east-1"
     settings:
       deployment_type: "docker"
       docker:
         compose_file: "docker/docker-compose.yml"
-        image: "n8nio/n8n:1.94.1"  # Pinned version
+        image: "n8nio/n8n:1.94.1" # Pinned version
         port: 5678
         profiles:
-          - cloudflare  # Optional: Enable Cloudflare Tunnel for remote access
+          - cloudflare # Optional: Enable Cloudflare Tunnel for remote access
       access:
-        type: "cloudflare"  # Use Cloudflare Tunnel for local development
+        type: "cloudflare" # Use Cloudflare Tunnel for local development
         cloudflare:
           enabled: true
-          tunnel_token_secret_name: "n8n/local/cloudflare-tunnel-token"  # Required for validation
+          tunnel_token_secret_name: "n8n/local/cloudflare-tunnel-token" # Required for validation
           tunnel_name: "n8n-local"
           tunnel_domain: "n8n-local.example.com"
       auth:
@@ -65,13 +65,13 @@ environments:
         use_existing_vpc: false
         vpc_cidr: "10.0.0.0/16"
       access:
-        type: "cloudflare"  # Use Cloudflare Tunnel instead of API Gateway
+        type: "cloudflare" # Use Cloudflare Tunnel instead of API Gateway
         cloudflare:
           enabled: true
           tunnel_token_secret_name: "n8n/dev/cloudflare-tunnel-token"
           tunnel_name: "n8n-dev"
           tunnel_domain: "n8n-dev.example.com"
-          access_enabled: false  # No Cloudflare Access policies for dev
+          access_enabled: false # No Cloudflare Access policies for dev
       auth:
         basic_auth_enabled: true
         oauth_enabled: false
@@ -167,19 +167,19 @@ environments:
       networking:
         use_existing_vpc: true
         vpc_id: "vpc-prod-12345"
-        subnet_ids: 
+        subnet_ids:
           - "subnet-prod-1a"
           - "subnet-prod-1b"
           - "subnet-prod-1c"
       access:
-        type: "cloudflare"  # Use Cloudflare Tunnel for zero-trust access
+        type: "cloudflare" # Use Cloudflare Tunnel for zero-trust access
         domain_name: "n8n.company.com"
         cloudflare:
           enabled: true
           tunnel_token_secret_name: "n8n/production/cloudflare-tunnel-token"
           tunnel_name: "n8n-production"
           tunnel_domain: "n8n.company.com"
-          access_enabled: true  # Enable Cloudflare Access for authentication
+          access_enabled: true # Enable Cloudflare Access for authentication
           access_allowed_emails:
             - "admin@company.com"
             - "devops@company.com"
@@ -290,7 +290,6 @@ shared_resources:
   storage:
     # Central S3 bucket for cross-environment artifacts
     artifacts_bucket: "mycompany-n8n-artifacts"
-
 # Access Configuration Options
 # ============================
 #

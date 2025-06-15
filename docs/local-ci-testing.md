@@ -5,13 +5,14 @@ This guide explains how to test GitHub Actions workflows locally using [act](htt
 ## Prerequisites
 
 1. Install act:
+
    ```bash
    # macOS
    brew install act
-   
+
    # Linux
    curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
-   
+
    # Windows (via Chocolatey)
    choco install act-cli
    ```
@@ -50,6 +51,7 @@ cp .env.act.example .env.act
 ```
 
 Key variables:
+
 - `GITHUB_TOKEN`: For actions that interact with GitHub API
 - `AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY`: For AWS deployment tests
 - `CLOUDFLARE_TUNNEL_TOKEN`: Set to dummy value for local tests
@@ -102,6 +104,7 @@ act -n
 **Error**: `exec: "node": executable file not found in $PATH`
 
 **Solution**: Ensure `.actrc` uses `full` images:
+
 ```bash
 -P ubuntu-latest=catthehacker/ubuntu:full-latest
 ```
@@ -110,7 +113,8 @@ act -n
 
 **Error**: `Cannot connect to the Docker daemon`
 
-**Solution**: 
+**Solution**:
+
 - Ensure Docker Desktop is running
 - For Docker-in-Docker, use `full` images with Docker installed
 
@@ -119,6 +123,7 @@ act -n
 **Error**: `Input required and not supplied: token`
 
 **Solution**: Add required tokens to `.env.act`:
+
 ```bash
 GITHUB_TOKEN=your_token_here
 ```
@@ -127,7 +132,8 @@ GITHUB_TOKEN=your_token_here
 
 **Error**: Out of memory or disk space
 
-**Solution**: 
+**Solution**:
+
 - Increase Docker Desktop resources
 - Use `--rm` flag to remove containers after runs
 - Clean up: `docker system prune -a`
@@ -137,6 +143,7 @@ GITHUB_TOKEN=your_token_here
 **Error**: `image platform does not match host platform`
 
 **Solution**: Add to `.actrc`:
+
 ```bash
 --container-architecture linux/amd64
 ```

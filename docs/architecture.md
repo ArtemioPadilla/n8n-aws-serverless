@@ -35,6 +35,7 @@ This document describes the architecture options available in n8n Deploy, coveri
 ```
 
 **Key Components:**
+
 - **API Gateway HTTP API**: Cost-effective serverless API ($1/million requests)
 - **ECS Fargate**: Serverless containers with 70% cost savings using Spot
 - **EFS**: Persistent storage for workflows and SQLite option
@@ -42,6 +43,7 @@ This document describes the architecture options available in n8n Deploy, coveri
 - **CloudWatch**: Comprehensive monitoring and logging
 
 **Best For:**
+
 - SaaS applications
 - Variable workloads
 - Teams wanting managed infrastructure
@@ -71,6 +73,7 @@ This document describes the architecture options available in n8n Deploy, coveri
 ```
 
 **Key Components:**
+
 - **Docker Compose**: Orchestrates all services
 - **n8n Container**: Main application with hot-reload in dev mode
 - **PostgreSQL/SQLite**: Database options based on needs
@@ -78,6 +81,7 @@ This document describes the architecture options available in n8n Deploy, coveri
 - **Monitoring Stack**: Optional Prometheus + Grafana
 
 **Best For:**
+
 - Local development
 - Testing and CI/CD
 - Learning n8n
@@ -107,6 +111,7 @@ This document describes the architecture options available in n8n Deploy, coveri
 ```
 
 **Key Components:**
+
 - **Load Balancer**: Nginx/Traefik with SSL termination
 - **Container Orchestration**: Docker Swarm or Kubernetes
 - **High Availability**: Multiple n8n instances with shared storage
@@ -114,6 +119,7 @@ This document describes the architecture options available in n8n Deploy, coveri
 - **Monitoring**: Full Prometheus/Grafana/AlertManager stack
 
 **Best For:**
+
 - On-premise requirements
 - Full control needs
 - Existing Docker infrastructure
@@ -144,6 +150,7 @@ This document describes the architecture options available in n8n Deploy, coveri
 ```
 
 **Key Components:**
+
 - **Cloudflare Edge**: Global network with DDoS protection
 - **Cloudflare Tunnel**: Secure outbound-only connection
 - **Zero-Trust Access**: Email/domain-based authentication
@@ -151,6 +158,7 @@ This document describes the architecture options available in n8n Deploy, coveri
 - **Any Backend**: Works with AWS, Docker, or bare metal
 
 **Best For:**
+
 - Maximum security requirements
 - No public IP allocation
 - Global user base
@@ -168,6 +176,7 @@ Cloudflare Edge ──► Cloudflare Tunnel ──► AWS Private Subnet ──�
 ```
 
 **Benefits:**
+
 - Zero-trust security with AWS scalability
 - No API Gateway or Load Balancer costs
 - Global edge network + auto-scaling
@@ -261,16 +270,19 @@ Layer 5: Data Security
 ## 📈 Scaling Patterns
 
 ### Vertical Scaling
+
 - **AWS**: Increase Fargate CPU/Memory
 - **Docker**: Increase container resources
 - **Cloudflare**: Scale backend resources
 
 ### Horizontal Scaling
+
 - **AWS**: Auto Scaling with target tracking
 - **Docker**: Swarm/Kubernetes replicas
 - **Cloudflare**: Multiple tunnel instances
 
 ### Database Scaling
+
 - **AWS**: RDS read replicas, Aurora Serverless
 - **Docker**: PostgreSQL replication, pgpool
 - **Hybrid**: Managed database services
@@ -283,7 +295,7 @@ Layer 5: Data Security
 Start
   │
   ├─ Need managed infrastructure? ──► Yes ──► AWS Serverless
-  │                                    
+  │
   ├─ Developing locally? ──► Yes ──► Docker Local
   │
   ├─ Have on-premise requirements? ──► Yes ──► Docker Production
@@ -299,6 +311,7 @@ Start
 ## 🚀 Migration Paths
 
 ### From Docker to AWS
+
 1. Export workflows and credentials
 2. Deploy AWS infrastructure
 3. Import data to EFS/RDS
@@ -306,6 +319,7 @@ Start
 5. Validate and cutover
 
 ### From AWS to Docker
+
 1. Create EFS backup
 2. Export RDS data
 3. Deploy Docker stack
@@ -313,6 +327,7 @@ Start
 5. Configure access method
 
 ### Adding Cloudflare Tunnel
+
 1. Create tunnel in Cloudflare
 2. Deploy cloudflared container/service
 3. Configure access policies

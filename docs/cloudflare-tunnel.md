@@ -3,6 +3,7 @@
 This guide explains how to use Cloudflare Tunnel for zero-trust access to your n8n deployment, eliminating the need for public IPs, load balancers, or API Gateway.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Benefits](#benefits)
 - [Prerequisites](#prerequisites)
@@ -16,6 +17,7 @@ This guide explains how to use Cloudflare Tunnel for zero-trust access to your n
 ## Overview
 
 Cloudflare Tunnel creates a secure outbound-only connection from your infrastructure to Cloudflare's edge network. This means:
+
 - No inbound ports need to be opened
 - No public IP addresses required
 - Built-in DDoS protection
@@ -40,18 +42,21 @@ Cloudflare Tunnel creates a secure outbound-only connection from your infrastruc
 ## Benefits
 
 ### Cost Savings
+
 - **No API Gateway**: Save $1/million requests
 - **No Load Balancer**: Save $16-25/month
 - **No NAT Gateway**: Save $45/month for outbound traffic
 - **Free tier**: Cloudflare Tunnel is free for up to 50 users
 
 ### Security Improvements
+
 - **Zero-trust model**: No exposed public endpoints
 - **Built-in DDoS protection**: Cloudflare's global network
 - **Access policies**: Email, domain, or IP-based restrictions
 - **No inbound rules**: Only outbound connections required
 
 ### Performance
+
 - **Global edge network**: 300+ PoPs worldwide
 - **Smart routing**: Optimized path selection
 - **Connection pooling**: Reduced latency
@@ -87,6 +92,7 @@ aws secretsmanager create-secret \
 ```
 
 For local development, add to `.env` file:
+
 ```bash
 CLOUDFLARE_TUNNEL_TOKEN=YOUR_TUNNEL_TOKEN_HERE
 ```
@@ -136,7 +142,7 @@ After deployment, configure the public hostname in Cloudflare:
 4. Add a new public hostname:
    - **Subdomain**: `n8n` (or your preferred subdomain)
    - **Domain**: Select your domain
-   - **Service**: 
+   - **Service**:
      - For ECS: `http://localhost:5678`
      - For Docker: `http://n8n:5678`
    - **Additional settings** (optional):
@@ -305,6 +311,7 @@ wget -O - http://localhost:2000/metrics
    - Update `system.yaml` configuration
 
 2. **Deployment**
+
    ```bash
    # Deploy with Cloudflare Tunnel
    cdk deploy -c environment=production
@@ -331,12 +338,14 @@ If issues occur, rollback by:
 ## Cost Comparison
 
 ### Traditional API Gateway Setup
+
 - API Gateway: ~$3.50/million requests
 - ALB: $16-25/month
 - CloudFront: $0.085/GB transfer
 - **Total**: ~$50-100/month for moderate usage
 
 ### Cloudflare Tunnel Setup
+
 - Tunnel: Free (up to 50 users)
 - Cloudflare Access: Free (up to 50 users)
 - No ALB needed: $0
@@ -346,17 +355,20 @@ If issues occur, rollback by:
 ### Savings Example
 
 For a typical n8n deployment with:
+
 - 10 million requests/month
 - 100GB data transfer
 - 24/7 availability
 
-**Traditional**: 
+**Traditional**:
+
 - API Gateway: $35
 - ALB: $20
 - Data transfer: $8.50
 - **Total: $63.50/month**
 
 **Cloudflare Tunnel**:
+
 - All included in free tier
 - **Total: $0/month**
 
@@ -378,7 +390,7 @@ environments:
         cloudflare:
           tunnel_name: "n8n-prod-us"
           tunnel_domain: "n8n-us.example.com"
-  
+
   production-eu:
     region: "eu-west-1"
     settings:
@@ -418,6 +430,7 @@ tunnel_config:
 Cloudflare Tunnel provides a secure, cost-effective, and performant way to expose n8n to the internet without traditional networking complexity. By eliminating public IPs and load balancers, you can save significant costs while improving security and global performance.
 
 For additional help, consult:
+
 - [Cloudflare Tunnel Documentation](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
 - [Cloudflare Access Documentation](https://developers.cloudflare.com/cloudflare-one/policies/access/)
 - [n8n AWS Serverless GitHub Issues](https://github.com/your-org/n8n-aws-serverless/issues)

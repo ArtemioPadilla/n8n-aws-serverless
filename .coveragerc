@@ -23,22 +23,22 @@ exclude_lines =
     def __str__
     raise AssertionError
     raise NotImplementedError
-    
+
     # Debugging and logging
     if self\.debug:
     if settings\.DEBUG
-    
+
     # Python 2/3 compatibility
     except ImportError
-    
+
     # Type checking
     if TYPE_CHECKING:
     if typing\.TYPE_CHECKING:
-    
+
     # Abstract methods
     @abstract
     @abc\.abstractmethod
-    
+
     # Main entry points
     if __name__ == .__main__.:
 

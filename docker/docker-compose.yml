@@ -1,7 +1,7 @@
 services:
   # Default n8n service (SQLite)
   n8n:
-    image: n8nio/n8n:1.94.1  # Pinned version for security and stability
+    image: n8nio/n8n:1.94.1 # Pinned version for security and stability
     container_name: n8n-local
     restart: unless-stopped
     ports:
@@ -35,7 +35,15 @@ services:
       - n8n_data:/home/node/.n8n
       - ./workflows:/home/node/.n8n/workflows
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:5678/healthz",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -117,7 +125,15 @@ services:
       - n8n_data:/home/node/.n8n
       - ./workflows:/home/node/.n8n/workflows
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:5678/healthz",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -141,10 +157,10 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
     networks:
       - n8n_network
     profiles:

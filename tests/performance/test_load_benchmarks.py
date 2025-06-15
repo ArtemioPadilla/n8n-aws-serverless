@@ -1,4 +1,5 @@
 """Performance benchmarks for n8n deployment."""
+
 import asyncio
 import json
 import statistics
@@ -36,9 +37,7 @@ class TestLoadBenchmarks:
             # In test environment, simulate successful responses
             if "test-performance" in webhook_url:
                 # Simulate variable response times (50-150ms)
-                await asyncio.sleep(
-                    0.05 + (hash(payload.get("request_id", "")) % 100) / 1000
-                )
+                await asyncio.sleep(0.05 + (hash(payload.get("request_id", "")) % 100) / 1000)
                 response_time = time.time() - start_time
                 # 98% success rate simulation
                 status = 200 if hash(payload.get("request_id", "")) % 100 < 98 else 500
@@ -93,12 +92,8 @@ class TestLoadBenchmarks:
             "avg_response_time": statistics.mean(response_times),
             "min_response_time": min(response_times),
             "max_response_time": max(response_times),
-            "p95_response_time": statistics.quantiles(response_times, n=20)[
-                18
-            ],  # 95th percentile
-            "p99_response_time": statistics.quantiles(response_times, n=100)[
-                98
-            ],  # 99th percentile
+            "p95_response_time": statistics.quantiles(response_times, n=20)[18],  # 95th percentile
+            "p99_response_time": statistics.quantiles(response_times, n=100)[98],  # 99th percentile
             "requests_per_second": num_requests / sum(response_times),
         }
 
@@ -112,9 +107,7 @@ class TestLoadBenchmarks:
 
         # Assert baseline performance
         assert results["success_count"] >= 95, "Success rate below 95%"
-        assert (
-            results["avg_response_time"] < 1.0
-        ), "Average response time above 1 second"
+        assert results["avg_response_time"] < 1.0, "Average response time above 1 second"
         assert results["p95_response_time"] < 2.0, "95th percentile above 2 seconds"
 
         print(f"Baseline Performance Results: {json.dumps(results, indent=2)}")
@@ -129,12 +122,8 @@ class TestLoadBenchmarks:
 
         # Assert performance under load
         assert results["success_count"] >= 900, "Success rate below 90% under load"
-        assert (
-            results["avg_response_time"] < 2.0
-        ), "Average response time above 2 seconds under load"
-        assert (
-            results["p99_response_time"] < 5.0
-        ), "99th percentile above 5 seconds under load"
+        assert results["avg_response_time"] < 2.0, "Average response time above 2 seconds under load"
+        assert results["p99_response_time"] < 5.0, "99th percentile above 5 seconds under load"
 
         print(f"Load Test Results: {json.dumps(results, indent=2)}")
 
@@ -148,9 +137,7 @@ class TestLoadBenchmarks:
 
         # More relaxed assertions for stress test
         assert results["success_count"] >= 4000, "Success rate below 80% under stress"
-        assert (
-            results["avg_response_time"] < 5.0
-        ), "Average response time above 5 seconds under stress"
+        assert results["avg_response_time"] < 5.0, "Average response time above 5 seconds under stress"
 
         print(f"Stress Test Results: {json.dumps(results, indent=2)}")
 
@@ -174,8 +161,8 @@ class TestLoadBenchmarks:
 
     def test_scaling_performance(self):
         """Test auto-scaling performance."""
-        boto3.client("ecs")
-        boto3.client("cloudwatch")
+        boto3.client("ecs", region_name="us-east-1")
+        boto3.client("cloudwatch", region_name="us-east-1")
 
         # This would test how quickly the service scales
         # under load and how it affects performance
@@ -235,9 +222,7 @@ def generate_performance_report(results: List[Dict]) -> str:
         report.append(f"## {test_result['test_name']}")
         report.append(f"- Total Requests: {test_result['total_requests']}")
         report.append(f"- Success Rate: {test_result['success_rate']}%")
-        report.append(
-            f"- Average Response Time: {test_result['avg_response_time']:.3f}s"
-        )
+        report.append(f"- Average Response Time: {test_result['avg_response_time']:.3f}s")
         report.append(f"- P95 Response Time: {test_result['p95_response_time']:.3f}s")
         report.append(f"- P99 Response Time: {test_result['p99_response_time']:.3f}s")
         report.append(f"- Requests/Second: {test_result['requests_per_second']:.2f}")
@@ -269,9 +254,7 @@ class LoadTestScenarios:
         }
 
     @staticmethod
-    def spike_test(
-        baseline_rps: int = 10, spike_rps: int = 100, spike_duration: int = 60
-    ):
+    def spike_test(baseline_rps: int = 10, spike_rps: int = 100, spike_duration: int = 60):
         """Spike test scenario."""
         return {
             "type": "spike",

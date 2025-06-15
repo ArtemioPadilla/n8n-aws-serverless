@@ -1,4 +1,5 @@
 """Integration tests for Cloudflare Tunnel deployment."""
+
 import pytest
 from aws_cdk import App, Environment
 
@@ -168,9 +169,7 @@ environments:
         app = App()
 
         # Create stacks
-        network_stack = NetworkStack(
-            app, "TestNetworkStack", config=cloudflare_config, environment="test"
-        )
+        network_stack = NetworkStack(app, "TestNetworkStack", config=cloudflare_config, environment="test")
 
         storage_stack = StorageStack(
             app,
@@ -236,9 +235,7 @@ environments:
         app = App()
 
         # Create stacks with API Gateway
-        network_stack = NetworkStack(
-            app, "TestNetworkStack", config=api_config, environment="test"
-        )
+        network_stack = NetworkStack(app, "TestNetworkStack", config=api_config, environment="test")
 
         storage_stack = StorageStack(
             app,
@@ -301,9 +298,7 @@ environments:
         cf_app = App()
 
         # Create stacks with Cloudflare
-        cf_network_stack = NetworkStack(
-            cf_app, "TestNetworkStack", config=cf_config, environment="test"
-        )
+        cf_network_stack = NetworkStack(cf_app, "TestNetworkStack", config=cf_config, environment="test")
 
         cf_storage_stack = StorageStack(
             cf_app,

@@ -1,4 +1,5 @@
 """Network stack for VPC and related resources."""
+
 from typing import List
 
 from aws_cdk import Fn
@@ -54,9 +55,7 @@ class NetworkStack(N8nBaseStack):
             raise ValueError("vpc_id is required when use_existing_vpc is True")
 
         # Import VPC by ID
-        vpc = ec2.Vpc.from_lookup(
-            self, "ImportedVpc", vpc_id=self.network_config.vpc_id
-        )
+        vpc = ec2.Vpc.from_lookup(self, "ImportedVpc", vpc_id=self.network_config.vpc_id)
 
         return vpc
 
@@ -64,11 +63,7 @@ class NetworkStack(N8nBaseStack):
         """Import existing subnets from configuration."""
         if not self.network_config.subnet_ids:
             # If no subnet IDs provided, use default VPC subnets
-            return (
-                self.vpc.public_subnets
-                if self.vpc.public_subnets
-                else self.vpc.private_subnets
-            )
+            return self.vpc.public_subnets if self.vpc.public_subnets else self.vpc.private_subnets
 
         # Import specific subnets
         subnets = []
@@ -86,9 +81,7 @@ class NetworkStack(N8nBaseStack):
         if self.network_config.nat_gateways > 0:
             # Create public and private subnets
             subnet_configuration = [
-                ec2.SubnetConfiguration(
-                    name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24
-                ),
+                ec2.SubnetConfiguration(name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24),
                 ec2.SubnetConfiguration(
                     name="Private",
                     subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
@@ -98,9 +91,7 @@ class NetworkStack(N8nBaseStack):
         else:
             # Only public subnets for cost optimization
             subnet_configuration = [
-                ec2.SubnetConfiguration(
-                    name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24
-                )
+                ec2.SubnetConfiguration(name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24)
             ]
 
         # Create VPC
@@ -191,9 +182,7 @@ class NetworkStack(N8nBaseStack):
     def _add_outputs(self) -> None:
         """Add stack outputs."""
         # VPC outputs
-        self.add_output(
-            "VpcId", value=self.vpc.vpc_id, description="VPC ID for n8n deployment"
-        )
+        self.add_output("VpcId", value=self.vpc.vpc_id, description="VPC ID for n8n deployment")
 
         # Subnet outputs
         subnet_ids = [subnet.subnet_id for subnet in self.subnets]
@@ -261,12 +250,8 @@ class NetworkStack(N8nBaseStack):
             subnet = ec2.Subnet.from_subnet_id(stack, f"ImportedSubnet{idx}", subnet_id)
             stack.subnets.append(subnet)
 
-        stack.n8n_security_group = ec2.SecurityGroup.from_security_group_id(
-            stack, "ImportedN8nSg", n8n_sg_id
-        )
+        stack.n8n_security_group = ec2.SecurityGroup.from_security_group_id(stack, "ImportedN8nSg", n8n_sg_id)
 
-        stack.efs_security_group = ec2.SecurityGroup.from_security_group_id(
-            stack, "ImportedEfsSg", efs_sg_id
-        )
+        stack.efs_security_group = ec2.SecurityGroup.from_security_group_id(stack, "ImportedEfsSg", efs_sg_id)
 
         return stack

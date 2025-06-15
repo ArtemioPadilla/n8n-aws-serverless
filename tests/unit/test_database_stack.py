@@ -1,4 +1,5 @@
 """Unit tests for DatabaseStack."""
+
 from unittest.mock import Mock
 
 import pytest
@@ -29,9 +30,7 @@ class TestDatabaseStack:
     def test_config_rds(self):
         """Create test configuration for RDS instance."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -53,9 +52,7 @@ class TestDatabaseStack:
     def test_config_aurora(self):
         """Create test configuration for Aurora Serverless."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -79,9 +76,7 @@ class TestDatabaseStack:
     def test_config_existing(self):
         """Create test configuration for existing database."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -123,9 +118,7 @@ class TestDatabaseStack:
         assert hasattr(stack, "instance")
         assert hasattr(stack, "secret")
 
-    def test_stack_initialization_aurora(
-        self, app, test_config_aurora, network_stack_mock
-    ):
+    def test_stack_initialization_aurora(self, app, test_config_aurora, network_stack_mock):
         """Test database stack initialization with Aurora Serverless."""
         stack = DatabaseStack(
             app,
@@ -140,9 +133,7 @@ class TestDatabaseStack:
         assert hasattr(stack, "cluster")
         assert hasattr(stack, "secret")
 
-    def test_database_security_group_creation(
-        self, app, test_config_rds, network_stack_mock
-    ):
+    def test_database_security_group_creation(self, app, test_config_rds, network_stack_mock):
         """Test database security group creation."""
         stack = DatabaseStack(
             app,
@@ -211,9 +202,7 @@ class TestDatabaseStack:
             },
         )
 
-    def test_aurora_serverless_creation(
-        self, app, test_config_aurora, network_stack_mock
-    ):
+    def test_aurora_serverless_creation(self, app, test_config_aurora, network_stack_mock):
         """Test Aurora Serverless cluster creation."""
         stack = DatabaseStack(
             app,
@@ -256,9 +245,7 @@ class TestDatabaseStack:
             },
         )
 
-    def test_existing_database_import(
-        self, app, test_config_existing, network_stack_mock
-    ):
+    def test_existing_database_import(self, app, test_config_existing, network_stack_mock):
         """Test importing existing database."""
         stack = DatabaseStack(
             app,
@@ -281,9 +268,7 @@ class TestDatabaseStack:
     def test_existing_database_missing_secret_arn(self, app, network_stack_mock):
         """Test error when existing database is missing secret ARN."""
         config = N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -291,7 +276,7 @@ class TestDatabaseStack:
                     settings=EnvironmentSettings(
                         database=DatabaseConfig(
                             type="postgres",
-                            use_existing=True
+                            use_existing=True,
                             # Missing connection_secret_arn
                         )
                     ),
@@ -340,9 +325,7 @@ class TestDatabaseStack:
     def test_production_settings(self, app, network_stack_mock):
         """Test production-specific settings."""
         config = N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "production": EnvironmentConfig(
                     account="123456789012",
@@ -392,17 +375,13 @@ class TestDatabaseStack:
 
         for input_class, expected_class in configs:
             config = N8nConfig(
-                global_config=GlobalConfig(
-                    project_name="test-n8n", organization="test-org"
-                ),
+                global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
                 environments={
                     "test": EnvironmentConfig(
                         account="123456789012",
                         region="us-east-1",
                         settings=EnvironmentSettings(
-                            database=DatabaseConfig(
-                                type="postgres", instance_class=input_class
-                            )
+                            database=DatabaseConfig(type="postgres", instance_class=input_class)
                         ),
                     )
                 },
@@ -418,9 +397,7 @@ class TestDatabaseStack:
             )
 
             template = Template.from_stack(stack)
-            template.has_resource_properties(
-                "AWS::RDS::DBInstance", {"DBInstanceClass": expected_class}
-            )
+            template.has_resource_properties("AWS::RDS::DBInstance", {"DBInstanceClass": expected_class})
 
     def test_stack_outputs(self, app, test_config_rds, network_stack_mock):
         """Test stack outputs are created correctly."""
@@ -446,13 +423,9 @@ class TestDatabaseStack:
         }
 
         for output in expected_outputs:
-            assert any(
-                output in key for key in output_keys
-            ), f"Missing output: {output}"
+            assert any(output in key for key in output_keys), f"Missing output: {output}"
 
-    def test_removal_policy_based_on_environment(
-        self, app, test_config_rds, network_stack_mock
-    ):
+    def test_removal_policy_based_on_environment(self, app, test_config_rds, network_stack_mock):
         """Test removal policy is set based on environment."""
         stack = DatabaseStack(
             app,
@@ -502,9 +475,7 @@ class TestDatabaseStack:
             {"DBSubnetGroupDescription": "Subnet group for n8n test"},
         )
 
-    def test_cloudwatch_logs_configuration(
-        self, app, test_config_rds, network_stack_mock
-    ):
+    def test_cloudwatch_logs_configuration(self, app, test_config_rds, network_stack_mock):
         """Test CloudWatch logs configuration."""
         stack = DatabaseStack(
             app,
@@ -529,9 +500,7 @@ class TestDatabaseStack:
     def test_no_database_config(self, app, network_stack_mock):
         """Test stack creation without database configuration."""
         config = N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",

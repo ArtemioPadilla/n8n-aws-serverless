@@ -1,4 +1,5 @@
 """Security tests for IAM policies and permissions."""
+
 from unittest.mock import patch
 
 import pytest
@@ -85,9 +86,7 @@ class TestIAMPolicies:
 
         # Find task role policies
         roles = template.find_resources("AWS::IAM::Role")
-        task_roles = {
-            k: v for k, v in roles.items() if "TaskRole" in k or "taskRole" in str(v)
-        }
+        task_roles = {k: v for k, v in roles.items() if "TaskRole" in k or "taskRole" in str(v)}
 
         for role_name, role in task_roles.items():
             policies = role.get("Properties", {}).get("Policies", [])
@@ -111,9 +110,7 @@ class TestIAMPolicies:
                             if resource == "*":
                                 # Some actions require wildcard resources
                                 assert any(
-                                    action
-                                    in ["logs:CreateLogGroup", "logs:CreateLogStream"]
-                                    for action in actions
+                                    action in ["logs:CreateLogGroup", "logs:CreateLogStream"] for action in actions
                                 ), f"Unnecessary wildcard resource in {role_name}"
 
     def test_no_admin_policies(self, app, test_config):
@@ -155,12 +152,8 @@ class TestIAMPolicies:
             managed_policies = role.get("Properties", {}).get("ManagedPolicyArns", [])
 
             for policy_arn in managed_policies:
-                assert "AdministratorAccess" not in str(
-                    policy_arn
-                ), f"Admin policy found in {role_name}"
-                assert "PowerUserAccess" not in str(
-                    policy_arn
-                ), f"PowerUser policy found in {role_name}"
+                assert "AdministratorAccess" not in str(policy_arn), f"Admin policy found in {role_name}"
+                assert "PowerUserAccess" not in str(policy_arn), f"PowerUser policy found in {role_name}"
 
     def test_secrets_access_restricted(self, app, test_config):
         """Test that secrets access is properly restricted."""
@@ -196,9 +189,7 @@ class TestIAMPolicies:
 
         for secret_name, secret in secrets.items():
             # Secrets should have resource policies restricting access
-            assert secret.get("Properties", {}).get(
-                "Description"
-            ), f"Secret {secret_name} missing description"
+            assert secret.get("Properties", {}).get("Description"), f"Secret {secret_name} missing description"
 
     def test_network_security_groups(self, app, test_config):
         """Test that security groups follow principle of least privilege."""
@@ -225,9 +216,7 @@ class TestIAMPolicies:
             if cidr == "0.0.0.0/0":
                 # Only allow specific ports from internet
                 allowed_internet_ports = [80, 443]
-                assert (
-                    from_port in allowed_internet_ports
-                ), f"Unrestricted internet access on port {from_port}"
+                assert from_port in allowed_internet_ports, f"Unrestricted internet access on port {from_port}"
 
     def test_encryption_at_rest(self, app, test_config):
         """Test that all data is encrypted at rest."""
@@ -253,9 +242,7 @@ class TestIAMPolicies:
         # Check EFS encryption
         efs_systems = template.find_resources("AWS::EFS::FileSystem")
         for fs_name, fs in efs_systems.items():
-            assert (
-                fs.get("Properties", {}).get("Encrypted") is True
-            ), f"EFS {fs_name} is not encrypted"
+            assert fs.get("Properties", {}).get("Encrypted") is True, f"EFS {fs_name} is not encrypted"
 
         # Check RDS encryption if database stack exists
         test_config.environments["test"].settings.database = {
@@ -279,9 +266,7 @@ class TestIAMPolicies:
         # Check RDS encryption
         rds_instances = db_template.find_resources("AWS::RDS::DBInstance")
         for db_name, db in rds_instances.items():
-            assert (
-                db.get("Properties", {}).get("StorageEncrypted") is True
-            ), f"RDS instance {db_name} is not encrypted"
+            assert db.get("Properties", {}).get("StorageEncrypted") is True, f"RDS instance {db_name} is not encrypted"
 
     def test_transit_encryption(self, app, test_config):
         """Test that data in transit is encrypted."""
@@ -304,9 +289,7 @@ class TestIAMPolicies:
 
         # Check EFS mount targets use encryption in transit
         volume_config = storage_stack.get_efs_volume_configuration()
-        assert (
-            volume_config["efs_volume_configuration"]["transit_encryption"] == "ENABLED"
-        )
+        assert volume_config["efs_volume_configuration"]["transit_encryption"] == "ENABLED"
 
     def test_api_gateway_authentication(self, app, test_config):
         """Test API Gateway has proper authentication."""
@@ -395,9 +378,7 @@ class TestIAMPolicies:
         for lg_name, lg in log_groups.items():
             retention = lg.get("Properties", {}).get("RetentionInDays")
             assert retention is not None, f"Log group {lg_name} has no retention policy"
-            assert (
-                retention <= 365
-            ), f"Log group {lg_name} retention too long: {retention} days"
+            assert retention <= 365, f"Log group {lg_name} retention too long: {retention} days"
 
     def test_no_hardcoded_secrets(self):
         """Test that no secrets are hardcoded in the codebase."""

@@ -45,7 +45,17 @@
       "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest tests/integration/test_stack_deployment.py::TestStackDeployment::test_full_stack_deployment -xvs)",
       "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest tests/integration/test_stack_deployment.py -k \"test_minimal\" -v)",
       "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest -k \"not test_full_stack_deployment\")",
-      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest --tb=short)"
+      "Bash(JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 pytest --tb=short)",
+      "Bash(export:*)",
+      "Bash(./scripts/setup-pre-commit.sh:*)",
+      "Bash(touch:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(detect-secrets scan:*)",
+      "Bash(pre-commit:*)",
+      "Bash(prettier:*)",
+      "Bash(npx prettier:*)",
+      "Bash(cat:*)",
+      "Bash(shellcheck:*)"
     ],
     "deny": []
   }

@@ -6,14 +6,29 @@ Thank you for your interest in contributing to n8n Deploy! This guide will help 
 
 1. Fork the repository on GitHub
 2. Clone your fork locally:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/n8n-deploy.git
    cd n8n-deploy
    ```
+
 3. Set up your development environment:
+
    ```bash
    make install-dev
    ```
+
+4. Install pre-commit hooks (recommended):
+
+   ```bash
+   ./scripts/setup-pre-commit.sh
+   ```
+
+   This will install hooks that automatically:
+   - Format your code (black, isort)
+   - Run linting checks
+   - Run quick tests on commit
+   - Run full test suite on push
 
 ## Development Process
 
@@ -58,18 +73,27 @@ make check
 ### 5. Commit Your Changes
 
 Write clear, concise commit messages:
+
 ```bash
 git commit -m "feat: add cloudflare tunnel support"
 git commit -m "fix: resolve memory leak in fargate service"
 git commit -m "docs: update deployment guide"
 ```
 
+**Note**: If you've installed pre-commit hooks, they will automatically run before each commit. To skip hooks temporarily (not recommended), use:
+
+```bash
+git commit --no-verify -m "your message"
+```
+
 ### 6. Submit a Pull Request
 
 1. Push your branch to your fork:
+
    ```bash
    git push origin feature/your-feature-name
    ```
+
 2. Open a pull request on GitHub
 3. Describe your changes and link any related issues
 4. Wait for review and address feedback

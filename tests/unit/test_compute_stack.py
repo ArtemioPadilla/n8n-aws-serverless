@@ -1,4 +1,5 @@
 """Unit tests for ComputeStack."""
+
 from unittest.mock import Mock, patch
 
 import pytest
@@ -32,9 +33,7 @@ class TestComputeStack:
     def test_config(self):
         """Create test configuration."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -76,9 +75,7 @@ class TestComputeStack:
         stack.n8n_access_point = efs_access_point_mock
         return stack
 
-    def test_stack_initialization(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_stack_initialization(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test compute stack initialization."""
         stack = ComputeStack(
             app,
@@ -96,9 +93,7 @@ class TestComputeStack:
         assert hasattr(stack, "cluster")
         assert hasattr(stack, "n8n_service")
 
-    def test_ecs_cluster_creation(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_ecs_cluster_creation(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test ECS cluster creation with correct properties."""
         stack = ComputeStack(
             app,
@@ -121,13 +116,9 @@ class TestComputeStack:
             },
         )
 
-    def test_container_insights_disabled(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_container_insights_disabled(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test container insights can be disabled."""
-        test_config.environments[
-            "test"
-        ].settings.monitoring.enable_container_insights = False
+        test_config.environments["test"].settings.monitoring.enable_container_insights = False
 
         stack = ComputeStack(
             app,
@@ -182,9 +173,7 @@ class TestComputeStack:
         assert call_args[1]["access_point"] == storage_stack_mock.n8n_access_point
         assert call_args[1]["environment"] == "test"
 
-    def test_auto_scaling_setup(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_auto_scaling_setup(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test auto-scaling is set up when max_tasks > min_tasks."""
         # Ensure auto-scaling is configured
         test_config.environments["test"].settings.scaling.min_tasks = 1
@@ -194,9 +183,7 @@ class TestComputeStack:
             # Set up mock service with auto-scaling capabilities
             mock_service = Mock()
             mock_scalable_target = Mock()
-            mock_service.service.auto_scale_task_count.return_value = (
-                mock_scalable_target
-            )
+            mock_service.service.auto_scale_task_count.return_value = mock_scalable_target
             mock_fargate.return_value = mock_service
 
             ComputeStack(
@@ -210,20 +197,14 @@ class TestComputeStack:
             )
 
             # Verify auto-scaling was set up
-            mock_service.service.auto_scale_task_count.assert_called_once_with(
-                min_capacity=1, max_capacity=5
-            )
+            mock_service.service.auto_scale_task_count.assert_called_once_with(min_capacity=1, max_capacity=5)
 
             # Verify CPU scaling was configured
             mock_scalable_target.scale_on_cpu_utilization.assert_called_once()
-            cpu_scaling_args = mock_scalable_target.scale_on_cpu_utilization.call_args[
-                1
-            ]
+            cpu_scaling_args = mock_scalable_target.scale_on_cpu_utilization.call_args[1]
             assert cpu_scaling_args["target_utilization_percent"] == 70
 
-    def test_no_auto_scaling_when_disabled(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_no_auto_scaling_when_disabled(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test auto-scaling is not set up when min_tasks equals max_tasks."""
         # Disable auto-scaling
         test_config.environments["test"].settings.scaling.min_tasks = 1
@@ -246,9 +227,7 @@ class TestComputeStack:
             # Verify auto-scaling was not called
             mock_service.service.auto_scale_task_count.assert_not_called()
 
-    def test_production_memory_scaling(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_production_memory_scaling(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test memory-based scaling is added for production environments."""
         # Set up production environment
         test_config.environments["production"] = EnvironmentConfig(
@@ -264,9 +243,7 @@ class TestComputeStack:
         with patch("n8n_deploy.stacks.compute_stack.N8nFargateService") as mock_fargate:
             mock_service = Mock()
             mock_scalable_target = Mock()
-            mock_service.service.auto_scale_task_count.return_value = (
-                mock_scalable_target
-            )
+            mock_service.service.auto_scale_task_count.return_value = mock_scalable_target
             mock_service.service.service_name = "test-service"
             mock_fargate.return_value = mock_service
 
@@ -285,9 +262,7 @@ class TestComputeStack:
             memory_scaling_args = mock_scalable_target.scale_on_metric.call_args
             assert memory_scaling_args[0][0] == "MemoryScaling"
 
-    def test_database_integration(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_database_integration(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test compute stack with database integration."""
         mock_secret = Mock()
 
@@ -306,27 +281,18 @@ class TestComputeStack:
 
             # Verify database parameters were passed
             call_args = mock_fargate.call_args[1]
-            assert (
-                call_args["database_endpoint"]
-                == "test-db.cluster-xxx.us-east-1.rds.amazonaws.com"
-            )
+            assert call_args["database_endpoint"] == "test-db.cluster-xxx.us-east-1.rds.amazonaws.com"
             assert call_args["database_secret"] == mock_secret
 
-    def test_stack_outputs(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_stack_outputs(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test stack outputs are created correctly."""
         with patch("n8n_deploy.stacks.compute_stack.N8nFargateService") as mock_fargate:
             # Set up mock service
             mock_service = Mock()
             mock_service.service.service_name = "test-n8n-service"
-            mock_service.service.service_arn = (
-                "arn:aws:ecs:us-east-1:123456789012:service/test"
-            )
+            mock_service.service.service_arn = "arn:aws:ecs:us-east-1:123456789012:service/test"
             mock_service.service.cloud_map_service = Mock(service_name="n8n.local")
-            mock_service.task_definition.task_definition_arn = (
-                "arn:aws:ecs:us-east-1:123456789012:task-definition/test"
-            )
+            mock_service.task_definition.task_definition_arn = "arn:aws:ecs:us-east-1:123456789012:task-definition/test"
             mock_service.log_group.log_group_name = "/ecs/test-n8n"
             mock_fargate.return_value = mock_service
 
@@ -357,13 +323,9 @@ class TestComputeStack:
             }
 
             for output in expected_outputs:
-                assert any(
-                    output in key for key in output_keys
-                ), f"Missing output: {output}"
+                assert any(output in key for key in output_keys), f"Missing output: {output}"
 
-    def test_spot_percentage_configuration(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_spot_percentage_configuration(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test spot percentage is correctly passed from configuration."""
         # Set spot percentage
         test_config.environments["test"].settings.fargate.spot_percentage = 100
@@ -382,9 +344,7 @@ class TestComputeStack:
         assert stack.is_spot_enabled is True
         assert stack.env_config.settings.fargate.spot_percentage == 100
 
-    def test_service_property_accessors(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_service_property_accessors(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test property accessors for service and security group."""
         with patch("n8n_deploy.stacks.compute_stack.N8nFargateService") as mock_fargate:
             mock_service = Mock()
@@ -408,9 +368,7 @@ class TestComputeStack:
             # Test security group property
             assert stack.service_security_group == network_stack_mock.n8n_security_group
 
-    def test_scaling_cooldown_periods(
-        self, app, test_config, network_stack_mock, storage_stack_mock
-    ):
+    def test_scaling_cooldown_periods(self, app, test_config, network_stack_mock, storage_stack_mock):
         """Test scaling cooldown periods are correctly configured."""
         # Set custom cooldown periods
         test_config.environments["test"].settings.scaling.scale_in_cooldown = 600
@@ -419,9 +377,7 @@ class TestComputeStack:
         with patch("n8n_deploy.stacks.compute_stack.N8nFargateService") as mock_fargate:
             mock_service = Mock()
             mock_scalable_target = Mock()
-            mock_service.service.auto_scale_task_count.return_value = (
-                mock_scalable_target
-            )
+            mock_service.service.auto_scale_task_count.return_value = mock_scalable_target
             mock_fargate.return_value = mock_service
 
             ComputeStack(
@@ -435,9 +391,7 @@ class TestComputeStack:
             )
 
             # Verify cooldown periods
-            cpu_scaling_call = mock_scalable_target.scale_on_cpu_utilization.call_args[
-                1
-            ]
+            cpu_scaling_call = mock_scalable_target.scale_on_cpu_utilization.call_args[1]
             assert cpu_scaling_call["scale_in_cooldown"].to_seconds() == 600
             assert cpu_scaling_call["scale_out_cooldown"].to_seconds() == 120
 
@@ -445,9 +399,7 @@ class TestComputeStack:
         """Test stack creation without scaling configuration."""
         # Create config without scaling
         config = N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",

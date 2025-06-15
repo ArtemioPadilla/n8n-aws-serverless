@@ -1,4 +1,5 @@
 """Monitoring stack for CloudWatch alarms and dashboards."""
+
 from typing import Optional
 
 from aws_cdk import Duration
@@ -60,10 +61,7 @@ class MonitoringStack(N8nBaseStack):
             self._create_database_alarms()
 
         # Create Cloudflare Tunnel alarms if enabled
-        if (
-            self.env_config.settings.access
-            and self.env_config.settings.access.type == AccessType.CLOUDFLARE
-        ):
+        if self.env_config.settings.access and self.env_config.settings.access.type == AccessType.CLOUDFLARE:
             self._create_cloudflare_tunnel_alarms()
 
         # Create dashboard
@@ -86,9 +84,7 @@ class MonitoringStack(N8nBaseStack):
 
         # Add email subscription if configured
         if self.monitoring_config and self.monitoring_config.alarm_email:
-            topic.add_subscription(
-                sns_subscriptions.EmailSubscription(self.monitoring_config.alarm_email)
-            )
+            topic.add_subscription(sns_subscriptions.EmailSubscription(self.monitoring_config.alarm_email))
 
         return topic
 
@@ -192,9 +188,7 @@ class MonitoringStack(N8nBaseStack):
 
     def _create_database_alarms(self) -> None:
         """Create alarms for database resources."""
-        if not hasattr(self.database_stack, "instance") and not hasattr(
-            self.database_stack, "cluster"
-        ):
+        if not hasattr(self.database_stack, "instance") and not hasattr(self.database_stack, "cluster"):
             return
 
         alarm_action = cloudwatch_actions.SnsAction(self.alarm_topic)
@@ -383,9 +377,7 @@ class MonitoringStack(N8nBaseStack):
         dashboard.add_widgets(
             cloudwatch.LogQueryWidget(
                 title="Recent Errors",
-                log_group_names=[
-                    self.compute_stack.n8n_service.log_group.log_group_name
-                ],
+                log_group_names=[self.compute_stack.n8n_service.log_group.log_group_name],
                 width=24,
                 height=4,
                 query_lines=[
@@ -430,10 +422,7 @@ class MonitoringStack(N8nBaseStack):
             )
 
         # Add Cloudflare Tunnel metrics if enabled
-        if (
-            self.env_config.settings.access
-            and self.env_config.settings.access.type == AccessType.CLOUDFLARE
-        ):
+        if self.env_config.settings.access and self.env_config.settings.access.type == AccessType.CLOUDFLARE:
             dashboard.add_widgets(
                 cloudwatch.GraphWidget(
                     title="Cloudflare Tunnel Health",
@@ -460,9 +449,7 @@ class MonitoringStack(N8nBaseStack):
                 ),
                 cloudwatch.LogQueryWidget(
                     title="Cloudflare Tunnel Logs",
-                    log_group_names=[
-                        self.compute_stack.n8n_service.log_group.log_group_name
-                    ],
+                    log_group_names=[self.compute_stack.n8n_service.log_group.log_group_name],
                     width=12,
                     height=6,
                     query_lines=[
@@ -480,9 +467,7 @@ class MonitoringStack(N8nBaseStack):
         """Create custom metrics for n8n-specific monitoring."""
         # Create custom metric namespace
         custom_namespace = (
-            self.monitoring_config.custom_metrics_namespace
-            if self.monitoring_config
-            else "N8n/Serverless"
+            self.monitoring_config.custom_metrics_namespace if self.monitoring_config else "N8n/Serverless"
         )
 
         # Create custom metrics filters for log insights
@@ -582,9 +567,7 @@ class MonitoringStack(N8nBaseStack):
             metric_name="AuthenticationErrors",
             metric_namespace=namespace,
             metric_value="1",
-            filter_pattern=logs.FilterPattern.literal(
-                "Authentication failed || Unauthorized access"
-            ),
+            filter_pattern=logs.FilterPattern.literal("Authentication failed || Unauthorized access"),
             default_value=0,
         )
 

@@ -1,4 +1,5 @@
 """Unit tests for network stack."""
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -56,34 +57,24 @@ class TestNetworkStack:
         mock_vpc_lookup.return_value = mock_vpc
 
         # Create stack
-        stack = NetworkStack(
-            mock_app, "network-stack", config=test_config, environment="test"
-        )
+        stack = NetworkStack(mock_app, "network-stack", config=test_config, environment="test")
 
         # Verify VPC was imported
-        mock_vpc_lookup.assert_called_once_with(
-            stack, "ImportedVpc", vpc_id="vpc-existing123"
-        )
+        mock_vpc_lookup.assert_called_once_with(stack, "ImportedVpc", vpc_id="vpc-existing123")
         assert stack.vpc == mock_vpc
 
     def test_vpc_id_required_for_import(self, mock_app, test_config):
         """Test that vpc_id is required when importing VPC."""
         # Configure test without vpc_id
-        test_config.environments["test"].settings.networking = NetworkingConfig(
-            use_existing_vpc=True, vpc_id=None
-        )
+        test_config.environments["test"].settings.networking = NetworkingConfig(use_existing_vpc=True, vpc_id=None)
 
         # Should raise error
         with pytest.raises(ValueError, match="vpc_id is required"):
-            NetworkStack(
-                mock_app, "network-stack", config=test_config, environment="test"
-            )
+            NetworkStack(mock_app, "network-stack", config=test_config, environment="test")
 
     @patch("n8n_deploy.stacks.network_stack.ec2.SecurityGroup")
     @patch("n8n_deploy.stacks.network_stack.ec2.Vpc")
-    def test_security_group_creation(
-        self, mock_vpc_class, mock_sg_class, mock_app, test_config
-    ):
+    def test_security_group_creation(self, mock_vpc_class, mock_sg_class, mock_app, test_config):
         """Test security group creation."""
         # Setup mocks
         mock_vpc = MagicMock()
@@ -118,9 +109,7 @@ class TestNetworkStack:
         # Test production environment
         test_config.environments["production"] = test_config.environments["test"]
 
-        NetworkStack(
-            mock_app, "network-stack-prod", config=test_config, environment="production"
-        )
+        NetworkStack(mock_app, "network-stack-prod", config=test_config, environment="production")
 
         prod_vpc_call = mock_vpc_class.call_args_list[-1]
         assert prod_vpc_call[1]["max_azs"] == 3
@@ -128,9 +117,7 @@ class TestNetworkStack:
         # Test staging environment
         test_config.environments["staging"] = test_config.environments["test"]
 
-        NetworkStack(
-            mock_app, "network-stack-staging", config=test_config, environment="staging"
-        )
+        NetworkStack(mock_app, "network-stack-staging", config=test_config, environment="staging")
 
         staging_vpc_call = mock_vpc_class.call_args_list[-1]
         assert staging_vpc_call[1]["max_azs"] == 2
@@ -138,9 +125,7 @@ class TestNetworkStack:
         # Test dev environment
         test_config.environments["dev"] = test_config.environments["test"]
 
-        NetworkStack(
-            mock_app, "network-stack-dev", config=test_config, environment="dev"
-        )
+        NetworkStack(mock_app, "network-stack-dev", config=test_config, environment="dev")
 
         dev_vpc_call = mock_vpc_class.call_args_list[-1]
         assert dev_vpc_call[1]["max_azs"] == 1
@@ -164,9 +149,7 @@ class TestNetworkStack:
     @patch("n8n_deploy.stacks.network_stack.CfnOutput")
     @patch("n8n_deploy.stacks.network_stack.ec2.SecurityGroup")
     @patch("n8n_deploy.stacks.network_stack.ec2.Vpc")
-    def test_stack_outputs(
-        self, mock_vpc_class, mock_sg_class, mock_output_class, mock_app, test_config
-    ):
+    def test_stack_outputs(self, mock_vpc_class, mock_sg_class, mock_output_class, mock_app, test_config):
         """Test that stack outputs are created correctly."""
         # Setup mocks
         mock_vpc = MagicMock()

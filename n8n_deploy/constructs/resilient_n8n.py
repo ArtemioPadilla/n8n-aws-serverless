@@ -1,4 +1,5 @@
 """Resilient n8n construct with error recovery mechanisms."""
+
 from typing import Any, Dict
 
 from aws_cdk import Duration, RemovalPolicy
@@ -82,9 +83,7 @@ class ResilientN8n(Construct):
         dlq_alarm.add_alarm_action(cloudwatch_actions.SnsAction(self.monitoring_topic))
 
         # Grant n8n service permission to send to DLQ
-        dlq.grant_send_messages(
-            self.compute_stack.n8n_service.task_definition.task_role
-        )
+        dlq.grant_send_messages(self.compute_stack.n8n_service.task_definition.task_role)
 
         return dlq
 
@@ -114,9 +113,7 @@ class ResilientN8n(Construct):
         dlq_alarm.add_alarm_action(cloudwatch_actions.SnsAction(self.monitoring_topic))
 
         # Grant permissions
-        dlq.grant_send_messages(
-            self.compute_stack.n8n_service.task_definition.task_role
-        )
+        dlq.grant_send_messages(self.compute_stack.n8n_service.task_definition.task_role)
 
         return dlq
 
@@ -232,13 +229,9 @@ def handler(event, context):
             self,
             "CircuitStateTable",
             table_name=f"n8n-{self.environment}-circuit-state",
-            partition_key=dynamodb.Attribute(
-                name="service_name", type=dynamodb.AttributeType.STRING
-            ),
+            partition_key=dynamodb.Attribute(name="service_name", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.DESTROY
-            if self.environment != "production"
-            else RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY if self.environment != "production" else RemovalPolicy.RETAIN,
             point_in_time_recovery=self.environment == "production",
         )
 
@@ -252,9 +245,7 @@ def handler(event, context):
         )
 
         # Allow n8n to invoke circuit breaker
-        circuit_breaker_fn.grant_invoke(
-            self.compute_stack.n8n_service.task_definition.task_role
-        )
+        circuit_breaker_fn.grant_invoke(self.compute_stack.n8n_service.task_definition.task_role)
 
         return circuit_breaker_fn
 
@@ -378,9 +369,7 @@ def handler(event, context):
         )
 
         # Allow n8n to send to retry queue
-        retry_queue.grant_send_messages(
-            self.compute_stack.n8n_service.task_definition.task_role
-        )
+        retry_queue.grant_send_messages(self.compute_stack.n8n_service.task_definition.task_role)
 
         return retry_handler_fn
 
@@ -546,9 +535,7 @@ def handler(event, context):
         )
 
         # Add alarm action
-        no_tasks_alarm.add_alarm_action(
-            cloudwatch_actions.SnsAction(self.monitoring_topic)
-        )
+        no_tasks_alarm.add_alarm_action(cloudwatch_actions.SnsAction(self.monitoring_topic))
 
         # Create alarm for high error rate
         error_rate_alarm = cloudwatch.Alarm(
@@ -581,9 +568,7 @@ def handler(event, context):
             comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
         )
 
-        error_rate_alarm.add_alarm_action(
-            cloudwatch_actions.SnsAction(self.monitoring_topic)
-        )
+        error_rate_alarm.add_alarm_action(cloudwatch_actions.SnsAction(self.monitoring_topic))
 
     def get_dlq_arns(self) -> Dict[str, str]:
         """Get ARNs of dead letter queues."""

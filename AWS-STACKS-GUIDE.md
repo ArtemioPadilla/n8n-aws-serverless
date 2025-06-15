@@ -5,38 +5,44 @@
 El proyecto está organizado en **8 stacks modulares** que se pueden combinar según tus necesidades:
 
 ### 1. **NetworkStack** (Opcional)
+
 - **Propósito**: Crear VPC, subnets, security groups
 - **Cuándo lo necesitas**: Si no tienes una VPC existente
 - **Costo**: $0/mes (recursos de red son gratuitos)
 
 ### 2. **StorageStack** (Requerido)
+
 - **Propósito**: Sistema de archivos EFS para persistencia
 - **Incluye**: EFS, backups, lifecycle policies
 - **Costo**: ~$3-5/mes (con lifecycle policies)
 
 ### 3. **DatabaseStack** (Opcional)
+
 - **Propósito**: Base de datos PostgreSQL
 - **Opciones**: RDS o Aurora Serverless
-- **Costo**: 
+- **Costo**:
   - RDS: ~$15/mes (db.t3.micro)
   - Aurora Serverless: ~$0.12/hora cuando está activo
 
 ### 4. **ComputeStack** (Requerido)
+
 - **Propósito**: ECS Fargate para ejecutar n8n
 - **Incluye**: Cluster ECS, Task Definition, Service
-- **Costo**: 
+- **Costo**:
   - Con Spot (80%): ~$3-5/mes
   - Sin Spot: ~$15-20/mes
 
 ### 5. **AccessStack** (Requerido)
+
 - **Propósito**: Exponer n8n a internet
 - **Incluye**: API Gateway HTTP API
 - **Opciones**: CloudFront, WAF
-- **Costo**: 
+- **Costo**:
   - API Gateway solo: ~$1/mes
   - Con CloudFront: +$0-5/mes
 
 ### 6. **MonitoringStack** (Opcional)
+
 - **Propósito**: CloudWatch dashboards y alertas
 - **Incluye**: Logs, métricas, alarmas, SNS
 - **Costo**: ~$5-10/mes
@@ -44,6 +50,7 @@ El proyecto está organizado en **8 stacks modulares** que se pueden combinar se
 ## 🚀 Opciones de Despliegue
 
 ### Opción 1: **Minimal** (~$5-10/mes)
+
 La configuración más simple y económica:
 
 ```bash
@@ -52,6 +59,7 @@ cdk deploy -c environment=dev -c stack_type=minimal
 ```
 
 **Incluye**:
+
 - ✅ StorageStack (EFS para SQLite)
 - ✅ ComputeStack (Fargate con Spot)
 - ✅ AccessStack (API Gateway)
@@ -59,11 +67,13 @@ cdk deploy -c environment=dev -c stack_type=minimal
 - ❌ No incluye monitoreo
 
 **Arquitectura**:
+
 ```
 Internet → API Gateway → Fargate (n8n) → EFS (SQLite)
 ```
 
 ### Opción 2: **Standard** (~$15-30/mes)
+
 Incluye monitoreo y backups:
 
 ```bash
@@ -71,12 +81,14 @@ cdk deploy -c environment=dev -c stack_type=standard
 ```
 
 **Incluye**:
+
 - ✅ Todo de Minimal
 - ✅ MonitoringStack
 - ✅ Backups automáticos
 - ✅ CloudFront (opcional)
 
 ### Opción 3: **Enterprise** (~$50-100/mes)
+
 Para producción con alta disponibilidad:
 
 ```bash
@@ -84,6 +96,7 @@ cdk deploy -c environment=production -c stack_type=enterprise
 ```
 
 **Incluye**:
+
 - ✅ Todo de Standard
 - ✅ DatabaseStack (PostgreSQL)
 - ✅ WAF
@@ -104,6 +117,7 @@ cdk deploy -c environment=dev -c stack_type=minimal --all
 ```
 
 Esto creará:
+
 1. **EFS** para almacenar datos de n8n
 2. **Fargate** ejecutando n8n (con 80% Spot para ahorrar)
 3. **API Gateway** para acceder a n8n
@@ -111,6 +125,7 @@ Esto creará:
 ## 📊 Análisis de Costos Detallado
 
 ### Stack Minimal (dev)
+
 | Servicio | Configuración | Costo Estimado |
 |----------|--------------|----------------|
 | EFS | 1GB con lifecycle | $0.30/mes |
@@ -119,6 +134,7 @@ Esto creará:
 | **TOTAL** | | **~$5-10/mes** |
 
 ### ¿Por qué tan barato?
+
 1. **Fargate Spot**: 70-80% de descuento
 2. **EFS Lifecycle**: Mueve archivos viejos a almacenamiento barato
 3. **API Gateway HTTP**: Más barato que ALB ($16/mes)
@@ -162,6 +178,7 @@ cdk deploy -c environment=dev n8n-deploy-dev-access
 ### 4. Obtener la URL
 
 Después del despliegue, verás:
+
 ```
 Outputs:
 n8n-deploy-dev-access.ApiUrl = https://xxxxx.execute-api.us-east-1.amazonaws.com
@@ -169,7 +186,7 @@ n8n-deploy-dev-access.ApiUrl = https://xxxxx.execute-api.us-east-1.amazonaws.com
 
 ## 🔧 Personalización
 
-### Si quieres usar tu VPC existente:
+### Si quieres usar tu VPC existente
 
 ```yaml
 environments:
@@ -183,7 +200,7 @@ environments:
           - "subnet-yyyyy"
 ```
 
-### Si quieres más memoria/CPU:
+### Si quieres más memoria/CPU
 
 ```yaml
 environments:
@@ -194,7 +211,7 @@ environments:
         memory: 1024  # 1 GB RAM
 ```
 
-### Si quieres PostgreSQL en lugar de SQLite:
+### Si quieres PostgreSQL en lugar de SQLite
 
 ```yaml
 environments:
@@ -208,22 +225,27 @@ environments:
 ## ❓ Preguntas Frecuentes
 
 ### ¿Necesito todos los stacks?
+
 No. Con el tipo "minimal" solo se crean 3 stacks esenciales.
 
 ### ¿Puedo añadir stacks después?
+
 Sí. Puedes empezar con minimal y añadir monitoring o database más tarde.
 
 ### ¿Cómo elimino todo?
+
 ```bash
 cdk destroy -c environment=dev --all
 ```
 
 ### ¿Puedo usar esto en producción?
+
 Sí, pero usa el tipo "standard" o "enterprise" con PostgreSQL.
 
 ## 📈 Siguiente Paso
 
 **Ejecuta este comando para empezar:**
+
 ```bash
 cdk deploy -c environment=dev -c stack_type=minimal --all --require-approval never
 ```

@@ -86,9 +86,7 @@ class TestConfigLoader:
                 "test": {
                     "account": "123456789012",
                     "region": "us-east-1",
-                    "settings": {
-                        "fargate": {"cpu": 256, "memory": 8192}  # Invalid for 256 CPU
-                    },
+                    "settings": {"fargate": {"cpu": 256, "memory": 8192}},  # Invalid for 256 CPU
                 }
             },
         }
@@ -120,7 +118,7 @@ class TestConfigLoader:
                     "settings": {
                         "fargate": {
                             "cpu": 256,
-                            "memory": 512
+                            "memory": 512,
                             # spot_percentage should come from defaults
                         }
                     },

@@ -55,11 +55,7 @@ class StorageStack(N8nBaseStack):
     def _create_efs_file_system(self) -> efs.FileSystem:
         """Create EFS file system for n8n data."""
         # Get EFS configuration from defaults
-        efs_config = (
-            self.config.defaults.efs
-            if self.config.defaults and self.config.defaults.efs
-            else {}
-        )
+        efs_config = self.config.defaults.efs if self.config.defaults and self.config.defaults.efs else {}
         lifecycle_days = efs_config.get("lifecycle_days", 30)
 
         # Map lifecycle days to available policies
@@ -76,9 +72,7 @@ class StorageStack(N8nBaseStack):
         }
 
         # Find the closest matching policy
-        closest_days = min(
-            lifecycle_policy_map.keys(), key=lambda x: abs(x - lifecycle_days)
-        )
+        closest_days = min(lifecycle_policy_map.keys(), key=lambda x: abs(x - lifecycle_days))
         lifecycle_policy = lifecycle_policy_map[closest_days]
 
         # Create file system
@@ -206,9 +200,7 @@ class StorageStack(N8nBaseStack):
         # Mount target info
         mount_targets = []
         for subnet in self.network_stack.subnets:
-            mount_targets.append(
-                f"{self.file_system.file_system_id}.efs.{self.region}.amazonaws.com"
-            )
+            mount_targets.append(f"{self.file_system.file_system_id}.efs.{self.region}.amazonaws.com")
 
         self.add_output(
             "MountTargets",

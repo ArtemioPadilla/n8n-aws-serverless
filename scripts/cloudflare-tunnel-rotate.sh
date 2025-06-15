@@ -105,18 +105,19 @@ check_secret_exists() {
 backup_current_token() {
     local current_token
     current_token=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query 'SecretString' --output text 2>/dev/null || echo "")
-    
+
     if [ -n "$current_token" ]; then
-        local backup_name="${SECRET_NAME}-backup-$(date +%Y%m%d-%H%M%S)"
+        local backup_name
+        backup_name="${SECRET_NAME}-backup-$(date +%Y%m%d-%H%M%S)"
         print_info "Creating backup of current token: $backup_name"
-        
+
         aws secretsmanager create-secret \
             --name "$backup_name" \
             --description "Backup of Cloudflare tunnel token before rotation" \
             --secret-string "$current_token" \
             --tags Key=Purpose,Value=backup Key=OriginalSecret,Value="$SECRET_NAME" \
             > /dev/null
-        
+
         print_success "Backup created successfully"
     fi
 }
@@ -124,22 +125,22 @@ backup_current_token() {
 # Function to validate tunnel token format
 validate_token() {
     local token=$1
-    
+
     # Basic validation - token should be a long base64-like string
     if [[ ! "$token" =~ ^[a-zA-Z0-9_-]{40,}$ ]]; then
         print_error "Invalid token format. Cloudflare tunnel tokens are typically long base64-like strings."
         return 1
     fi
-    
+
     return 0
 }
 
 # Function to update the secret
 update_secret() {
     local token=$1
-    
+
     print_info "Updating secret '$SECRET_NAME'..."
-    
+
     if aws secretsmanager update-secret \
         --secret-id "$SECRET_NAME" \
         --secret-string "$token" \
@@ -156,9 +157,9 @@ update_secret() {
 restart_ecs_service() {
     local cluster_name="n8n-${ENVIRONMENT}"
     local service_name="n8n-${ENVIRONMENT}"
-    
+
     print_info "Restarting ECS service '$service_name' in cluster '$cluster_name'..."
-    
+
     # Force new deployment to pick up the new secret
     if aws ecs update-service \
         --cluster "$cluster_name" \
@@ -166,7 +167,7 @@ restart_ecs_service() {
         --force-new-deployment \
         > /dev/null; then
         print_success "ECS service restart initiated"
-        
+
         # Wait for service to stabilize
         print_info "Waiting for service to stabilize..."
         aws ecs wait services-stable \
@@ -182,25 +183,27 @@ restart_ecs_service() {
 # Function to verify tunnel health
 verify_tunnel_health() {
     local cluster_name="n8n-${ENVIRONMENT}"
-    
+
     print_info "Verifying tunnel health..."
-    
+
     # Get the latest task ARN
-    local task_arn=$(aws ecs list-tasks \
+    local task_arn
+    task_arn=$(aws ecs list-tasks \
         --cluster "$cluster_name" \
         --service-name "n8n-${ENVIRONMENT}" \
         --desired-status RUNNING \
         --query 'taskArns[0]' \
         --output text)
-    
+
     if [ "$task_arn" != "None" ] && [ -n "$task_arn" ]; then
         # Check task health
-        local task_health=$(aws ecs describe-tasks \
+        local task_health
+        task_health=$(aws ecs describe-tasks \
             --cluster "$cluster_name" \
             --tasks "$task_arn" \
             --query 'tasks[0].healthStatus' \
             --output text)
-        
+
         if [ "$task_health" == "HEALTHY" ]; then
             print_success "Tunnel is healthy"
             return 0
@@ -219,38 +222,38 @@ main() {
     print_info "Cloudflare Tunnel Token Rotation"
     print_info "================================"
     echo
-    
+
     # Check prerequisites
     check_aws_cli
     verify_aws_credentials
     check_secret_exists
-    
+
     # Get new token if not provided
     if [ -z "$NEW_TOKEN" ]; then
         echo "Please enter the new Cloudflare tunnel token:"
-        read -s NEW_TOKEN
+        read -rs NEW_TOKEN
         echo
     fi
-    
+
     # Validate token
     if ! validate_token "$NEW_TOKEN"; then
         exit 1
     fi
-    
+
     # Backup current token
     backup_current_token
-    
+
     # Update the secret
     if ! update_secret "$NEW_TOKEN"; then
         exit 1
     fi
-    
+
     # Restart service if requested
     if [ "$RESTART_SERVICE" = true ]; then
         if restart_ecs_service; then
             # Give the service a moment to start
             sleep 30
-            
+
             # Verify health
             verify_tunnel_health || print_warning "Please check CloudWatch logs for any issues"
         fi
@@ -258,10 +261,10 @@ main() {
         print_warning "Service not restarted. Use -r flag to restart the ECS service."
         print_info "You will need to manually restart the service for the new token to take effect."
     fi
-    
+
     echo
     print_success "Token rotation completed successfully!"
-    
+
     if [ "$RESTART_SERVICE" = false ]; then
         echo
         echo "Next steps:"

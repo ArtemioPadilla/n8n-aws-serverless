@@ -1,4 +1,5 @@
 """Pydantic models for configuration validation."""
+
 import re
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -71,9 +72,7 @@ class ScalingConfig(BaseModel):
         """Ensure max_tasks >= min_tasks."""
         min_tasks = values.get("min_tasks", 1)
         if max_tasks < min_tasks:
-            raise ValueError(
-                f"max_tasks ({max_tasks}) must be >= min_tasks ({min_tasks})"
-            )
+            raise ValueError(f"max_tasks ({max_tasks}) must be >= min_tasks ({min_tasks})")
         return max_tasks
 
 
@@ -129,9 +128,7 @@ class CloudflareConfig(BaseModel):
     def validate_tunnel_token(self):
         """Ensure tunnel token is provided when Cloudflare is enabled."""
         if self.enabled and not self.tunnel_token_secret_name:
-            raise ValueError(
-                "tunnel_token_secret_name is required when Cloudflare is enabled"
-            )
+            raise ValueError("tunnel_token_secret_name is required when Cloudflare is enabled")
         return self
 
     @field_validator("tunnel_domain")
@@ -150,9 +147,7 @@ class CloudflareConfig(BaseModel):
                 r"(\.[a-zA-Z0-9]([a-zA-Z0-9-_]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$"
             )
             if not re.match(pattern, v):
-                raise ValueError(
-                    f"Invalid domain format: {v}. Must be a valid domain name."
-                )
+                raise ValueError(f"Invalid domain format: {v}. Must be a valid domain name.")
         return v
 
 

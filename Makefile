@@ -59,6 +59,12 @@ lint: ## Run linting checks
 	$(ACTIVATE) && $(ISORT) --check-only n8n_deploy tests
 	@echo "$(GREEN)✓ Linting passed$(NC)"
 
+lint-no-black: ## Run linting checks without black (for pre-commit)
+	@echo "$(YELLOW)Running linting checks (no black)...$(NC)"
+	$(ACTIVATE) && $(FLAKE8) n8n_deploy tests
+	$(ACTIVATE) && $(ISORT) --check-only n8n_deploy tests
+	@echo "$(GREEN)✓ Linting passed$(NC)"
+
 format: ## Format code
 	@echo "$(YELLOW)Formatting code...$(NC)"
 	$(ACTIVATE) && $(ISORT) n8n_deploy tests

@@ -3,6 +3,7 @@
 This guide provides comprehensive disaster recovery (DR) procedures for the n8n AWS Serverless deployment.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [RTO and RPO Objectives](#rto-and-rpo-objectives)
 - [Backup Strategy](#backup-strategy)
@@ -13,6 +14,7 @@ This guide provides comprehensive disaster recovery (DR) procedures for the n8n 
 ## Overview
 
 The n8n AWS Serverless deployment is designed with resilience in mind, featuring:
+
 - Automated backups for EFS and RDS
 - Multi-AZ deployments for production
 - Dead Letter Queues for failed operations
@@ -22,6 +24,7 @@ The n8n AWS Serverless deployment is designed with resilience in mind, featuring
 ## RTO and RPO Objectives
 
 ### Recovery Time Objective (RTO)
+
 The maximum acceptable time to restore service after a disaster.
 
 | Component | RTO Target | Notes |
@@ -32,6 +35,7 @@ The maximum acceptable time to restore service after a disaster.
 | Complete Stack | 2 hours | Full CDK redeploy |
 
 ### Recovery Point Objective (RPO)
+
 The maximum acceptable data loss measured in time.
 
 | Component | RPO Target | Backup Frequency |
@@ -46,6 +50,7 @@ The maximum acceptable data loss measured in time.
 ### 1. Automated Backups
 
 #### EFS Backups
+
 ```yaml
 # Configured in system.yaml
 backup:
@@ -57,6 +62,7 @@ backup:
 ```
 
 #### RDS Backups
+
 - Automated daily backups at 03:00 UTC
 - 30-day retention for production
 - Point-in-time recovery enabled
@@ -64,6 +70,7 @@ backup:
 ### 2. Manual Backup Procedures
 
 #### Backup n8n Workflows
+
 ```bash
 # Export all workflows
 curl -X GET https://n8n.example.com/rest/workflows \
@@ -75,6 +82,7 @@ aws s3 cp workflows-backup-*.json s3://backup-bucket/n8n/workflows/
 ```
 
 #### Backup Credentials and Secrets
+
 ```bash
 # Backup secrets to secure location
 aws secretsmanager get-secret-value \
@@ -105,10 +113,12 @@ aws s3api put-bucket-replication \
 #### Scenario: n8n service is down
 
 **Automatic Recovery** (already configured):
+
 - ECS automatically restarts failed tasks
 - Health checks trigger auto-recovery
 
 **Manual Recovery**:
+
 ```bash
 # Force new deployment
 aws ecs update-service \
@@ -127,6 +137,7 @@ aws ecs wait services-stable \
 #### Scenario: Database corruption or failure
 
 **From Automated Backup**:
+
 ```bash
 # List available backups
 aws rds describe-db-snapshots \
@@ -145,6 +156,7 @@ aws ecs update-service \
 ```
 
 **Point-in-Time Recovery**:
+
 ```bash
 # Restore to specific time
 aws rds restore-db-instance-to-point-in-time \
@@ -158,6 +170,7 @@ aws rds restore-db-instance-to-point-in-time \
 #### Scenario: EFS data loss or corruption
 
 **From AWS Backup**:
+
 ```bash
 # List recovery points
 aws backup list-recovery-points-by-backup-vault \
@@ -176,6 +189,7 @@ aws backup start-restore-job \
 #### Scenario: Complete region failure or stack deletion
 
 **Deploy to DR Region**:
+
 ```bash
 # Update CDK context for DR region
 export CDK_DEFAULT_REGION=us-west-2
@@ -192,6 +206,7 @@ cdk deploy -c environment=production-dr --all
 #### Scenario: Lost or corrupted workflows
 
 **From Backup**:
+
 ```bash
 # Download backup from S3
 aws s3 cp s3://backup-bucket/n8n/workflows/workflows-backup-20240120.json .
@@ -208,6 +223,7 @@ curl -X POST https://n8n.example.com/rest/workflows \
 #### Scenario: Webhooks failed and need reprocessing
 
 **From Dead Letter Queue**:
+
 ```bash
 # Process messages from DLQ
 aws sqs receive-message \
@@ -257,6 +273,7 @@ aws fis start-experiment --experiment-template-id <template-id>
 ### 1. Monitoring and Alerting
 
 Ensure these alarms are configured:
+
 - Service health checks
 - Database connection failures
 - High error rates
@@ -273,6 +290,7 @@ Ensure these alarms are configured:
 ### 3. Documentation Updates
 
 Keep these documents current:
+
 - Runbook with step-by-step procedures
 - Contact list for escalations
 - Architecture diagrams
@@ -281,6 +299,7 @@ Keep these documents current:
 ## Recovery Scripts
 
 ### restore-from-backup.sh
+
 ```bash
 #!/bin/bash
 # Automated restore script
@@ -308,6 +327,7 @@ esac
 ```
 
 ### health-check.sh
+
 ```bash
 #!/bin/bash
 # Service health verification
@@ -383,11 +403,13 @@ check_n8n_api() {
 ### C. Monitoring Dashboard
 
 Access the DR monitoring dashboard:
+
 ```
 https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=n8n-production-dr-dashboard
 ```
 
 Key metrics to monitor:
+
 - Backup job success rate
 - RTO achievement (actual vs target)
 - RPO compliance
@@ -396,6 +418,7 @@ Key metrics to monitor:
 ## Summary
 
 This disaster recovery plan ensures:
+
 1. **Minimal downtime** through automated recovery
 2. **Data protection** via regular backups
 3. **Quick recovery** with documented procedures

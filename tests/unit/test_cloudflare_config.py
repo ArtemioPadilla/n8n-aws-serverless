@@ -59,9 +59,7 @@ class TestCloudflareConfig:
         ]
 
         for domain in valid_domains:
-            config = CloudflareConfig(
-                enabled=True, tunnel_token_secret_name="secret", tunnel_domain=domain
-            )
+            config = CloudflareConfig(enabled=True, tunnel_token_secret_name="secret", tunnel_domain=domain)
             assert config.tunnel_domain == domain
 
         # Invalid domains
@@ -106,9 +104,7 @@ class TestAccessConfig:
         """Test Cloudflare access configuration."""
         config = AccessConfig(
             type=AccessType.CLOUDFLARE,
-            cloudflare=CloudflareConfig(
-                enabled=True, tunnel_token_secret_name="my-secret"
-            ),
+            cloudflare=CloudflareConfig(enabled=True, tunnel_token_secret_name="my-secret"),
         )
         assert config.type == AccessType.CLOUDFLARE
         assert config.cloudflare.enabled is True
@@ -164,9 +160,7 @@ class TestCloudflareTunnelConfiguration:
         template = Template.from_stack(self.stack)
 
         # Should create a new secret
-        template.has_resource_properties(
-            "AWS::SecretsManager::Secret", {"Name": "n8n/test/cloudflare-tunnel-token"}
-        )
+        template.has_resource_properties("AWS::SecretsManager::Secret", {"Name": "n8n/test/cloudflare-tunnel-token"})
 
         # Should output the secret ARN
         template.has_output("TunnelConfigTunnelTokenSecretArn", {})
@@ -191,14 +185,7 @@ class TestCloudflareTunnelConfiguration:
 
         # Verify access configuration is stored
         assert config.access_config["enabled"] is True
-        assert (
-            len(
-                config.tunnel_config["ingress"][0]["originRequest"]
-                .get("access", {})
-                .get("policies", [])
-            )
-            > 0
-        )
+        assert len(config.tunnel_config["ingress"][0]["originRequest"].get("access", {}).get("policies", [])) > 0
 
 
 class TestCloudflareTunnelSidecar:
@@ -213,9 +200,7 @@ class TestCloudflareTunnelSidecar:
         self.vpc = ec2.Vpc(self.stack, "TestVpc")
 
         # Create task definition
-        self.task_definition = ecs.FargateTaskDefinition(
-            self.stack, "TestTaskDef", cpu=512, memory_limit_mib=1024
-        )
+        self.task_definition = ecs.FargateTaskDefinition(self.stack, "TestTaskDef", cpu=512, memory_limit_mib=1024)
 
         # Add n8n container
         self.n8n_container = self.task_definition.add_container(
@@ -335,9 +320,7 @@ class TestCloudflareTunnelSidecar:
                         Match.object_like(
                             {
                                 "Name": "cloudflare-tunnel",
-                                "Secrets": Match.array_with(
-                                    [Match.object_like({"Name": "TUNNEL_TOKEN"})]
-                                ),
+                                "Secrets": Match.array_with([Match.object_like({"Name": "TUNNEL_TOKEN"})]),
                             }
                         )
                     ]

@@ -1,0 +1,34 @@
+{
+  "default": true,
+  "MD003": { "style": "atx" },
+  "MD004": { "style": "dash" },
+  "MD013": false,
+  "MD024": { "siblings_only": true },
+  "MD026": false,
+  "MD033": {
+    "allowed_elements": [
+      "example",
+      "good-example",
+      "bad-example",
+      "reasoning",
+      "antml:function_calls",
+      "antml:invoke",
+      "antml:parameter",
+      "details",
+      "summary",
+      "env",
+      "system-reminder",
+      "b",
+      "table",
+      "tr",
+      "td",
+      "p"
+    ]
+  },
+  "MD034": false,
+  "MD036": false,
+  "MD040": false,
+  "MD041": false,
+  "MD029": false,
+  "MD051": false
+}

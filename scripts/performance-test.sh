@@ -115,60 +115,60 @@ fi
 # Check dependencies
 check_dependencies() {
     print_info "Checking dependencies..."
-    
+
     local deps=("python3" "pip" "aws")
     local missing=()
-    
+
     for dep in "${deps[@]}"; do
         if ! command -v "$dep" &> /dev/null; then
             missing+=("$dep")
         fi
     done
-    
+
     if [ ${#missing[@]} -ne 0 ]; then
         print_error "Missing dependencies: ${missing[*]}"
         echo "Please install the missing dependencies and try again."
         exit 1
     fi
-    
+
     # Check Python packages
     if ! python3 -c "import pytest" &> /dev/null; then
         print_error "pytest not installed. Run: pip install pytest pytest-asyncio aiohttp"
         exit 1
     fi
-    
+
     print_success "All dependencies installed"
 }
 
 # Setup test environment
 setup_test_env() {
     print_info "Setting up test environment..."
-    
+
     # Create results directory
     RESULTS_DIR="$PROJECT_ROOT/performance-results"
     mkdir -p "$RESULTS_DIR"
-    
+
     # Export environment variables for tests
     export N8N_TEST_URL="$N8N_URL"
     export N8N_TEST_ENVIRONMENT="$ENVIRONMENT"
     export N8N_TEST_DURATION="$DURATION"
     export N8N_TEST_CONCURRENT="$CONCURRENT_USERS"
     export N8N_TEST_RPS="$REQUESTS_PER_SECOND"
-    
+
     print_success "Test environment configured"
 }
 
 # Run baseline test
 run_baseline_test() {
     print_header "Running Baseline Performance Test"
-    
+
     print_info "Configuration:"
     echo "  - URL: $N8N_URL"
     echo "  - Duration: ${DURATION}s"
     echo "  - Concurrent Users: $CONCURRENT_USERS"
     echo "  - Target RPS: $REQUESTS_PER_SECOND"
     echo
-    
+
     # Run pytest with baseline test
     python3 -m pytest "$PROJECT_ROOT/tests/performance/test_load_benchmarks.py::TestLoadBenchmarks::test_webhook_performance_baseline" \
         -v \
@@ -179,14 +179,14 @@ run_baseline_test() {
 # Run load test
 run_load_test() {
     print_header "Running Load Performance Test"
-    
+
     print_info "Configuration:"
     echo "  - URL: $N8N_URL"
     echo "  - Duration: ${DURATION}s"
     echo "  - Concurrent Users: $CONCURRENT_USERS"
     echo "  - Target RPS: $REQUESTS_PER_SECOND"
     echo
-    
+
     # Run pytest with load test
     python3 -m pytest "$PROJECT_ROOT/tests/performance/test_load_benchmarks.py::TestLoadBenchmarks::test_webhook_performance_under_load" \
         -v \
@@ -197,14 +197,14 @@ run_load_test() {
 # Run stress test
 run_stress_test() {
     print_header "Running Stress Test"
-    
+
     print_info "Configuration:"
     echo "  - URL: $N8N_URL"
     echo "  - Duration: ${DURATION}s"
     echo "  - Concurrent Users: $CONCURRENT_USERS"
     echo "  - Target RPS: $REQUESTS_PER_SECOND"
     echo
-    
+
     # Run pytest with stress test
     python3 -m pytest "$PROJECT_ROOT/tests/performance/test_load_benchmarks.py::TestLoadBenchmarks::test_webhook_performance_stress" \
         -v \
@@ -215,14 +215,14 @@ run_stress_test() {
 # Run spike test
 run_spike_test() {
     print_header "Running Spike Test"
-    
+
     print_info "Configuration:"
     echo "  - URL: $N8N_URL"
     echo "  - Normal Load: 10 RPS"
     echo "  - Spike Load: $REQUESTS_PER_SECOND RPS"
     echo "  - Spike Duration: 60s"
     echo
-    
+
     # For spike test, we'll use a custom script
     python3 << EOF
 import asyncio
@@ -231,17 +231,17 @@ from tests.performance.test_load_benchmarks import TestLoadBenchmarks
 
 async def spike_test():
     test = TestLoadBenchmarks()
-    
+
     # Normal load
     print("Starting normal load phase...")
     normal_results = await test._run_webhook_load_test("$N8N_URL/webhook/test", 100, 10)
     print(f"Normal load results: {normal_results}")
-    
+
     # Spike
     print("\nStarting spike phase...")
     spike_results = await test._run_webhook_load_test("$N8N_URL/webhook/test", 1000, $CONCURRENT_USERS)
     print(f"Spike results: {spike_results}")
-    
+
     # Return to normal
     print("\nReturning to normal load...")
     recovery_results = await test._run_webhook_load_test("$N8N_URL/webhook/test", 100, 10)
@@ -254,14 +254,14 @@ EOF
 # Monitor resources during test
 monitor_resources() {
     print_info "Monitoring AWS resources during test..."
-    
+
     # Get ECS service metrics
     aws cloudwatch get-metric-statistics \
         --namespace AWS/ECS \
         --metric-name CPUUtilization \
-        --dimensions Name=ServiceName,Value=n8n-$ENVIRONMENT \
-        --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S) \
-        --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+        --dimensions Name=ServiceName,Value=n8n-"$ENVIRONMENT" \
+        --start-time "$(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S)" \
+        --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
         --period 60 \
         --statistics Average,Maximum \
         --output table
@@ -270,9 +270,9 @@ monitor_resources() {
 # Generate report
 generate_report() {
     print_header "Generating Performance Report"
-    
+
     REPORT_FILE="$RESULTS_DIR/performance-report-$(date +%Y%m%d-%H%M%S).md"
-    
+
     cat > "$REPORT_FILE" << EOF
 # n8n Performance Test Report
 
@@ -300,17 +300,17 @@ $(monitor_resources)
 - Review error logs for any failures during testing
 
 EOF
-    
+
     print_success "Report generated: $REPORT_FILE"
 }
 
 # Main execution
 main() {
     print_header "n8n AWS Serverless Performance Testing"
-    
+
     check_dependencies
     setup_test_env
-    
+
     case $TEST_TYPE in
         baseline)
             run_baseline_test
@@ -329,13 +329,13 @@ main() {
             usage
             ;;
     esac
-    
+
     # Monitor resources
     monitor_resources
-    
+
     # Generate report
     generate_report
-    
+
     print_success "Performance testing completed!"
     echo
     echo "Results saved to: $RESULTS_DIR"

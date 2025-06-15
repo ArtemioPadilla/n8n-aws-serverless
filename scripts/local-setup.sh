@@ -29,21 +29,21 @@ print_info() {
 # Check prerequisites
 check_prerequisites() {
     print_info "Checking prerequisites..."
-    
+
     # Check Docker
     if ! command -v docker &> /dev/null; then
         print_error "Docker is not installed. Please install Docker first."
         exit 1
     fi
     print_success "Docker is installed"
-    
+
     # Check Docker Compose
     if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
         print_error "Docker Compose is not installed. Please install Docker Compose first."
         exit 1
     fi
     print_success "Docker Compose is installed"
-    
+
     # Check if Docker daemon is running
     if ! docker info &> /dev/null; then
         print_error "Docker daemon is not running. Please start Docker."
@@ -55,25 +55,26 @@ check_prerequisites() {
 # Create necessary directories
 create_directories() {
     print_info "Creating necessary directories..."
-    
+
     mkdir -p "$DOCKER_DIR/workflows"
     mkdir -p "$DOCKER_DIR/ssl"
     mkdir -p "$DOCKER_DIR/grafana/dashboards"
     mkdir -p "$DOCKER_DIR/grafana/datasources"
-    
+
     print_success "Directories created"
 }
 
 # Setup environment file
 setup_env_file() {
     print_info "Setting up environment file..."
-    
+
     if [ ! -f "$DOCKER_DIR/.env" ]; then
         cp "$DOCKER_DIR/.env.example" "$DOCKER_DIR/.env"
-        
+
         # Generate encryption key
-        ENCRYPTION_KEY=$(openssl rand -hex 32 2>/dev/null || cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 64 | head -n 1)
-        
+        local ENCRYPTION_KEY
+        ENCRYPTION_KEY=$(openssl rand -hex 32 2>/dev/null || tr -dc 'a-f0-9' < /dev/urandom | fold -w 64 | head -n 1)
+
         # Update .env file based on OS
         if [[ "$OSTYPE" == "darwin"* ]]; then
             # macOS
@@ -82,7 +83,7 @@ setup_env_file() {
             # Linux
             sed -i "s/your-32-character-encryption-key-here/$ENCRYPTION_KEY/" "$DOCKER_DIR/.env"
         fi
-        
+
         print_success "Environment file created with generated encryption key"
         print_info "Please review and update $DOCKER_DIR/.env with your settings"
     else
@@ -93,14 +94,14 @@ setup_env_file() {
 # Generate self-signed SSL certificates for local HTTPS
 generate_ssl_certs() {
     print_info "Generating self-signed SSL certificates..."
-    
+
     if [ ! -f "$DOCKER_DIR/ssl/cert.pem" ]; then
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout "$DOCKER_DIR/ssl/key.pem" \
             -out "$DOCKER_DIR/ssl/cert.pem" \
             -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" \
             2>/dev/null
-        
+
         print_success "SSL certificates generated"
     else
         print_success "SSL certificates already exist"
@@ -110,7 +111,7 @@ generate_ssl_certs() {
 # Create Prometheus configuration
 create_prometheus_config() {
     print_info "Creating Prometheus configuration..."
-    
+
     cat > "$DOCKER_DIR/prometheus.yml" << 'EOF'
 global:
   scrape_interval: 15s
@@ -121,29 +122,29 @@ scrape_configs:
     static_configs:
       - targets: ['n8n:5678']
     metrics_path: '/metrics'
-    
+
   - job_name: 'postgres'
     static_configs:
       - targets: ['postgres-exporter:9187']
-      
+
   - job_name: 'redis'
     static_configs:
       - targets: ['redis-exporter:9121']
-      
+
   - job_name: 'cloudflared'
     static_configs:
       - targets: ['cloudflared:2000']
     metrics_path: '/metrics'
 EOF
-    
+
     print_success "Prometheus configuration created"
 }
 
 # Create Grafana datasource configuration
 create_grafana_datasource() {
     print_info "Creating Grafana datasource configuration..."
-    
-    cat > "$DOCKER_DIR/grafana/datasources/prometheus.yml" << 'EOF'
+
+    cat << 'EOF' > "$DOCKER_DIR/grafana/datasources/prometheus.yml"
 apiVersion: 1
 
 datasources:
@@ -154,14 +155,14 @@ datasources:
     isDefault: true
     editable: false
 EOF
-    
+
     print_success "Grafana datasource configuration created"
 }
 
 # Create sample n8n dashboard for Grafana
 create_grafana_dashboard() {
     print_info "Creating sample Grafana dashboard..."
-    
+
     cat > "$DOCKER_DIR/grafana/dashboards/n8n-dashboard.json" << 'EOF'
 {
   "dashboard": {
@@ -204,7 +205,7 @@ create_grafana_dashboard() {
   }
 }
 EOF
-    
+
     # Create dashboard provider configuration
     cat > "$DOCKER_DIR/grafana/dashboards/provider.yml" << 'EOF'
 apiVersion: 1
@@ -219,42 +220,42 @@ providers:
     options:
       path: /etc/grafana/provisioning/dashboards
 EOF
-    
+
     print_success "Grafana dashboard created"
 }
 
 # Setup Cloudflare Tunnel configuration
 setup_cloudflare_tunnel() {
     print_info "Checking Cloudflare Tunnel configuration..."
-    
+
     # Check if user wants to set up Cloudflare Tunnel
     echo
     read -p "Do you want to configure Cloudflare Tunnel for secure remote access? (y/N): " -n 1 -r
     echo
-    
+
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_info "Setting up Cloudflare Tunnel configuration..."
-        
+
         echo
         echo "To use Cloudflare Tunnel, you need to:"
         echo "1. Create a tunnel in your Cloudflare Zero Trust dashboard"
         echo "2. Copy the tunnel token"
         echo
-        
+
         read -p "Do you have a Cloudflare Tunnel token? (y/N): " -n 1 -r
         echo
-        
+
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            read -p "Enter your Cloudflare Tunnel token: " TUNNEL_TOKEN
-            
-            if [ ! -z "$TUNNEL_TOKEN" ]; then
+            read -rp "Enter your Cloudflare Tunnel token: " TUNNEL_TOKEN
+
+            if [ -n "$TUNNEL_TOKEN" ]; then
                 # Validate token format (base64-like string, typically 40+ characters)
                 if [[ ! "$TUNNEL_TOKEN" =~ ^[a-zA-Z0-9_-]{40,}$ ]]; then
                     print_error "Invalid token format. Cloudflare Tunnel tokens are typically long base64-like strings."
                     echo "Please check your token and try again."
                     return 1
                 fi
-                
+
                 # Update .env file with the token
                 if [[ "$OSTYPE" == "darwin"* ]]; then
                     # macOS
@@ -263,7 +264,7 @@ setup_cloudflare_tunnel() {
                     # Linux
                     sed -i "s/CLOUDFLARE_TUNNEL_TOKEN=$/CLOUDFLARE_TUNNEL_TOKEN=$TUNNEL_TOKEN/" "$DOCKER_DIR/.env"
                 fi
-                
+
                 print_success "Cloudflare Tunnel token configured"
                 echo
                 echo "To use Cloudflare Tunnel, run:"
@@ -293,7 +294,7 @@ main() {
     echo "🚀 n8n Local Development Setup"
     echo "=============================="
     echo
-    
+
     check_prerequisites
     create_directories
     setup_env_file
@@ -302,7 +303,7 @@ main() {
     create_grafana_datasource
     create_grafana_dashboard
     setup_cloudflare_tunnel
-    
+
     echo
     print_success "Local setup completed successfully!"
     echo

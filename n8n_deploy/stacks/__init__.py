@@ -1,4 +1,5 @@
 """Stack definitions for n8n AWS Serverless CDK."""
+
 from .access_stack import AccessStack
 from .base_stack import N8nBaseStack
 from .compute_stack import ComputeStack

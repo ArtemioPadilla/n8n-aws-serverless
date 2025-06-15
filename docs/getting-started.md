@@ -53,7 +53,8 @@ make local-up
 ```
 
 **What you get:**
-- n8n running on http://localhost:5678
+
+- n8n running on <http://localhost:5678>
 - SQLite database (upgradeable to PostgreSQL)
 - Persistent data in `./n8n-data`
 - Optional monitoring with Grafana
@@ -75,12 +76,14 @@ cdk deploy -c environment=production -c stack_type=minimal
 ```
 
 **What you get:**
+
 - ECS Fargate with Spot instances (256 CPU, 512MB RAM)
 - API Gateway endpoint
 - EFS storage with SQLite
 - ~$5-10/month cost
 
 **Configuration** (`config/system.yaml`):
+
 ```yaml
 environments:
   production:
@@ -105,6 +108,7 @@ cdk deploy -c environment=production -c stack_type=standard
 ```
 
 **What you get:**
+
 - ECS Fargate (512 CPU, 1GB RAM)
 - RDS PostgreSQL database
 - CloudWatch monitoring
@@ -112,6 +116,7 @@ cdk deploy -c environment=production -c stack_type=standard
 - ~$15-30/month cost
 
 **Configuration** (`config/system.yaml`):
+
 ```yaml
 environments:
   production:
@@ -139,6 +144,7 @@ cdk deploy -c environment=production -c stack_type=enterprise
 ```
 
 **What you get:**
+
 - High-performance Fargate (2048 CPU, 4GB RAM)
 - Aurora PostgreSQL Serverless
 - Multi-AZ deployment
@@ -161,6 +167,7 @@ cdk deploy -c environment=production -c access_type=cloudflare
 ```
 
 **What you get:**
+
 - No exposed ports or public IPs
 - Global edge network
 - Built-in DDoS protection
@@ -183,6 +190,7 @@ docker-compose --profile monitoring up -d
 ```
 
 **What you get:**
+
 - Production-ready Docker stack
 - Nginx reverse proxy with SSL
 - PostgreSQL database
@@ -235,7 +243,8 @@ nano config/system.yaml
 
 ### 3. Set Required Secrets
 
-#### For AWS:
+#### For AWS
+
 ```bash
 # Create n8n encryption key
 aws secretsmanager create-secret \
@@ -243,7 +252,8 @@ aws secretsmanager create-secret \
   --secret-string $(openssl rand -base64 32)
 ```
 
-#### For Docker:
+#### For Docker
+
 ```bash
 # Create .env file
 cp .env.example .env
@@ -257,9 +267,9 @@ echo "N8N_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
 
 ### 1. Access n8n
 
-- **Docker Local**: http://localhost:5678
+- **Docker Local**: <http://localhost:5678>
 - **AWS**: Check CloudFormation outputs for URL
-- **Cloudflare**: https://your-domain.com
+- **Cloudflare**: <https://your-domain.com>
 
 ### 2. Create Admin Account
 
@@ -276,13 +286,15 @@ echo "N8N_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
 
 ### 4. Setup Monitoring
 
-#### AWS:
+#### AWS
+
 ```bash
 # View CloudWatch dashboard
 make view-dashboard environment=production
 ```
 
-#### Docker:
+#### Docker
+
 ```bash
 # Access Grafana
 open http://localhost:3000
@@ -297,19 +309,21 @@ open http://localhost:3000
 <summary><b>Cannot access n8n</b></summary>
 
 1. Check container/task is running:
+
    ```bash
    # Docker
    docker ps
-   
+
    # AWS
    aws ecs list-tasks --cluster n8n-prod
    ```
 
 2. Check logs:
+
    ```bash
    # Docker
    docker logs n8n
-   
+
    # AWS
    make logs environment=production
    ```
@@ -360,7 +374,7 @@ open http://localhost:3000
 - 🐛 [Report Issues](https://github.com/your-org/n8n-deploy/issues)
 - 📧 [Email Support](mailto:support@n8n-deploy.dev)
 
-## 🎉 You're Ready!
+## 🎉 You're Ready
 
 Congratulations! You now have n8n running with enterprise features. Start building your automation workflows and join our community for tips and best practices.
 

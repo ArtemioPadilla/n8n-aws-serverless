@@ -126,7 +126,7 @@ fi
 # Build Docker Compose command
 get_compose_files() {
     local files="-f docker-compose.yml"
-    
+
     # Handle full profile - deploy everything
     if [ "$PROFILE" = "full" ]; then
         # Check if Cloudflare token exists
@@ -142,18 +142,18 @@ get_compose_files() {
     else
         files="$files --profile $PROFILE"
     fi
-    
+
     # Add monitoring profile if requested (and not already in full mode)
     if [ "$MONITORING" = true ] && [ "$PROFILE" != "full" ]; then
         files="$files --profile monitoring"
     fi
-    
+
     # For postgres profile, include both postgres and monitoring exporters if monitoring is enabled
     if [ "$PROFILE" = "postgres" ] && [ "$MONITORING" = true ]; then
         # postgres-exporter is already included with monitoring profile
         true
     fi
-    
+
     echo "$files"
 }
 
@@ -161,32 +161,36 @@ get_compose_files() {
 case "${ACTION:-up}" in
     down)
         print_info "Stopping n8n containers..."
+        # shellcheck disable=SC2046
         $DOCKER_COMPOSE $(get_compose_files) down -v
         print_success "All containers stopped and removed"
         ;;
-        
+
     restart)
         print_info "Restarting n8n containers..."
+        # shellcheck disable=SC2046
         $DOCKER_COMPOSE $(get_compose_files) restart
         print_success "Containers restarted"
         ;;
-        
+
     logs)
         print_info "Showing logs..."
+        # shellcheck disable=SC2046
         $DOCKER_COMPOSE $(get_compose_files) logs -f
         ;;
-        
+
     status)
         print_info "Container status:"
+        # shellcheck disable=SC2046
         $DOCKER_COMPOSE $(get_compose_files) ps
         echo
         print_info "Container health:"
         docker ps --format "table {{.Names}}\t{{.Status}}" | grep n8n || true
         ;;
-        
+
     up|*)
         print_info "Starting n8n with profile: $PROFILE"
-        
+
         # Show info for full profile
         if [ "$PROFILE" = "full" ]; then
             if grep -q "CLOUDFLARE_TUNNEL_TOKEN=." ".env" 2>/dev/null; then
@@ -195,24 +199,26 @@ case "${ACTION:-up}" in
                 print_info "No Cloudflare token found - deploying without Cloudflare Tunnel"
             fi
         fi
-        
+
         # Pull latest images
         print_info "Pulling latest images..."
+        # shellcheck disable=SC2046
         $DOCKER_COMPOSE $(get_compose_files) pull
-        
+
         # Start containers
         if [ "$DETACH" = true ]; then
+            # shellcheck disable=SC2046
             $DOCKER_COMPOSE $(get_compose_files) up -d
-            
+
             print_success "n8n started successfully!"
             echo
             echo -e "${BLUE}Access n8n at:${NC}"
             echo "  - HTTP:  http://localhost:5678"
-            
+
             if [ -f "ssl/cert.pem" ] && [ "$PROFILE" != "default" ]; then
                 echo "  - HTTPS: https://localhost (with nginx)"
             fi
-            
+
             # Check if Cloudflare is running
             if docker ps --format "{{.Names}}" | grep -q "cloudflared"; then
                 echo
@@ -221,7 +227,7 @@ case "${ACTION:-up}" in
                 echo "  - Configure your tunnel domain in Cloudflare Zero Trust dashboard"
                 echo "  - Tunnel will be accessible at your configured domain"
             fi
-            
+
             if [ "$MONITORING" = true ] || [ "$PROFILE" = "full" ]; then
                 echo
                 echo -e "${BLUE}Monitoring stack:${NC}"
@@ -229,7 +235,7 @@ case "${ACTION:-up}" in
                 echo "  - Grafana:    http://localhost:3000"
                 echo "    Username: admin (check .env for password)"
             fi
-            
+
             if [ "$PROFILE" = "full" ]; then
                 echo
                 echo -e "${BLUE}Full deployment includes:${NC}"
@@ -246,7 +252,7 @@ case "${ACTION:-up}" in
                 echo "  - Total containers: $(docker ps --format "{{.Names}}" | wc -l | tr -d ' ')"
                 echo "  - Approximate memory: ~2GB"
             fi
-            
+
             echo
             echo "Default credentials (if basic auth is enabled):"
             echo "  Username: $(grep N8N_BASIC_AUTH_USER .env | cut -d'=' -f2 || echo 'admin')"
@@ -255,6 +261,7 @@ case "${ACTION:-up}" in
             echo "To view logs: $0 -l"
             echo "To stop:      $0 -d"
         else
+            # shellcheck disable=SC2046
             $DOCKER_COMPOSE $(get_compose_files) up
         fi
         ;;

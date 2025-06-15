@@ -1,7 +1,7 @@
 # Production-like Docker Compose setup with PostgreSQL and monitoring
 services:
   n8n:
-    image: n8nio/n8n:1.94.1  # Pinned version for security and stability
+    image: n8nio/n8n:1.94.1 # Pinned version for security and stability
     container_name: n8n-prod
     restart: always
     ports:
@@ -28,7 +28,7 @@ services:
       - EXECUTIONS_DATA_SAVE_ON_ERROR=all
       - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
       - EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=true
-      - EXECUTIONS_DATA_MAX_AGE=336  # 14 days
+      - EXECUTIONS_DATA_MAX_AGE=336 # 14 days
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_PRUNE_TIMEOUT=3600
       # Queue mode settings
@@ -48,7 +48,15 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:5678/healthz",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -58,10 +66,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 
   postgres:
@@ -86,7 +94,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
 
   redis:
@@ -104,7 +112,14 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "--pass", "${REDIS_PASSWORD:-redis_password}", "ping"]
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "--pass",
+          "${REDIS_PASSWORD:-redis_password}",
+          "ping",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -113,7 +128,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 
   # Nginx reverse proxy for HTTPS
@@ -150,10 +165,10 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
     networks:
       - n8n_network
     profiles:
@@ -204,11 +219,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
     profiles:
       - cloudflare
-      - monitoring  # Also available when monitoring is enabled
+      - monitoring # Also available when monitoring is enabled
 
 volumes:
   n8n_data:

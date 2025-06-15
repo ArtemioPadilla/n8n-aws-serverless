@@ -1,4 +1,5 @@
 """Construct for n8n Fargate service with all required configurations."""
+
 from typing import Dict, List, Optional
 
 from aws_cdk import Duration, RemovalPolicy, Stack
@@ -104,15 +105,10 @@ class N8nFargateService(Construct):
         }
 
         retention_days = logs.RetentionDays.ONE_MONTH  # Default
-        if (
-            self.env_config.settings.monitoring
-            and self.env_config.settings.monitoring.log_retention_days
-        ):
+        if self.env_config.settings.monitoring and self.env_config.settings.monitoring.log_retention_days:
             requested_days = self.env_config.settings.monitoring.log_retention_days
             # Find the closest matching retention period
-            closest_days = min(
-                retention_map.keys(), key=lambda x: abs(x - requested_days)
-            )
+            closest_days = min(retention_map.keys(), key=lambda x: abs(x - requested_days))
             retention_days = retention_map[closest_days]
 
         return logs.LogGroup(
@@ -120,9 +116,7 @@ class N8nFargateService(Construct):
             "LogGroup",
             log_group_name=f"/ecs/n8n/{self.environment}",
             retention=retention_days,
-            removal_policy=RemovalPolicy.DESTROY
-            if self.environment == "dev"
-            else RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY if self.environment == "dev" else RemovalPolicy.RETAIN,
         )
 
     def _create_task_definition(self) -> ecs.FargateTaskDefinition:
@@ -201,9 +195,7 @@ class N8nFargateService(Construct):
                 retries=3,
                 start_period=Duration.seconds(60),
             ),
-            memory_reservation_mib=int(
-                self.fargate_config.memory * 0.8
-            ),  # 80% soft limit
+            memory_reservation_mib=int(self.fargate_config.memory * 0.8),  # 80% soft limit
         )
 
         # Mount EFS volume
@@ -217,13 +209,11 @@ class N8nFargateService(Construct):
 
         return container
 
-    def _build_environment_variables(
-        self, database_endpoint: Optional[str]
-    ) -> Dict[str, str]:
+    def _build_environment_variables(self, database_endpoint: Optional[str]) -> Dict[str, str]:
         """Build environment variables for n8n container."""
         env_vars = {
             # Basic configuration
-            "N8N_HOST": "0.0.0.0",
+            "N8N_HOST": "0.0.0.0",  # nosec B104 - Required for container networking
             "N8N_PORT": "5678",
             "N8N_PROTOCOL": "https",
             "NODE_ENV": "production",
@@ -240,18 +230,12 @@ class N8nFargateService(Construct):
         }
 
         # Database configuration
-        if (
-            self.database_config
-            and self.database_config.type == DatabaseType.POSTGRES
-            and database_endpoint
-        ):
+        if self.database_config and self.database_config.type == DatabaseType.POSTGRES and database_endpoint:
             env_vars.update(
                 {
                     "DB_TYPE": "postgresdb",
                     "DB_POSTGRESDB_HOST": database_endpoint.split(":")[0],
-                    "DB_POSTGRESDB_PORT": database_endpoint.split(":")[1]
-                    if ":" in database_endpoint
-                    else "5432",
+                    "DB_POSTGRESDB_PORT": database_endpoint.split(":")[1] if ":" in database_endpoint else "5432",
                     "DB_POSTGRESDB_DATABASE": "n8n",
                     "DB_POSTGRESDB_SCHEMA": "public",
                 }
@@ -270,13 +254,10 @@ class N8nFargateService(Construct):
                 env_vars["N8N_BASIC_AUTH_ACTIVE"] = "true"
 
         # Webhook configuration
-        if self.env_config.settings.features and self.env_config.settings.features.get(
-            "webhooks_enabled"
-        ):
+        if self.env_config.settings.features and self.env_config.settings.features.get("webhooks_enabled"):
             env_vars["WEBHOOK_URL"] = (
                 f"https://{self.env_config.settings.access.domain_name}/webhook"
-                if self.env_config.settings.access
-                and self.env_config.settings.access.domain_name
+                if self.env_config.settings.access and self.env_config.settings.access.domain_name
                 else ""
             )
 
@@ -297,36 +278,21 @@ class N8nFargateService(Construct):
         }
 
         # Database credentials
-        if (
-            database_secret
-            and self.database_config
-            and self.database_config.type == DatabaseType.POSTGRES
-        ):
+        if database_secret and self.database_config and self.database_config.type == DatabaseType.POSTGRES:
             secrets.update(
                 {
-                    "DB_POSTGRESDB_USER": ecs.Secret.from_secrets_manager(
-                        database_secret, "username"
-                    ),
-                    "DB_POSTGRESDB_PASSWORD": ecs.Secret.from_secrets_manager(
-                        database_secret, "password"
-                    ),
+                    "DB_POSTGRESDB_USER": ecs.Secret.from_secrets_manager(database_secret, "username"),
+                    "DB_POSTGRESDB_PASSWORD": ecs.Secret.from_secrets_manager(database_secret, "password"),
                 }
             )
 
         # Basic auth credentials
-        if (
-            self.env_config.settings.auth
-            and self.env_config.settings.auth.basic_auth_enabled
-        ):
+        if self.env_config.settings.auth and self.env_config.settings.auth.basic_auth_enabled:
             basic_auth_secret = self._get_or_create_basic_auth_secret()
             secrets.update(
                 {
-                    "N8N_BASIC_AUTH_USER": ecs.Secret.from_secrets_manager(
-                        basic_auth_secret, "username"
-                    ),
-                    "N8N_BASIC_AUTH_PASSWORD": ecs.Secret.from_secrets_manager(
-                        basic_auth_secret, "password"
-                    ),
+                    "N8N_BASIC_AUTH_USER": ecs.Secret.from_secrets_manager(basic_auth_secret, "username"),
+                    "N8N_BASIC_AUTH_PASSWORD": ecs.Secret.from_secrets_manager(basic_auth_secret, "password"),
                 }
             )
 
@@ -400,9 +366,7 @@ class N8nFargateService(Construct):
             service_name=f"n8n-{self.environment}",
             vpc_subnets=ec2.SubnetSelection(subnets=self.subnets),
             security_groups=[self.security_group],
-            desired_count=self.env_config.settings.scaling.min_tasks
-            if self.env_config.settings.scaling
-            else 1,
+            desired_count=self.env_config.settings.scaling.min_tasks if self.env_config.settings.scaling else 1,
             capacity_provider_strategies=capacity_provider_strategies,
             enable_execute_command=True,  # Enable ECS Exec for debugging
             health_check_grace_period=Duration.seconds(120),
@@ -453,9 +417,7 @@ class N8nFargateService(Construct):
         )
 
         # SES permissions for email sending (if needed)
-        if self.env_config.settings.features and self.env_config.settings.features.get(
-            "email_enabled"
-        ):
+        if self.env_config.settings.features and self.env_config.settings.features.get("email_enabled"):
             role.add_to_policy(
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,

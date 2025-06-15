@@ -1,4 +1,5 @@
 """Access stack for API Gateway and CloudFront."""
+
 from typing import Optional
 
 from aws_cdk import Duration
@@ -81,9 +82,7 @@ class AccessStack(N8nBaseStack):
             "VpcLink",
             vpc_link_name=self.get_resource_name("vpc-link"),
             vpc=self.compute_stack.network_stack.vpc,
-            subnets=ec2.SubnetSelection(
-                subnets=self.compute_stack.network_stack.subnets
-            ),
+            subnets=ec2.SubnetSelection(subnets=self.compute_stack.network_stack.subnets),
             security_groups=[self.compute_stack.network_stack.n8n_security_group],
         )
 
@@ -104,23 +103,21 @@ class AccessStack(N8nBaseStack):
             "HttpApi",
             api_name=self.get_resource_name("api"),
             description=f"n8n API for {self.environment}",
-            cors_preflight=apigatewayv2.CorsPreflightOptions(
-                allow_origins=self.access_config.cors_origins
+            cors_preflight=(
+                apigatewayv2.CorsPreflightOptions(
+                    allow_origins=self.access_config.cors_origins if self.access_config else ["*"],
+                    allow_methods=[apigatewayv2.CorsHttpMethod.ANY],
+                    allow_headers=["*"],
+                    max_age=Duration.days(1),
+                )
                 if self.access_config
-                else ["*"],
-                allow_methods=[apigatewayv2.CorsHttpMethod.ANY],
-                allow_headers=["*"],
-                max_age=Duration.days(1),
-            )
-            if self.access_config
-            else None,
+                else None
+            ),
         )
 
         # Create service discovery integration
         # Check if CloudMap service is available
-        cloud_map_service = getattr(
-            self.compute_stack.n8n_service.service, "cloud_map_service", None
-        )
+        cloud_map_service = getattr(self.compute_stack.n8n_service.service, "cloud_map_service", None)
 
         if cloud_map_service:
             integration = apigatewayv2_integrations.HttpServiceDiscoveryIntegration(
@@ -220,14 +217,16 @@ class AccessStack(N8nBaseStack):
                 cache_policy=cache_policy,
                 origin_request_policy=origin_request_policy,
             ),
-            domain_names=[self.access_config.domain_name]
-            if self.access_config and self.access_config.domain_name
-            else None,
+            domain_names=(
+                [self.access_config.domain_name] if self.access_config and self.access_config.domain_name else None
+            ),
             certificate=certificate,
             minimum_protocol_version=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
-            price_class=cloudfront.PriceClass.PRICE_CLASS_100
-            if self.is_development()
-            else cloudfront.PriceClass.PRICE_CLASS_ALL,
+            price_class=(
+                cloudfront.PriceClass.PRICE_CLASS_100
+                if self.is_development()
+                else cloudfront.PriceClass.PRICE_CLASS_ALL
+            ),
             enabled=True,
             http_version=cloudfront.HttpVersion.HTTP2_AND_3,
             enable_ipv6=True,
@@ -360,9 +359,7 @@ class AccessStack(N8nBaseStack):
         # Check for shared certificate
         shared_cert_arn = self.get_shared_resource("security", "certificate_arn")
         if shared_cert_arn:
-            return acm.Certificate.from_certificate_arn(
-                self, "SharedCertificate", shared_cert_arn
-            )
+            return acm.Certificate.from_certificate_arn(self, "SharedCertificate", shared_cert_arn)
 
         # For CloudFront, certificate must be in us-east-1
         # This is a simplified version - in production, you'd handle this differently
@@ -392,9 +389,7 @@ class AccessStack(N8nBaseStack):
                 "ARecord",
                 zone=hosted_zone,
                 record_name=self.access_config.domain_name,
-                target=route53.RecordTarget.from_alias(
-                    targets.CloudFrontTarget(self.distribution)
-                ),
+                target=route53.RecordTarget.from_alias(targets.CloudFrontTarget(self.distribution)),
             )
 
     def _add_outputs(self) -> None:
@@ -405,14 +400,11 @@ class AccessStack(N8nBaseStack):
             if self.api:
                 self.add_output(
                     "ApiUrl",
-                    value=self.api.url
-                    or f"https://{self.api.api_id}.execute-api.{self.region}.amazonaws.com",
+                    value=self.api.url or f"https://{self.api.api_id}.execute-api.{self.region}.amazonaws.com",
                     description="API Gateway URL",
                 )
 
-                self.add_output(
-                    "ApiId", value=self.api.api_id, description="API Gateway ID"
-                )
+                self.add_output("ApiId", value=self.api.api_id, description="API Gateway ID")
         else:
             # Cloudflare Tunnel outputs
             self.add_output(
@@ -421,10 +413,7 @@ class AccessStack(N8nBaseStack):
                 description="Access method is Cloudflare Tunnel",
             )
 
-            if (
-                self.access_config.cloudflare
-                and self.access_config.cloudflare.tunnel_domain
-            ):
+            if self.access_config.cloudflare and self.access_config.cloudflare.tunnel_domain:
                 self.add_output(
                     "AccessUrl",
                     value=f"https://{self.access_config.cloudflare.tunnel_domain}",

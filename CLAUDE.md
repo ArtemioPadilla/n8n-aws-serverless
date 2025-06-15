@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 **n8n Deploy** is a comprehensive deployment platform for n8n workflow automation that supports multiple deployment targets:
+
 - **AWS Serverless**: Cost-optimized cloud deployment using ECS Fargate, API Gateway, and managed services
 - **Docker**: Local development and on-premise production deployments
 - **Cloudflare Tunnel**: Zero-trust access layer that works with any backend
@@ -25,6 +26,7 @@ The platform provides enterprise-grade features at costs ranging from free (loca
 ## Development Commands
 
 ### Quick Start
+
 ```bash
 # Setup environment
 make install
@@ -40,6 +42,7 @@ make deploy-dev
 ```
 
 ### Common Commands
+
 ```bash
 # CDK deployment
 cdk deploy -c environment=dev
@@ -62,6 +65,7 @@ make format                # Format code
 ## Project Architecture
 
 ### Directory Structure
+
 ```
 n8n-deploy/
 ├── deployments/              # Deployment configurations
@@ -104,7 +108,7 @@ environments:
     n8n:
       version: "1.94.1"
       encryption_key: "{{ secrets.n8n_encryption_key }}"
-    
+
     # AWS-specific
     aws:
       account: "123456789012"
@@ -113,12 +117,12 @@ environments:
         cpu: 512
         memory: 1024
         spot_enabled: true
-    
+
     # Docker-specific
     docker:
       compose_profile: "production"
       postgres_enabled: true
-    
+
     # Cloudflare-specific
     cloudflare:
       tunnel_name: "n8n-production"
@@ -138,16 +142,19 @@ environments:
 ## Testing Strategy
 
 ### Unit Tests
+
 - Test each stack independently with mocked dependencies
 - Verify resource creation and configuration
 - Check IAM policies and security settings
 
 ### Integration Tests
+
 - Test stack interactions
 - Verify end-to-end deployment
 - Local Docker Compose testing
 
 ### Coverage Requirements
+
 - Minimum 80% code coverage
 - Coverage reports in HTML and XML formats
 - Pre-commit hooks for code quality
@@ -173,11 +180,13 @@ The project is designed for cost efficiency:
 ## Local Development
 
 ### Docker Compose Setup
+
 - Development configuration with SQLite
 - Production-like setup with PostgreSQL
 - Optional monitoring stack (Prometheus + Grafana)
 
 ### Testing Locally
+
 ```bash
 # Start services
 ./scripts/local-deploy.sh
@@ -195,12 +204,14 @@ The project is designed for cost efficiency:
 ## Deployment Patterns
 
 ### Environment Types
+
 - **local**: Docker-based development
 - **dev**: Minimal AWS resources
 - **staging**: Production-like with lower scale
 - **production**: Full HA with monitoring
 
 ### Stack Types
+
 - **minimal**: Basic n8n ($5-10/month)
 - **standard**: With monitoring ($15-30/month)
 - **enterprise**: Full features ($50-100/month)
@@ -208,6 +219,7 @@ The project is designed for cost efficiency:
 ## Best Practices
 
 1. **Always run tests before deployment**
+
    ```bash
    make check  # Runs lint + test
    ```
@@ -237,12 +249,14 @@ The project is designed for cost efficiency:
 The project supports Cloudflare Tunnel as an alternative to API Gateway:
 
 ### Benefits
+
 - **Zero cost**: Free tier supports up to 50 users
 - **No public IPs**: Outbound-only connections
 - **Built-in DDoS protection**: Cloudflare's global network
 - **Zero-trust security**: Email/domain-based access policies
 
 ### Configuration
+
 ```yaml
 access:
   type: "cloudflare"  # Instead of "api_gateway"
@@ -259,6 +273,7 @@ access:
 ```
 
 ### Token Rotation
+
 ```bash
 # Rotate Cloudflare tunnel token
 ./scripts/cloudflare-tunnel-rotate.sh -e production -r
@@ -269,12 +284,14 @@ access:
 This project has evolved from a simple AWS serverless deployment tool into a comprehensive n8n deployment platform. Key additions include:
 
 ### Multi-Platform Support
+
 - **AWS Serverless**: Original focus, now enhanced with more options
 - **Docker Local**: Full development environment with monitoring
 - **Docker Production**: Enterprise-ready on-premise deployment
 - **Cloudflare Tunnel**: Zero-trust networking for any backend
 
 ### Advanced Features
+
 - **Unified Configuration**: One `system.yaml` for all deployment types
 - **Cost Tiers**: From free to enterprise with clear pricing
 - **Security Options**: Basic auth to zero-trust with Cloudflare
@@ -282,6 +299,7 @@ This project has evolved from a simple AWS serverless deployment tool into a com
 - **Backup/Recovery**: Automated across all platforms
 
 ### Use Cases
+
 - **Personal**: Free local or $5/month AWS
 - **Startup**: $15-30/month with auto-scaling
 - **Enterprise**: $50-100/month with HA and compliance

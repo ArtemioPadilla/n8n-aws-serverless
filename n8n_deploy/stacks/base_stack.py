@@ -1,4 +1,5 @@
 """Base stack with common patterns for all n8n stacks."""
+
 from typing import Dict, Optional
 
 from aws_cdk import CfnOutput, RemovalPolicy, Stack, Tags
@@ -53,9 +54,7 @@ class N8nBaseStack(Stack):
         self._apply_tags()
 
         # Set removal policy based on environment
-        self.removal_policy = (
-            RemovalPolicy.DESTROY if environment == "dev" else RemovalPolicy.RETAIN
-        )
+        self.removal_policy = RemovalPolicy.DESTROY if environment == "dev" else RemovalPolicy.RETAIN
 
     def _apply_tags(self) -> None:
         """Apply tags to all resources in the stack."""
@@ -187,10 +186,7 @@ class N8nBaseStack(Stack):
         if self.config.global_config.cost_allocation_tags:
             for tag_key in self.config.global_config.cost_allocation_tags:
                 # Check if tag exists in global or environment tags
-                if (
-                    self.config.global_config.tags
-                    and tag_key in self.config.global_config.tags
-                ):
+                if self.config.global_config.tags and tag_key in self.config.global_config.tags:
                     tags[tag_key] = self.config.global_config.tags[tag_key]
                 elif self.env_config.tags and tag_key in self.env_config.tags:
                     tags[tag_key] = self.env_config.tags[tag_key]
@@ -225,11 +221,7 @@ class N8nBaseStack(Stack):
     @property
     def is_spot_enabled(self) -> bool:
         """Check if Spot instances should be used."""
-        if (
-            self.env_config
-            and self.env_config.settings
-            and self.env_config.settings.fargate
-        ):
+        if self.env_config and self.env_config.settings and self.env_config.settings.fargate:
             return self.env_config.settings.fargate.spot_percentage > 0
         return False
 

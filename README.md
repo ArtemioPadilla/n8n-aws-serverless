@@ -18,6 +18,7 @@
 <td width="33%" align="center">
 
 ### ☁️ AWS Serverless
+
 **From $5/month**
 
 Perfect for personal projects and startups. Auto-scaling, managed infrastructure, pay-per-use.
@@ -28,6 +29,7 @@ Perfect for personal projects and startups. Auto-scaling, managed infrastructure
 <td width="33%" align="center">
 
 ### 🐳 Docker Local
+
 **Free**
 
 Ideal for development, testing, or self-hosted deployments. Full control, no cloud costs.
@@ -38,6 +40,7 @@ Ideal for development, testing, or self-hosted deployments. Full control, no clo
 <td width="33%" align="center">
 
 ### 🔒 Cloudflare Tunnel
+
 **Zero-Trust Access**
 
 Enterprise security without complexity. No public IPs, built-in DDoS protection.
@@ -106,6 +109,7 @@ cd n8n-deploy
 ## 📋 Features
 
 ### Core Features
+
 - ✅ **Multi-deployment support**: AWS, Docker, Kubernetes, Cloudflare
 - ✅ **Configuration-driven**: Single `system.yaml` for all settings
 - ✅ **Environment management**: Dev, staging, production presets
@@ -113,6 +117,7 @@ cd n8n-deploy
 - ✅ **Security first**: Secrets management, IAM roles, network isolation
 
 ### AWS Serverless Features
+
 - 🚀 **ECS Fargate**: Serverless containers with Spot support (70% savings)
 - 💾 **Flexible Storage**: EFS for workflows, optional RDS for scale
 - 🌐 **API Gateway**: Cost-effective alternative to load balancers
@@ -120,6 +125,7 @@ cd n8n-deploy
 - 🔄 **Auto-scaling**: CPU/memory-based scaling policies
 
 ### Docker Features
+
 - 🐳 **Production-ready**: Nginx reverse proxy, SSL, health checks
 - 📊 **Full monitoring**: Prometheus, Grafana, and n8n dashboards
 - 💾 **Multiple databases**: SQLite, PostgreSQL, MySQL support
@@ -127,6 +133,7 @@ cd n8n-deploy
 - 🔧 **Development mode**: Hot-reload and debugging tools
 
 ### Cloudflare Tunnel Features
+
 - 🔒 **Zero-trust networking**: No exposed ports or public IPs
 - 🌍 **Global edge network**: Built-in DDoS protection
 - 👥 **Access control**: Email/domain-based authentication
@@ -169,7 +176,7 @@ environments:
     n8n:
       version: "1.94.1"
       encryption_key: "{{ secrets.n8n_encryption_key }}"
-    
+
     # AWS-specific settings
     aws:
       account: "123456789012"
@@ -178,13 +185,13 @@ environments:
         cpu: 512
         memory: 1024
         spot_enabled: true
-    
+
     # Docker-specific settings
     docker:
       compose_profile: "production"
       postgres_enabled: true
       redis_enabled: true
-    
+
     # Cloudflare-specific settings
     cloudflare:
       tunnel_name: "n8n-production"
@@ -209,14 +216,17 @@ environments:
 ## 💰 Cost Examples
 
 ### Personal Use (AWS)
+
 - **Minimal**: ~$5-10/month (256 CPU, 512MB RAM, SQLite)
 - **Standard**: ~$15-20/month (512 CPU, 1GB RAM, PostgreSQL)
 
 ### Team Use (AWS)
+
 - **Small Team**: ~$30-50/month (1024 CPU, 2GB RAM, RDS)
 - **Medium Team**: ~$75-100/month (2048 CPU, 4GB RAM, Aurora)
 
 ### Enterprise (Hybrid)
+
 - **Cloudflare + AWS**: ~$50-100/month (High availability, zero-trust)
 - **On-premise + Cloudflare**: Infrastructure cost only
 
@@ -250,6 +260,7 @@ make costs environment=production
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ### Development Process
+
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes

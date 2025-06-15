@@ -21,6 +21,7 @@ This guide provides strategies to minimize costs while running n8n on AWS server
 ### 1. Compute Optimization
 
 #### Use Fargate Spot Instances
+
 ```yaml
 # In system.yaml
 fargate:
@@ -28,11 +29,13 @@ fargate:
 ```
 
 Benefits:
+
 - 70% discount vs on-demand
 - Automatic failover to on-demand
 - Suitable for non-critical workloads
 
 #### Right-Size Container Resources
+
 ```yaml
 # Development
 fargate:
@@ -46,11 +49,13 @@ fargate:
 ```
 
 Cost impact:
+
 - 256 CPU + 512 MB: ~$9/month
 - 512 CPU + 1024 MB: ~$18/month
 - 1024 CPU + 2048 MB: ~$36/month
 
 #### Implement Auto-Scaling
+
 ```yaml
 scaling:
   min_tasks: 1
@@ -60,6 +65,7 @@ scaling:
 ```
 
 Savings:
+
 - Scale down during low usage
 - Prevent over-provisioning
 - 40-60% cost reduction
@@ -67,17 +73,20 @@ Savings:
 ### 2. Storage Optimization
 
 #### EFS Lifecycle Management
+
 ```yaml
 efs:
   lifecycle_days: 30  # Move to Infrequent Access
 ```
 
 Cost impact:
+
 - Standard: $0.30/GB/month
 - Infrequent Access: $0.025/GB/month
 - 90% savings on cold data
 
 #### Optimize Backup Retention
+
 ```yaml
 backup:
   retention_days: 7   # Reduce from 30 days
@@ -87,11 +96,13 @@ backup:
 ### 3. Database Optimization
 
 #### Use SQLite for Small Workloads
+
 - Cost: $0 (uses EFS storage)
 - Suitable for: <5,000 executions/day
 - Migration path to PostgreSQL when needed
 
 #### Aurora Serverless v2 Configuration
+
 ```yaml
 aurora_serverless:
   min_capacity: 0.5   # Scale to zero
@@ -99,10 +110,12 @@ aurora_serverless:
 ```
 
 Cost comparison:
+
 - RDS t4g.micro: ~$13/month
 - Aurora Serverless: ~$45/month (but scales to zero)
 
 #### Database Optimization Tips
+
 ```sql
 -- Enable data pruning
 EXECUTIONS_DATA_MAX_AGE=7  # Keep only 7 days
@@ -115,10 +128,12 @@ EXECUTIONS_DATA_SAVE_DATA_ON_SUCCESS=false
 ### 4. Network Optimization
 
 #### Avoid Load Balancers
+
 - ALB cost: $16-25/month
 - Alternative: API Gateway HTTP API ($1/million requests)
 
 #### Minimize Data Transfer
+
 ```yaml
 # Use same region for all services
 region: us-east-1  # Lowest costs
@@ -129,6 +144,7 @@ n8n:
 ```
 
 #### Use VPC Endpoints
+
 ```python
 # Avoid NAT Gateway costs ($45/month)
 vpc_endpoints:
@@ -140,6 +156,7 @@ vpc_endpoints:
 ### 5. Monitoring Cost Optimization
 
 #### CloudWatch Logs
+
 ```yaml
 monitoring:
   log_retention_days: 7    # Reduce from 30
@@ -147,6 +164,7 @@ monitoring:
 ```
 
 #### Metrics and Alarms
+
 - Use basic metrics (free)
 - Limit custom metrics
 - Consolidate alarms
@@ -154,6 +172,7 @@ monitoring:
 ### 6. Environment-Specific Optimization
 
 #### Development Environment
+
 ```yaml
 dev:
   settings:
@@ -162,18 +181,19 @@ dev:
       cpu: 256
       memory: 512
       spot_percentage: 100
-    
+
     # No redundancy
     scaling:
       min_tasks: 1
       max_tasks: 1
-    
+
     # Minimal monitoring
     monitoring:
       enable_container_insights: false
 ```
 
 #### Production Environment
+
 ```yaml
 production:
   settings:
@@ -182,12 +202,12 @@ production:
       cpu: 512
       memory: 1024
       spot_percentage: 50  # Mix for reliability
-    
+
     # Auto-scaling
     scaling:
       min_tasks: 2
       max_tasks: 10
-      
+
     # Scheduled scaling
     scheduled_scaling:
       - schedule: "cron(0 18 * * ? *)"  # 6 PM
@@ -199,6 +219,7 @@ production:
 ### 7. AWS Cost Optimization Tools
 
 #### Enable AWS Budgets
+
 ```bash
 aws budgets create-budget \
   --account-id $AWS_ACCOUNT_ID \
@@ -206,6 +227,7 @@ aws budgets create-budget \
 ```
 
 #### Use Cost Allocation Tags
+
 ```yaml
 global:
   tags:
@@ -215,6 +237,7 @@ global:
 ```
 
 #### Regular Cost Reviews
+
 ```bash
 # Monthly cost report
 aws ce get-cost-and-usage \
@@ -227,6 +250,7 @@ aws ce get-cost-and-usage \
 ### 8. Reserved Capacity
 
 #### Compute Savings Plans
+
 - 1-year commitment: 30% savings
 - 3-year commitment: 50% savings
 
@@ -259,6 +283,7 @@ aws ce get-savings-plans-purchase-recommendation \
 ### 10. Cost Monitoring Scripts
 
 #### Daily Cost Check
+
 ```bash
 #!/bin/bash
 # Get yesterday's costs
@@ -270,6 +295,7 @@ aws ce get-cost-and-usage \
 ```
 
 #### Resource Utilization
+
 ```python
 # Check Fargate utilization
 import boto3
@@ -293,6 +319,7 @@ response = cloudwatch.get_metric_statistics(
 ## Cost Optimization Checklist
 
 ### Initial Deployment
+
 - [ ] Use Spot instances for non-production
 - [ ] Start with minimal resources
 - [ ] Enable EFS lifecycle management
@@ -300,6 +327,7 @@ response = cloudwatch.get_metric_statistics(
 - [ ] Skip CloudFront initially
 
 ### After 1 Month
+
 - [ ] Review CloudWatch metrics
 - [ ] Right-size Fargate tasks
 - [ ] Enable auto-scaling
@@ -307,6 +335,7 @@ response = cloudwatch.get_metric_statistics(
 - [ ] Set up cost alerts
 
 ### After 3 Months
+
 - [ ] Consider Reserved Instances
 - [ ] Evaluate Savings Plans
 - [ ] Optimize backup retention
@@ -314,6 +343,7 @@ response = cloudwatch.get_metric_statistics(
 - [ ] Consolidate resources
 
 ### Ongoing
+
 - [ ] Monthly cost reviews
 - [ ] Quarterly architecture review
 - [ ] Annual reserved capacity evaluation
@@ -323,6 +353,7 @@ response = cloudwatch.get_metric_statistics(
 ## Example Cost Scenarios
 
 ### Personal Use (<$10/month)
+
 ```yaml
 settings:
   fargate:
@@ -340,6 +371,7 @@ settings:
 ```
 
 ### Small Team (~$25/month)
+
 ```yaml
 settings:
   fargate:
@@ -357,6 +389,7 @@ settings:
 ```
 
 ### Enterprise (~$100/month)
+
 ```yaml
 settings:
   fargate:

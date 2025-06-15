@@ -3,6 +3,7 @@
 This guide provides comprehensive information for developing and testing n8n locally using Docker Compose.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Docker Compose Architecture](#docker-compose-architecture)
 - [Development Profiles](#development-profiles)
@@ -14,6 +15,7 @@ This guide provides comprehensive information for developing and testing n8n loc
 ## Overview
 
 The local development environment uses Docker Compose with profiles to provide flexible deployment options:
+
 - **SQLite** for lightweight development
 - **PostgreSQL** for production-like testing
 - **Redis** for queue-based execution
@@ -49,75 +51,93 @@ Docker Compose profiles allow selective service deployment:
 ## Development Profiles
 
 ### 1. Default Profile (SQLite)
+
 Simplest setup for quick testing:
+
 ```bash
 ./scripts/local-deploy.sh
 ```
 
 **When to use:**
+
 - Rapid prototyping
 - Testing workflows
 - Learning n8n
 - Limited resources
 
 **Limitations:**
+
 - No concurrent executions
 - Basic performance
 - Not suitable for production testing
 
 ### 2. PostgreSQL Profile
+
 Production-like database setup:
+
 ```bash
 ./scripts/local-deploy.sh -p postgres
 ```
 
 **When to use:**
+
 - Testing production workflows
 - Database-specific features
 - Performance testing
 - Multi-user scenarios
 
 **Benefits:**
+
 - Better performance
 - Concurrent executions
 - Production parity
 - Advanced queries
 
 ### 3. Scaling Profile
+
 Adds Redis for distributed execution:
+
 ```bash
 ./scripts/local-deploy.sh -p scaling
 ```
 
 **When to use:**
+
 - Testing queue mode
 - Multi-worker setups
 - High-volume workflows
 - Distributed execution
 
 **Configuration:**
+
 - Uses Redis for job queues
 - Enables `EXECUTIONS_MODE=queue`
 - Supports multiple n8n workers
 
 ### 4. Monitoring Profile
+
 Adds Prometheus and Grafana:
+
 ```bash
 ./scripts/local-deploy.sh -m
 ```
 
 **When to use:**
+
 - Performance analysis
 - Debugging issues
 - Resource monitoring
 - Metric collection
 
 **Access:**
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000
+
+- Prometheus: <http://localhost:9090>
+- Grafana: <http://localhost:3000>
 
 ### 5. Combined Profiles
+
 Mix profiles for comprehensive testing:
+
 ```bash
 # PostgreSQL with monitoring
 ./scripts/local-deploy.sh -p postgres -m
@@ -171,6 +191,7 @@ export N8N_PORT=5679
 ### 1. Workflow Development
 
 #### Import/Export Workflows
+
 ```bash
 # Export all workflows
 docker exec n8n-local n8n export:workflow --all --output=/home/node/.n8n/workflows/
@@ -180,7 +201,9 @@ docker exec n8n-local n8n import:workflow --input=/home/node/.n8n/workflows/my-w
 ```
 
 #### Access Workflow Files
+
 Workflows are synced to `docker/workflows/` for version control:
+
 ```bash
 ls docker/workflows/
 git add docker/workflows/my-workflow.json
@@ -189,6 +212,7 @@ git add docker/workflows/my-workflow.json
 ### 2. Database Management
 
 #### PostgreSQL Access
+
 ```bash
 # Connect to PostgreSQL
 docker exec -it n8n-postgres psql -U n8n -d n8n
@@ -201,6 +225,7 @@ docker exec -i n8n-postgres psql -U n8n n8n < backup.sql
 ```
 
 #### SQLite Access
+
 ```bash
 # Access SQLite database
 docker exec -it n8n-local sqlite3 /home/node/.n8n/database.sqlite
@@ -212,6 +237,7 @@ docker cp n8n-local:/home/node/.n8n/database.sqlite ./backup.sqlite
 ### 3. Testing Workflows
 
 #### Using the CLI
+
 ```bash
 # Execute specific workflow
 docker exec n8n-local n8n execute --id=<workflow-id>
@@ -223,6 +249,7 @@ curl -X POST http://localhost:5678/webhook/test-webhook \
 ```
 
 #### Load Testing
+
 ```bash
 # Run performance tests
 ./scripts/performance-test.sh -u http://localhost:5678 -t baseline
@@ -235,6 +262,7 @@ curl -X POST http://localhost:5678/webhook/test-webhook \
 ### 4. Log Management
 
 #### View Logs
+
 ```bash
 # All services
 ./scripts/local-deploy.sh -l
@@ -250,7 +278,9 @@ docker logs n8n-local 2>&1 | grep ERROR
 ```
 
 #### Log Rotation
+
 Configure in docker-compose.yml:
+
 ```yaml
 services:
   n8n:
@@ -266,6 +296,7 @@ services:
 ### 1. Container Debugging
 
 #### Interactive Shell
+
 ```bash
 # Access n8n container
 docker exec -it n8n-local /bin/sh
@@ -278,6 +309,7 @@ docker exec n8n-local env | grep N8N
 ```
 
 #### Health Checks
+
 ```bash
 # Check service health
 docker ps --format "table {{.Names}}\t{{.Status}}"
@@ -289,6 +321,7 @@ curl http://localhost:5678/healthz
 ### 2. Network Debugging
 
 #### Test Connectivity
+
 ```bash
 # From n8n to postgres
 docker exec n8n-local ping postgres
@@ -303,6 +336,7 @@ docker network inspect n8n_network
 ### 3. Performance Debugging
 
 #### Resource Usage
+
 ```bash
 # Real-time stats
 docker stats
@@ -360,6 +394,7 @@ ln -sf .env.development .env
 ### Common Issues
 
 #### 1. Port Already in Use
+
 ```bash
 # Find process using port
 lsof -i :5678
@@ -369,6 +404,7 @@ N8N_PORT=5679 ./scripts/local-deploy.sh
 ```
 
 #### 2. Container Won't Start
+
 ```bash
 # Check logs
 docker logs n8n-local
@@ -381,6 +417,7 @@ docker volume prune -f
 ```
 
 #### 3. Database Connection Failed
+
 ```bash
 # Verify postgres is running
 docker ps | grep postgres
@@ -393,6 +430,7 @@ docker volume rm n8n_postgres_data
 ```
 
 #### 4. Monitoring Not Working
+
 ```bash
 # Check Prometheus targets
 curl http://localhost:9090/api/v1/targets

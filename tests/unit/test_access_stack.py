@@ -1,4 +1,5 @@
 """Unit tests for AccessStack."""
+
 from unittest.mock import Mock, patch
 
 import pytest
@@ -17,9 +18,7 @@ from n8n_deploy.stacks.compute_stack import ComputeStack
 from n8n_deploy.stacks.network_stack import NetworkStack
 
 
-@pytest.mark.skip(
-    reason="Unit tests require CDK synthesis which needs valid AWS environment"
-)
+@pytest.mark.skip(reason="Unit tests require CDK synthesis which needs valid AWS environment")
 class TestAccessStack:
     """Test cases for AccessStack."""
 
@@ -32,9 +31,7 @@ class TestAccessStack:
     def test_config_basic(self):
         """Create basic test configuration."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -54,9 +51,7 @@ class TestAccessStack:
     def test_config_cloudfront(self):
         """Create test configuration with CloudFront enabled."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -77,9 +72,7 @@ class TestAccessStack:
     def test_config_waf(self):
         """Create test configuration with WAF enabled."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -214,17 +207,11 @@ class TestAccessStack:
         )
 
         # Verify routes
-        template.has_resource_properties(
-            "AWS::ApiGatewayV2::Route", {"RouteKey": "ANY /{proxy+}"}
-        )
+        template.has_resource_properties("AWS::ApiGatewayV2::Route", {"RouteKey": "ANY /{proxy+}"})
 
-        template.has_resource_properties(
-            "AWS::ApiGatewayV2::Route", {"RouteKey": "ANY /"}
-        )
+        template.has_resource_properties("AWS::ApiGatewayV2::Route", {"RouteKey": "ANY /"})
 
-    def test_security_group_ingress_rule(
-        self, app, test_config_basic, compute_stack_mock
-    ):
+    def test_security_group_ingress_rule(self, app, test_config_basic, compute_stack_mock):
         """Test that API Gateway can access the compute service."""
         # Create a real security group mock with add_ingress_rule method
         sg_mock = Mock()
@@ -246,9 +233,7 @@ class TestAccessStack:
         assert call_args[1]["connection"].from_port == 5678
         assert call_args[1]["description"] == "Allow API Gateway to access n8n"
 
-    def test_cloudfront_distribution_creation(
-        self, app, test_config_cloudfront, compute_stack_mock
-    ):
+    def test_cloudfront_distribution_creation(self, app, test_config_cloudfront, compute_stack_mock):
         """Test CloudFront distribution creation when enabled."""
         stack = AccessStack(
             app,
@@ -276,12 +261,8 @@ class TestAccessStack:
                         [
                             Match.object_like(
                                 {
-                                    "DomainName": Match.string_like_regexp(
-                                        ".*execute-api.*amazonaws.com"
-                                    ),
-                                    "CustomOriginConfig": {
-                                        "OriginProtocolPolicy": "https-only"
-                                    },
+                                    "DomainName": Match.string_like_regexp(".*execute-api.*amazonaws.com"),
+                                    "CustomOriginConfig": {"OriginProtocolPolicy": "https-only"},
                                 }
                             )
                         ]
@@ -290,9 +271,7 @@ class TestAccessStack:
             },
         )
 
-    def test_cloudfront_cache_behaviors(
-        self, app, test_config_cloudfront, compute_stack_mock
-    ):
+    def test_cloudfront_cache_behaviors(self, app, test_config_cloudfront, compute_stack_mock):
         """Test CloudFront cache behaviors for specific paths."""
         stack = AccessStack(
             app,
@@ -350,9 +329,7 @@ class TestAccessStack:
                 "DefaultAction": {"Block": {}},  # Block by default with IP whitelist
                 "Rules": Match.array_with(
                     [
-                        Match.object_like(
-                            {"Name": "AWSManagedRulesCommonRuleSet", "Priority": 10}
-                        ),
+                        Match.object_like({"Name": "AWSManagedRulesCommonRuleSet", "Priority": 10}),
                         Match.object_like(
                             {
                                 "Name": "RateLimitRule",
@@ -431,13 +408,9 @@ class TestAccessStack:
         }
 
         for output in expected_outputs:
-            assert any(
-                output in key for key in output_keys
-            ), f"Missing output: {output}"
+            assert any(output in key for key in output_keys), f"Missing output: {output}"
 
-    def test_no_cloudfront_when_disabled(
-        self, app, test_config_basic, compute_stack_mock
-    ):
+    def test_no_cloudfront_when_disabled(self, app, test_config_basic, compute_stack_mock):
         """Test that CloudFront is not created when disabled."""
         stack = AccessStack(
             app,
@@ -457,17 +430,13 @@ class TestAccessStack:
     def test_production_cloudfront_settings(self, app, compute_stack_mock):
         """Test production-specific CloudFront settings."""
         config = N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "production": EnvironmentConfig(
                     account="123456789012",
                     region="us-east-1",
                     settings=EnvironmentSettings(
-                        access=AccessConfig(
-                            cloudfront_enabled=True, api_gateway_throttle=10000
-                        )
+                        access=AccessConfig(cloudfront_enabled=True, api_gateway_throttle=10000)
                     ),
                 )
             },
@@ -487,19 +456,13 @@ class TestAccessStack:
         # Verify production price class
         template.has_resource_properties(
             "AWS::CloudFront::Distribution",
-            {
-                "DistributionConfig": {
-                    "PriceClass": "PriceClass_All"  # All edge locations for production
-                }
-            },
+            {"DistributionConfig": {"PriceClass": "PriceClass_All"}},  # All edge locations for production
         )
 
     def test_cors_configuration(self, app, compute_stack_mock):
         """Test CORS configuration options."""
         config = N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -544,13 +507,10 @@ class TestAccessStack:
         """Test certificate import from shared resources."""
         with patch.object(AccessStack, "get_shared_resource") as mock_shared:
             mock_shared.return_value = (
-                "arn:aws:acm:us-east-1:123456789012:certificate/"
-                "12345678-1234-1234-1234-123456789012"
+                "arn:aws:acm:us-east-1:123456789012:certificate/" "12345678-1234-1234-1234-123456789012"
             )
 
-            with patch(
-                "n8n_deploy.stacks.access_stack.acm.Certificate.from_certificate_arn"
-            ) as mock_cert:
+            with patch("n8n_deploy.stacks.access_stack.acm.Certificate.from_certificate_arn") as mock_cert:
                 mock_cert_instance = Mock()
                 mock_cert.return_value = mock_cert_instance
 

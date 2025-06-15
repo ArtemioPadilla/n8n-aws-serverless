@@ -1,4 +1,5 @@
 """Security tests for secrets scanning and validation."""
+
 import re
 from pathlib import Path
 
@@ -50,9 +51,7 @@ class TestSecretsScanning:
 
                 for pattern in aws_key_patterns:
                     matches = re.findall(pattern, content)
-                    assert (
-                        not matches
-                    ), f"AWS credentials found in {file_path}: {matches}"
+                    assert not matches, f"AWS credentials found in {file_path}: {matches}"
             except Exception:
                 pass  # Skip binary files
 
@@ -87,9 +86,7 @@ class TestSecretsScanning:
                     continue
                 # Allow test keys and local development SSL certificates
                 allowed_paths = ["test", "docker/ssl", "examples", "fixtures"]
-                if not any(
-                    allowed in str(key_file).lower() for allowed in allowed_paths
-                ):
+                if not any(allowed in str(key_file).lower() for allowed in allowed_paths):
                     assert False, f"Private key file found: {key_file}"
 
         # Check for key content in files
@@ -135,9 +132,7 @@ class TestSecretsScanning:
             if "docker" in env_file.parts:
                 continue
             # Only .env.example should exist elsewhere
-            assert (
-                env_file.name == ".env.example"
-            ), f"Found committed .env file: {env_file}"
+            assert env_file.name == ".env.example", f"Found committed .env file: {env_file}"
 
     def test_no_database_credentials(self, project_root):
         """Test that no database credentials are hardcoded."""
@@ -149,9 +144,7 @@ class TestSecretsScanning:
         ]
 
         files_to_check = (
-            list(project_root.rglob("*.py"))
-            + list(project_root.rglob("*.yaml"))
-            + list(project_root.rglob("*.yml"))
+            list(project_root.rglob("*.py")) + list(project_root.rglob("*.yaml")) + list(project_root.rglob("*.yml"))
         )
 
         for file_path in files_to_check:
@@ -175,9 +168,7 @@ class TestSecretsScanning:
                                 "test",
                             ]
                         ):
-                            assert (
-                                False
-                            ), f"Database credentials found in {file_path}: {match}"
+                            assert False, f"Database credentials found in {file_path}: {match}"
             except Exception:
                 pass
 
@@ -200,13 +191,13 @@ class TestSecretsScanning:
                 # Check for common secret fields
                 secret_fields = ["password", "secret", "key", "token", "credential"]
 
-                def check_dict_for_secrets(d, path=""):
+                def check_dict_for_secrets(d, path="", fields=secret_fields, filename=config_file):
                     if isinstance(d, dict):
                         for k, v in d.items():
                             current_path = f"{path}.{k}" if path else k
 
                             # Check if key suggests secret
-                            if any(secret in k.lower() for secret in secret_fields):
+                            if any(secret in k.lower() for secret in fields):
                                 # Skip keys that are references to secrets (not actual secrets)
                                 if any(
                                     ref in k.lower()
@@ -233,17 +224,15 @@ class TestSecretsScanning:
                                         ]
                                     )
                                 ):
-                                    assert (
-                                        False
-                                    ), f"Potential secret in {config_file} at {current_path}: {v}"
+                                    assert False, f"Potential secret in {filename} at {current_path}: {v}"
 
                             # Recurse
-                            check_dict_for_secrets(v, current_path)
+                            check_dict_for_secrets(v, current_path, fields, filename)
                     elif isinstance(d, list):
                         for i, item in enumerate(d):
-                            check_dict_for_secrets(item, f"{path}[{i}]")
+                            check_dict_for_secrets(item, f"{path}[{i}]", fields, filename)
 
-                check_dict_for_secrets(config)
+                check_dict_for_secrets(config, "", secret_fields, config_file)
 
             except yaml.YAMLError:
                 pass  # Skip invalid YAML files
@@ -257,15 +246,11 @@ class TestSecretsScanning:
         ]
 
         files_to_check = (
-            list(project_root.rglob("*.py"))
-            + list(project_root.rglob("*.js"))
-            + list(project_root.rglob("*.ts"))
+            list(project_root.rglob("*.py")) + list(project_root.rglob("*.js")) + list(project_root.rglob("*.ts"))
         )
 
         for file_path in files_to_check:
-            if any(
-                skip in str(file_path) for skip in [".venv", "venv", "node_modules"]
-            ):
+            if any(skip in str(file_path) for skip in [".venv", "venv", "node_modules"]):
                 continue
 
             try:
@@ -305,21 +290,15 @@ class TestSecretsScanning:
 
             repos = pre_commit_config.get("repos", [])
             has_secrets_scanning = any(
-                "detect-secrets" in str(repo)
-                or "git-secrets" in str(repo)
-                or "truffleHog" in str(repo)
+                "detect-secrets" in str(repo) or "git-secrets" in str(repo) or "truffleHog" in str(repo)
                 for repo in repos
             )
 
-            assert (
-                has_secrets_scanning
-            ), "Pre-commit configuration doesn't include secrets scanning"
+            assert has_secrets_scanning, "Pre-commit configuration doesn't include secrets scanning"
 
     def test_docker_files_no_secrets(self, project_root):
         """Test that Dockerfiles don't contain secrets."""
-        docker_files = list(project_root.rglob("Dockerfile*")) + list(
-            project_root.rglob("docker-compose*.yml")
-        )
+        docker_files = list(project_root.rglob("Dockerfile*")) + list(project_root.rglob("docker-compose*.yml"))
 
         for docker_file in docker_files:
             try:
@@ -335,8 +314,7 @@ class TestSecretsScanning:
                     matches = re.findall(pattern, content, re.IGNORECASE)
                     for match in matches:
                         if not any(
-                            placeholder in match.lower()
-                            for placeholder in ["build-arg", "your", "example", "xxx"]
+                            placeholder in match.lower() for placeholder in ["build-arg", "your", "example", "xxx"]
                         ):
                             assert False, f"Secret in Dockerfile {docker_file}: {match}"
 
@@ -345,9 +323,7 @@ class TestSecretsScanning:
 
     def test_terraform_files_no_secrets(self, project_root):
         """Test that Terraform files don't contain secrets."""
-        tf_files = list(project_root.rglob("*.tf")) + list(
-            project_root.rglob("*.tfvars")
-        )
+        tf_files = list(project_root.rglob("*.tf")) + list(project_root.rglob("*.tfvars"))
 
         for tf_file in tf_files:
             # Skip example files
@@ -367,10 +343,7 @@ class TestSecretsScanning:
                 for pattern in secret_patterns:
                     matches = re.findall(pattern, content, re.IGNORECASE)
                     for match in matches:
-                        if not any(
-                            placeholder in match.lower()
-                            for placeholder in ["var.", "data.", "example"]
-                        ):
+                        if not any(placeholder in match.lower() for placeholder in ["var.", "data.", "example"]):
                             assert False, f"Secret in Terraform file {tf_file}: {match}"
 
             except Exception:

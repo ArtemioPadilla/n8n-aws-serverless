@@ -1,4 +1,5 @@
 """Pytest configuration and fixtures for unit tests."""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -145,9 +146,7 @@ def mock_service():
 def mock_secret():
     """Create a mock Secrets Manager secret."""
     secret = MagicMock(spec=secretsmanager.Secret)
-    secret.secret_arn = (
-        "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret"
-    )
+    secret.secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret"
     return secret
 
 
@@ -195,8 +194,6 @@ def mock_database_stack(mock_secret):
     stack.secret = mock_secret
     stack.endpoint = "test-db.cluster-12345.us-east-1.rds.amazonaws.com:5432"
     stack.instance = MagicMock()
-    stack.instance.db_instance_endpoint_address = (
-        "test-db.12345.us-east-1.rds.amazonaws.com"
-    )
+    stack.instance.db_instance_endpoint_address = "test-db.12345.us-east-1.rds.amazonaws.com"
     stack.instance.db_instance_endpoint_port = "5432"
     return stack

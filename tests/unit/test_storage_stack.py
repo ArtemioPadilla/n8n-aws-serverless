@@ -1,4 +1,5 @@
 """Unit tests for StorageStack."""
+
 from unittest.mock import Mock
 
 import pytest
@@ -30,20 +31,14 @@ class TestStorageStack:
     def test_config(self):
         """Create test configuration."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
-            defaults=DefaultsConfig(
-                efs={"lifecycle_days": 30, "backup_retention_days": 7}
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
+            defaults=DefaultsConfig(efs={"lifecycle_days": 30, "backup_retention_days": 7}),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
                     region="us-east-1",
                     settings=EnvironmentSettings(
-                        backup=BackupConfig(
-                            enabled=True, retention_days=7, cross_region_backup=False
-                        )
+                        backup=BackupConfig(enabled=True, retention_days=7, cross_region_backup=False)
                     ),
                 )
             },
@@ -161,9 +156,7 @@ class TestStorageStack:
             "AWS::Backup::BackupPlan",
             {
                 "BackupPlan": {
-                    "BackupPlanName": Match.string_like_regexp(
-                        "test-n8n-test-backup-plan"
-                    ),
+                    "BackupPlanName": Match.string_like_regexp("test-n8n-test-backup-plan"),
                     "BackupPlanRule": [
                         {
                             "RuleName": "DailyBackup",
@@ -185,16 +178,12 @@ class TestStorageStack:
             {
                 "BackupSelection": {
                     "SelectionName": "EfsBackupSelection",
-                    "Resources": Match.array_with(
-                        [Match.string_like_regexp("arn:aws:elasticfilesystem:.*")]
-                    ),
+                    "Resources": Match.array_with([Match.string_like_regexp("arn:aws:elasticfilesystem:.*")]),
                 }
             },
         )
 
-    def test_backup_not_created_when_disabled(
-        self, app, test_config, network_stack_mock
-    ):
+    def test_backup_not_created_when_disabled(self, app, test_config, network_stack_mock):
         """Test that backup resources are not created when disabled."""
         # Disable backup in config
         test_config.environments["test"].settings.backup.enabled = False
@@ -215,9 +204,7 @@ class TestStorageStack:
         template.resource_count_is("AWS::Backup::BackupPlan", 0)
         template.resource_count_is("AWS::Backup::BackupSelection", 0)
 
-    def test_production_environment_settings(
-        self, app, test_config, network_stack_mock
-    ):
+    def test_production_environment_settings(self, app, test_config, network_stack_mock):
         """Test production-specific settings."""
         # Set environment to production
         test_config.environments["production"] = EnvironmentConfig(
@@ -245,9 +232,7 @@ class TestStorageStack:
         template = Template.from_stack(stack)
 
         # Verify automatic backups enabled for production
-        template.has_resource_properties(
-            "AWS::EFS::FileSystem", {"BackupPolicy": {"Status": "ENABLED"}}
-        )
+        template.has_resource_properties("AWS::EFS::FileSystem", {"BackupPolicy": {"Status": "ENABLED"}})
 
         # Verify continuous backup for production
         template.has_resource_properties(
@@ -290,9 +275,7 @@ class TestStorageStack:
         }
 
         for output in expected_outputs:
-            assert any(
-                output in key for key in output_keys
-            ), f"Missing output: {output}"
+            assert any(output in key for key in output_keys), f"Missing output: {output}"
 
     def test_efs_volume_configuration(self, app, test_config, network_stack_mock):
         """Test EFS volume configuration for Fargate."""
@@ -310,17 +293,9 @@ class TestStorageStack:
 
         assert volume_config["name"] == "n8n-data"
         assert "efs_volume_configuration" in volume_config
-        assert (
-            volume_config["efs_volume_configuration"]["transit_encryption"] == "ENABLED"
-        )
-        assert (
-            volume_config["efs_volume_configuration"]["authorization_config"]["iam"]
-            == "ENABLED"
-        )
-        assert (
-            "access_point_id"
-            in volume_config["efs_volume_configuration"]["authorization_config"]
-        )
+        assert volume_config["efs_volume_configuration"]["transit_encryption"] == "ENABLED"
+        assert volume_config["efs_volume_configuration"]["authorization_config"]["iam"] == "ENABLED"
+        assert "access_point_id" in volume_config["efs_volume_configuration"]["authorization_config"]
         assert "file_system_id" in volume_config["efs_volume_configuration"]
 
     def test_grant_read_write_permissions(self, app, test_config, network_stack_mock):
@@ -346,9 +321,7 @@ class TestStorageStack:
         # Verify grant was called
         stack.file_system.grant_read_write.assert_called_once_with(grantee_mock)
 
-    def test_removal_policy_based_on_environment(
-        self, app, test_config, network_stack_mock
-    ):
+    def test_removal_policy_based_on_environment(self, app, test_config, network_stack_mock):
         """Test removal policy is set based on environment."""
         # Test non-production environment
         stack = StorageStack(
@@ -422,9 +395,7 @@ class TestStorageStack:
         # Verify mount targets are created for each subnet
         template.resource_count_is("AWS::EFS::MountTarget", 2)
 
-    def test_cross_region_backup_configuration(
-        self, app, test_config, network_stack_mock
-    ):
+    def test_cross_region_backup_configuration(self, app, test_config, network_stack_mock):
         """Test cross-region backup configuration."""
         # Enable cross-region backup
         test_config.environments["test"].settings.backup.cross_region_backup = True

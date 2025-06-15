@@ -1,4 +1,5 @@
 """Unit tests for base stack."""
+
 import pytest
 from aws_cdk import RemovalPolicy
 from aws_cdk.assertions import Template
@@ -11,9 +12,7 @@ class TestBaseStack:
 
     def test_base_stack_initialization(self, mock_app, test_config):
         """Test base stack initialization."""
-        stack = N8nBaseStack(
-            mock_app, "test-stack", config=test_config, environment="test"
-        )
+        stack = N8nBaseStack(mock_app, "test-stack", config=test_config, environment="test")
 
         assert stack.environment == "test"
         assert stack.config == test_config
@@ -23,9 +22,7 @@ class TestBaseStack:
     @pytest.mark.skip(reason="Template synthesis requires valid AWS environment format")
     def test_tag_application(self, mock_app, test_config):
         """Test that tags are properly applied."""
-        stack = N8nBaseStack(
-            mock_app, "test-stack", config=test_config, environment="test"
-        )
+        stack = N8nBaseStack(mock_app, "test-stack", config=test_config, environment="test")
 
         Template.from_stack(stack)
 
@@ -36,9 +33,7 @@ class TestBaseStack:
 
     def test_resource_naming(self, mock_app, test_config):
         """Test resource naming convention."""
-        stack = N8nBaseStack(
-            mock_app, "test-stack", config=test_config, environment="test"
-        )
+        stack = N8nBaseStack(mock_app, "test-stack", config=test_config, environment="test")
 
         # Test resource naming
         assert stack.get_resource_name("vpc") == "test-n8n-test-vpc"
@@ -61,9 +56,7 @@ class TestBaseStack:
 
         # Test production environment
         test_config.environments["production"] = test_config.environments["test"]
-        prod_stack = N8nBaseStack(
-            mock_app, "prod-stack", config=test_config, environment="production"
-        )
+        prod_stack = N8nBaseStack(mock_app, "prod-stack", config=test_config, environment="production")
         assert prod_stack.removal_policy == RemovalPolicy.RETAIN
 
     def test_is_production_is_development(self, mock_app, test_config):
@@ -72,32 +65,24 @@ class TestBaseStack:
         test_config.environments["production"] = test_config.environments["test"]
         test_config.environments["dev"] = test_config.environments["test"]
 
-        prod_stack = N8nBaseStack(
-            mock_app, "prod-stack", config=test_config, environment="production"
-        )
+        prod_stack = N8nBaseStack(mock_app, "prod-stack", config=test_config, environment="production")
         assert prod_stack.is_production() is True
         assert prod_stack.is_development() is False
 
-        dev_stack = N8nBaseStack(
-            mock_app, "dev-stack", config=test_config, environment="dev"
-        )
+        dev_stack = N8nBaseStack(mock_app, "dev-stack", config=test_config, environment="dev")
         assert dev_stack.is_production() is False
         assert dev_stack.is_development() is True
 
     def test_spot_enabled(self, mock_app, test_config):
         """Test spot instance detection."""
-        stack = N8nBaseStack(
-            mock_app, "test-stack", config=test_config, environment="test"
-        )
+        stack = N8nBaseStack(mock_app, "test-stack", config=test_config, environment="test")
 
         # Test config has spot_percentage = 80
         assert stack.is_spot_enabled is True
 
         # Test with spot disabled
         test_config.environments["test"].settings.fargate.spot_percentage = 0
-        stack2 = N8nBaseStack(
-            mock_app, "test-stack-2", config=test_config, environment="test"
-        )
+        stack2 = N8nBaseStack(mock_app, "test-stack-2", config=test_config, environment="test")
         assert stack2.is_spot_enabled is False
 
     def test_get_shared_resource(self, mock_app, test_config):
@@ -113,23 +98,16 @@ class TestBaseStack:
             networking={"vpc_id": "vpc-shared123"},
         )
 
-        stack = N8nBaseStack(
-            mock_app, "test-stack", config=test_config, environment="test"
-        )
+        stack = N8nBaseStack(mock_app, "test-stack", config=test_config, environment="test")
 
-        assert (
-            stack.get_shared_resource("security", "kms_key_arn")
-            == "arn:aws:kms:us-east-1:123:key/test"
-        )
+        assert stack.get_shared_resource("security", "kms_key_arn") == "arn:aws:kms:us-east-1:123:key/test"
         assert stack.get_shared_resource("networking", "vpc_id") == "vpc-shared123"
         assert stack.get_shared_resource("storage", "bucket") is None
         assert stack.get_shared_resource("invalid", "test") is None
 
     def test_output_export_logic(self, mock_app, test_config):
         """Test output export determination."""
-        stack = N8nBaseStack(
-            mock_app, "test-stack", config=test_config, environment="test"
-        )
+        stack = N8nBaseStack(mock_app, "test-stack", config=test_config, environment="test")
 
         # Test exportable outputs
         assert stack.should_export_output("VpcId") is True
@@ -144,13 +122,9 @@ class TestBaseStack:
     def test_component_enabled(self, mock_app, test_config):
         """Test component enablement check."""
         # Add components to features
-        test_config.environments["test"].settings.features = {
-            "components": ["fargate", "efs", "monitoring"]
-        }
+        test_config.environments["test"].settings.features = {"components": ["fargate", "efs", "monitoring"]}
 
-        stack = N8nBaseStack(
-            mock_app, "test-stack", config=test_config, environment="test"
-        )
+        stack = N8nBaseStack(mock_app, "test-stack", config=test_config, environment="test")
 
         assert stack.get_component_enabled("fargate") is True
         assert stack.get_component_enabled("efs") is True

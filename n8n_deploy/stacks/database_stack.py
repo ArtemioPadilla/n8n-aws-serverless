@@ -124,9 +124,7 @@ class DatabaseStack(N8nBaseStack):
         self.cluster = rds.DatabaseCluster(
             self,
             "AuroraCluster",
-            engine=rds.DatabaseClusterEngine.aurora_postgres(
-                version=rds.AuroraPostgresEngineVersion.VER_15_3
-            ),
+            engine=rds.DatabaseClusterEngine.aurora_postgres(version=rds.AuroraPostgresEngineVersion.VER_15_3),
             credentials=rds.Credentials.from_secret(self.secret),
             default_database_name="n8n",
             cluster_identifier=self.get_resource_name("aurora"),
@@ -197,9 +195,7 @@ class DatabaseStack(N8nBaseStack):
         self.instance = rds.DatabaseInstance(
             self,
             "Database",
-            engine=rds.DatabaseInstanceEngine.postgres(
-                version=rds.PostgresEngineVersion.VER_15_3
-            ),
+            engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_15_3),
             instance_type=instance_class,
             credentials=rds.Credentials.from_secret(self.secret),
             database_name="n8n",
@@ -224,19 +220,13 @@ class DatabaseStack(N8nBaseStack):
             auto_minor_version_upgrade=False,  # Control updates
         )
 
-        self.endpoint = (
-            self.instance.db_instance_endpoint_address
-            + ":"
-            + self.instance.db_instance_endpoint_port
-        )
+        self.endpoint = self.instance.db_instance_endpoint_address + ":" + self.instance.db_instance_endpoint_port
 
     def _add_outputs(self) -> None:
         """Add stack outputs."""
         # Database endpoint
         if hasattr(self, "endpoint") and self.endpoint:
-            self.add_output(
-                "DatabaseEndpoint", value=self.endpoint, description="Database endpoint"
-            )
+            self.add_output("DatabaseEndpoint", value=self.endpoint, description="Database endpoint")
 
         # Secret ARN
         if hasattr(self, "secret"):

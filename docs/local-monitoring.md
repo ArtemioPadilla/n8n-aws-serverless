@@ -5,6 +5,7 @@ This guide covers the monitoring stack available for local n8n development using
 ## Overview
 
 The local monitoring stack provides real-time metrics and visualization for your n8n instance, including:
+
 - Workflow execution metrics
 - Resource utilization (CPU, memory)
 - Database performance (when using PostgreSQL)
@@ -13,6 +14,7 @@ The local monitoring stack provides real-time metrics and visualization for your
 ## Quick Start
 
 Enable monitoring with any deployment:
+
 ```bash
 # With SQLite and monitoring
 ./scripts/local-deploy.sh -m
@@ -27,7 +29,8 @@ Enable monitoring with any deployment:
 ## Access Points
 
 ### Prometheus
-- URL: http://localhost:9090
+
+- URL: <http://localhost:9090>
 - Purpose: Metrics collection and querying
 - Features:
   - Direct metric queries
@@ -35,7 +38,8 @@ Enable monitoring with any deployment:
   - Alert management (if configured)
 
 ### Grafana
-- URL: http://localhost:3000
+
+- URL: <http://localhost:3000>
 - Default credentials:
   - Username: `admin`
   - Password: `admin` (or check `GRAFANA_PASSWORD` in `.env`)
@@ -47,6 +51,7 @@ Enable monitoring with any deployment:
 ## Available Metrics
 
 ### n8n Metrics
+
 All n8n metrics are prefixed with `n8n_` (configurable via `N8N_METRICS_PREFIX`):
 
 ```prometheus
@@ -69,6 +74,7 @@ n8n_system_cpu_usage_percent
 ```
 
 ### PostgreSQL Metrics (with postgres profile)
+
 ```prometheus
 # Connection metrics
 pg_stat_database_numbackends
@@ -86,6 +92,7 @@ pg_stat_replication_lag_bytes
 ```
 
 ### Redis Metrics (with scaling profile)
+
 ```prometheus
 # Memory metrics
 redis_memory_used_bytes
@@ -108,21 +115,23 @@ redis_aof_last_rewrite_duration_sec
 
 ### Creating a Custom Dashboard
 
-1. Access Grafana at http://localhost:3000
+1. Access Grafana at <http://localhost:3000>
 2. Navigate to Dashboards → New Dashboard
 3. Add panels with relevant queries
 
 Example queries for common use cases:
 
 #### Workflow Success Rate
+
 ```prometheus
-rate(n8n_workflow_executions_total{status="success"}[5m]) 
-/ 
-rate(n8n_workflow_executions_total[5m]) 
+rate(n8n_workflow_executions_total{status="success"}[5m])
+/
+rate(n8n_workflow_executions_total[5m])
 * 100
 ```
 
 #### Average Workflow Duration
+
 ```prometheus
 rate(n8n_workflow_execution_duration_seconds_sum[5m])
 /
@@ -130,16 +139,18 @@ rate(n8n_workflow_execution_duration_seconds_count[5m])
 ```
 
 #### Database Connection Pool Usage
+
 ```prometheus
-pg_stat_database_numbackends{datname="n8n"} 
-/ 
-pg_settings_max_connections 
+pg_stat_database_numbackends{datname="n8n"}
+/
+pg_settings_max_connections
 * 100
 ```
 
 ### Importing Pre-built Dashboards
 
 The project includes pre-configured dashboards in `docker/grafana/dashboards/`:
+
 - `n8n-dashboard.json` - Main n8n metrics
 - Additional dashboards can be added to this directory
 
@@ -150,6 +161,7 @@ While full alerting is typically configured in production, you can set up basic 
 ### Prometheus Alerts
 
 Create `docker/prometheus-alerts.yml`:
+
 ```yaml
 groups:
   - name: n8n_alerts
@@ -159,7 +171,7 @@ groups:
         for: 5m
         annotations:
           summary: "High workflow error rate detected"
-          
+
       - alert: DatabaseConnectionsHigh
         expr: pg_stat_database_numbackends > 80
         for: 5m
@@ -192,6 +204,7 @@ global:
 If monitoring impacts performance:
 
 1. Increase scrape intervals:
+
 ```yaml
 scrape_configs:
   - job_name: 'n8n'
@@ -201,6 +214,7 @@ scrape_configs:
 2. Disable unused exporters in docker-compose.yml
 
 3. Limit Prometheus memory:
+
 ```yaml
 services:
   prometheus:
@@ -214,12 +228,15 @@ services:
 
 ### Prometheus Not Scraping Metrics
 
-1. Check targets at http://localhost:9090/targets
+1. Check targets at <http://localhost:9090/targets>
 2. Verify n8n metrics endpoint:
+
 ```bash
 curl http://localhost:5678/metrics
 ```
+
 3. Check Prometheus logs:
+
 ```bash
 docker logs n8n-prometheus
 ```
@@ -230,6 +247,7 @@ docker logs n8n-prometheus
 2. Check time range (top right corner)
 3. Test queries directly in Prometheus
 4. Ensure services are running:
+
 ```bash
 ./scripts/local-deploy.sh -s
 ```
@@ -237,6 +255,7 @@ docker logs n8n-prometheus
 ### Port Conflicts
 
 If ports are already in use:
+
 ```bash
 # Change ports in docker-compose.yml or use different ports
 PROMETHEUS_PORT=9091 GRAFANA_PORT=3001 ./scripts/local-deploy.sh -m

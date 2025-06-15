@@ -17,18 +17,11 @@ from typing import Optional
 import aws_cdk as cdk
 
 from n8n_deploy.config import ConfigLoader
-from n8n_deploy.stacks import (
-    NetworkStack,
-    StorageStack,
-    ComputeStack,
-    AccessStack,
-)
 from n8n_deploy.config.models import DatabaseType
+from n8n_deploy.stacks import AccessStack, ComputeStack, NetworkStack, StorageStack
 
 
-def create_stacks(
-    app: cdk.App, environment: str, stack_type: Optional[str] = None
-) -> None:
+def create_stacks(app: cdk.App, environment: str, stack_type: Optional[str] = None) -> None:
     """Create all stacks for the specified environment.
 
     Args:
@@ -47,9 +40,7 @@ def create_stacks(
         config = config_loader.load_config(environment, stack_type)
     except FileNotFoundError:
         print("Error: system.yaml not found. Please create a system.yaml file.")
-        print(
-            "You can use 'python -m n8n_deploy.config.config_loader' to generate an example."
-        )
+        print("You can use 'python -m n8n_deploy.config.config_loader' to generate an example.")
         sys.exit(1)
     except ValueError as e:
         print(f"Error loading configuration: {e}")
@@ -70,10 +61,7 @@ def create_stacks(
     else:
         # Default components based on configuration
         components = ["network", "storage", "compute", "access"]
-        if (
-            env_config.settings.database
-            and env_config.settings.database.type == DatabaseType.POSTGRES
-        ):
+        if env_config.settings.database and env_config.settings.database.type == DatabaseType.POSTGRES:
             components.append("database")
         if env_config.settings.monitoring:
             components.append("monitoring")
@@ -111,8 +99,7 @@ def create_stacks(
     database_endpoint = None
     database_secret = None
     if "database" in components or (
-        env_config.settings.database
-        and env_config.settings.database.type == DatabaseType.POSTGRES
+        env_config.settings.database and env_config.settings.database.type == DatabaseType.POSTGRES
     ):
         # Import DatabaseStack when needed
         from n8n_deploy.stacks import DatabaseStack

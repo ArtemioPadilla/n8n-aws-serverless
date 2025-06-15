@@ -5,6 +5,7 @@ This guide helps you quickly access and use the monitoring stack for your local 
 ## Prerequisites
 
 Make sure you have started n8n with monitoring enabled:
+
 ```bash
 ./scripts/local-deploy.sh -p postgres -m
 ```
@@ -12,21 +13,25 @@ Make sure you have started n8n with monitoring enabled:
 ## Accessing the Monitoring Stack
 
 ### 1. Grafana (Dashboards)
-- **URL**: http://localhost:3000
+
+- **URL**: <http://localhost:3000>
 - **Default Username**: `admin`
 - **Default Password**: Check your `.env` file or use `admin` if not changed
 
 ### 2. Prometheus (Metrics)
-- **URL**: http://localhost:9090
-- **Targets Status**: http://localhost:9090/targets
-- **Available Metrics**: http://localhost:9090/graph
+
+- **URL**: <http://localhost:9090>
+- **Targets Status**: <http://localhost:9090/targets>
+- **Available Metrics**: <http://localhost:9090/graph>
 
 ## Available Dashboards
 
 After logging into Grafana, you'll find pre-configured dashboards:
 
 ### n8n Complete Monitoring
+
 Located in the `n8n` folder, this dashboard includes:
+
 - **n8n Status**: Overall health indicator
 - **Executions/min**: Current workflow execution rate
 - **Success Rate**: Percentage of successful executions
@@ -35,7 +40,9 @@ Located in the `n8n` folder, this dashboard includes:
 - **Webhook Metrics**: Request rates and response times
 
 ### PostgreSQL Monitoring
+
 When using the postgres profile, this dashboard shows:
+
 - **Connection Usage**: Active connections and pool utilization
 - **Transaction Rates**: Commits and rollbacks per second
 - **Cache Hit Ratio**: Database performance indicator
@@ -47,12 +54,13 @@ When using the postgres profile, this dashboard shows:
 ### No Data in Dashboards?
 
 1. **Check if n8n is exposing metrics**:
+
    ```bash
    curl http://localhost:5678/metrics | grep n8n_
    ```
 
 2. **Verify Prometheus is scraping n8n**:
-   - Go to http://localhost:9090/targets
+   - Go to <http://localhost:9090/targets>
    - Look for the `n8n` target - it should show as "UP"
 
 3. **Check time range in Grafana**:
@@ -87,13 +95,15 @@ n8n_process_resident_memory_bytes
 
 ## Creating Custom Alerts
 
-### In Grafana:
+### In Grafana
+
 1. Edit any panel
 2. Go to "Alert" tab
 3. Set conditions (e.g., when success rate < 90%)
 4. Configure notification channel
 
-### Example Alert Conditions:
+### Example Alert Conditions
+
 - **High Error Rate**: When `rate(n8n_workflow_executions_total{status="error"}[5m]) > 0.1`
 - **High Memory Usage**: When `n8n_process_resident_memory_bytes > 1073741824` (1GB)
 - **Slow Workflows**: When `avg(n8n_workflow_execution_duration_seconds) > 10`

@@ -1,4 +1,5 @@
 """Integration tests for stack deployment and dependencies."""
+
 from unittest.mock import patch
 
 import pytest
@@ -124,18 +125,9 @@ class TestStackDeployment:
         # Verify stack properties without synthesis
         # This avoids the CDK environment parsing issue with "test"
         # Stack names are based on the construct_id passed to the stack
-        assert (
-            network_stack.stack_name
-            == f"{config.global_config.project_name}-{environment}-network"
-        )
-        assert (
-            storage_stack.stack_name
-            == f"{config.global_config.project_name}-{environment}-storage"
-        )
-        assert (
-            compute_stack.stack_name
-            == f"{config.global_config.project_name}-{environment}-compute"
-        )
+        assert network_stack.stack_name == f"{config.global_config.project_name}-{environment}-network"
+        assert storage_stack.stack_name == f"{config.global_config.project_name}-{environment}-storage"
+        assert compute_stack.stack_name == f"{config.global_config.project_name}-{environment}-compute"
 
         # Verify resources are created by checking construct properties
         assert hasattr(network_stack, "vpc")
@@ -169,9 +161,7 @@ class TestStackDeployment:
         )
 
         # Deploy all stacks in order
-        network_stack = NetworkStack(
-            app, "test-network", config=config, environment=environment, env=env
-        )
+        network_stack = NetworkStack(app, "test-network", config=config, environment=environment, env=env)
 
         storage_stack = StorageStack(
             app,
@@ -198,12 +188,8 @@ class TestStackDeployment:
             environment=environment,
             network_stack=network_stack,
             storage_stack=storage_stack,
-            database_endpoint=database_stack.endpoint
-            if hasattr(database_stack, "endpoint")
-            else None,
-            database_secret=database_stack.secret
-            if hasattr(database_stack, "secret")
-            else None,
+            database_endpoint=database_stack.endpoint if hasattr(database_stack, "endpoint") else None,
+            database_secret=database_stack.secret if hasattr(database_stack, "secret") else None,
             env=env,
         )
 
@@ -258,9 +244,7 @@ class TestStackDeployment:
         )
 
         # Deploy network and storage stacks
-        network_stack = NetworkStack(
-            app, "test-network", config=config, environment=environment, env=env
-        )
+        network_stack = NetworkStack(app, "test-network", config=config, environment=environment, env=env)
 
         storage_stack = StorageStack(
             app,
@@ -363,9 +347,7 @@ class TestStackDeployment:
         )
 
         # Deploy network stack with existing VPC
-        network_stack = NetworkStack(
-            app, "test-network", config=config, environment=environment, env=env
-        )
+        network_stack = NetworkStack(app, "test-network", config=config, environment=environment, env=env)
 
         # Verify VPC was imported, not created
         # When using existing VPC, the stack should not create a new VPC
@@ -393,9 +375,7 @@ class TestStackDeployment:
         )
 
         # Deploy minimal stack
-        network_stack = NetworkStack(
-            app, "test-network", config=config, environment=environment, env=env
-        )
+        network_stack = NetworkStack(app, "test-network", config=config, environment=environment, env=env)
 
         StorageStack(
             app,
@@ -430,9 +410,7 @@ class TestStackDeployment:
             config.environments[environment] = config.environments["test"].copy()
             config.environments[environment].region = region
 
-            env = Environment(
-                account=config.environments[environment].account, region=region
-            )
+            env = Environment(account=config.environments[environment].account, region=region)
 
             # Deploy network stack in each region
             network_stack = NetworkStack(
@@ -468,9 +446,7 @@ class TestStackDeployment:
             region=config.environments[environment].region,
         )
 
-        network_stack = NetworkStack(
-            app, "test-network", config=config, environment=environment, env=env
-        )
+        network_stack = NetworkStack(app, "test-network", config=config, environment=environment, env=env)
 
         # Verify tags are applied to the stack
         # Since we can't synthesize in test environment, we verify the stack has the expected config

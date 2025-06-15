@@ -1,4 +1,5 @@
 """Cloudflare Tunnel construct for zero-trust access to n8n."""
+
 from typing import Any, Dict, Optional
 
 from aws_cdk import Duration, Stack
@@ -112,9 +113,7 @@ class CloudflareTunnelConfiguration(Construct):
         # Domain-based access
         if self.access_config.get("allowed_domains"):
             for domain in self.access_config["allowed_domains"]:
-                access_rules.append(
-                    {"type": "email_domain", "email_domain": {"domain": domain}}
-                )
+                access_rules.append({"type": "email_domain", "email_domain": {"domain": domain}})
 
         # Add access configuration to the tunnel
         if access_rules:
@@ -184,9 +183,7 @@ class CloudflareTunnelSidecar(Construct):
                 "TUNNEL_TRANSPORT_PROTOCOL": "quic",
             },
             secrets={"TUNNEL_TOKEN": ecs.Secret.from_secrets_manager(tunnel_secret)},
-            logging=ecs.LogDriver.aws_logs(
-                stream_prefix="cloudflare", log_group=log_group
-            ),
+            logging=ecs.LogDriver.aws_logs(stream_prefix="cloudflare", log_group=log_group),
             health_check=ecs.HealthCheck(
                 command=[
                     "CMD-SHELL",
@@ -200,9 +197,7 @@ class CloudflareTunnelSidecar(Construct):
         )
 
         # Add port mapping for metrics
-        self.container.add_port_mappings(
-            ecs.PortMapping(container_port=2000, protocol=ecs.Protocol.TCP)
-        )
+        self.container.add_port_mappings(ecs.PortMapping(container_port=2000, protocol=ecs.Protocol.TCP))
 
         # Grant read access to the tunnel secret
         tunnel_secret.grant_read(task_definition.task_role)

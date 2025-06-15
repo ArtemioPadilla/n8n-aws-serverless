@@ -1,4 +1,5 @@
 """Configuration loader for system.yaml."""
+
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -76,9 +77,7 @@ class ConfigLoader:
         if self._config.defaults:
             config_dict["defaults"] = self._config.defaults.model_dump()
         if self._config.stacks:
-            config_dict["stacks"] = {
-                k: v.model_dump() for k, v in self._config.stacks.items()
-            }
+            config_dict["stacks"] = {k: v.model_dump() for k, v in self._config.stacks.items()}
         if self._config.shared_resources:
             config_dict["shared_resources"] = self._config.shared_resources.model_dump()
 
@@ -99,9 +98,7 @@ class ConfigLoader:
                     break
                 current = current.parent
             else:
-                raise FileNotFoundError(
-                    f"Configuration file '{self.config_file}' not found"
-                )
+                raise FileNotFoundError(f"Configuration file '{self.config_file}' not found")
 
         with open(self.config_file, "r") as f:
             self._raw_config = yaml.safe_load(f)
@@ -115,9 +112,7 @@ class ConfigLoader:
         except ValidationError as e:
             raise ValueError(f"Configuration validation failed: {e}")
 
-    def _apply_stack_type(
-        self, env_config: EnvironmentConfig, stack_type: str
-    ) -> EnvironmentConfig:
+    def _apply_stack_type(self, env_config: EnvironmentConfig, stack_type: str) -> EnvironmentConfig:
         """Apply stack type configuration to environment.
 
         Args:
@@ -151,9 +146,7 @@ class ConfigLoader:
 
         return modified_config
 
-    def _apply_overrides(
-        self, env_config: EnvironmentConfig, overrides: Dict[str, Any]
-    ) -> EnvironmentConfig:
+    def _apply_overrides(self, env_config: EnvironmentConfig, overrides: Dict[str, Any]) -> EnvironmentConfig:
         """Apply runtime overrides to configuration.
 
         Args:
@@ -187,11 +180,7 @@ class ConfigLoader:
             self._load_raw_config()
             self._validate_config()
 
-        return (
-            list(self._config.stacks.keys())
-            if self._config and self._config.stacks
-            else []
-        )
+        return list(self._config.stacks.keys()) if self._config and self._config.stacks else []
 
     def validate_config_file(self) -> bool:
         """Validate the configuration file without loading specific environment.

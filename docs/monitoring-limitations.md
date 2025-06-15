@@ -44,7 +44,7 @@ The **n8n Basic Monitoring** dashboard has been created to work with the availab
 
 ### Accessing the Working Dashboard
 
-1. Go to Grafana: http://localhost:3000
+1. Go to Grafana: <http://localhost:3000>
 2. Login with admin / secure-grafana-password
 3. Navigate to Dashboards → Browse
 4. Open "n8n Basic Monitoring"
@@ -56,9 +56,11 @@ Since workflow metrics are not available via Prometheus, here are alternative ap
 ### 1. Use n8n's Built-in Execution History
 
 Access the execution history directly in n8n:
-- http://localhost:5678/workflow/executions
+
+- <http://localhost:5678/workflow/executions>
 
 This shows:
+
 - Execution status (success/error)
 - Execution duration
 - Error messages
@@ -86,6 +88,7 @@ docker logs -f n8n-local | grep -E "Execution|Workflow"
 ### 4. Create Custom Monitoring Workflow
 
 Create a workflow in n8n that:
+
 1. Runs periodically (cron)
 2. Queries execution history via n8n API
 3. Sends metrics to a custom endpoint or database
@@ -96,6 +99,7 @@ Create a workflow in n8n that:
 ### When n8n Adds Workflow Metrics
 
 Once n8n exposes workflow execution metrics, you can:
+
 1. Switch back to the "n8n Complete Monitoring" dashboard
 2. All panels will automatically start showing data
 3. No configuration changes needed
@@ -103,7 +107,8 @@ Once n8n exposes workflow execution metrics, you can:
 ### Check for Updates
 
 Monitor n8n releases for metric improvements:
-- https://github.com/n8n-io/n8n/releases
+
+- <https://github.com/n8n-io/n8n/releases>
 - Look for mentions of "metrics", "prometheus", or "monitoring"
 
 ## Alternative Monitoring Solutions
@@ -111,14 +116,15 @@ Monitor n8n releases for metric improvements:
 ### 1. Use n8n's Execution Data API
 
 Create a Python/Node.js script that:
+
 ```python
 import requests
 import time
 from prometheus_client import Counter, Histogram, start_http_server
 
 # Define custom metrics
-workflow_executions = Counter('custom_n8n_workflow_executions_total', 
-                            'Total workflow executions', 
+workflow_executions = Counter('custom_n8n_workflow_executions_total',
+                            'Total workflow executions',
                             ['status'])
 workflow_duration = Histogram('custom_n8n_workflow_duration_seconds',
                             'Workflow execution duration')
@@ -134,6 +140,7 @@ while True:
 ### 2. Use Application Performance Monitoring (APM)
 
 Consider adding APM tools that can monitor Node.js applications:
+
 - New Relic
 - DataDog
 - AppDynamics
@@ -142,6 +149,7 @@ Consider adding APM tools that can monitor Node.js applications:
 ### 3. Custom Logging Solution
 
 Configure n8n to output structured logs and use:
+
 - ELK Stack (Elasticsearch, Logstash, Kibana)
 - Loki + Grafana
 - CloudWatch Logs (if on AWS)
@@ -149,6 +157,7 @@ Configure n8n to output structured logs and use:
 ## Summary
 
 While n8n v1.94.1 has limited metrics support, the basic monitoring dashboard provides:
+
 - ✅ Service health monitoring
 - ✅ Resource usage tracking
 - ✅ Performance indicators (event loop, GC)

@@ -53,7 +53,7 @@ fi
 
 # Backup current configuration
 echo "💾 Backing up configuration..."
-cp system.yaml system.yaml.backup.$(date +%Y%m%d_%H%M%S)
+cp system.yaml "system.yaml.backup.$(date +%Y%m%d_%H%M%S)"
 echo "✅ Configuration backed up"
 echo ""
 
@@ -104,9 +104,11 @@ python3 -m venv .venv
 # Activate virtual environment
 if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
     # Windows
+    # shellcheck source=/dev/null
     source .venv/Scripts/activate
 else
     # Unix-like
+    # shellcheck source=/dev/null
     source .venv/bin/activate
 fi
 

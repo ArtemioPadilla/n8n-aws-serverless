@@ -3,6 +3,7 @@
 This guide covers deploying n8n to AWS using the CDK infrastructure.
 
 ## Table of Contents
+
 - [Prerequisites](#prerequisites)
 - [Initial Setup](#initial-setup)
 - [Deployment Options](#deployment-options)
@@ -14,6 +15,7 @@ This guide covers deploying n8n to AWS using the CDK infrastructure.
 ## Prerequisites
 
 ### Required Tools
+
 ```bash
 # Check versions
 python --version  # 3.8+
@@ -23,7 +25,9 @@ cdk --version     # 2.0+
 ```
 
 ### AWS Permissions
+
 Your AWS user/role needs the following permissions:
+
 - CloudFormation full access
 - IAM role creation
 - VPC and networking
@@ -34,6 +38,7 @@ Your AWS user/role needs the following permissions:
 - (Optional) RDS, CloudFront, Route53
 
 ### AWS Account Preparation
+
 ```bash
 # Configure AWS credentials
 aws configure
@@ -72,6 +77,7 @@ vim system.yaml
 ```
 
 Key configuration items:
+
 ```yaml
 environments:
   dev:
@@ -99,18 +105,21 @@ python -c "from n8n_deploy.config import ConfigLoader; print(ConfigLoader().get_
 ### Environment-Based Deployment
 
 #### Development Environment
+
 ```bash
 # Minimal cost, basic features
 cdk deploy -c environment=dev
 ```
 
 #### Staging Environment
+
 ```bash
 # Production-like, with PostgreSQL
 cdk deploy -c environment=staging
 ```
 
 #### Production Environment
+
 ```bash
 # Full features, high availability
 cdk deploy -c environment=production
@@ -119,26 +128,32 @@ cdk deploy -c environment=production
 ### Stack Type Deployment
 
 #### Minimal Stack (~$5-10/month)
+
 ```bash
 cdk deploy -c environment=dev -c stack_type=minimal
 ```
+
 - Basic n8n with SQLite
 - No monitoring or backups
 - Single availability zone
 
 #### Standard Stack (~$15-30/month)
+
 ```bash
 cdk deploy -c environment=staging -c stack_type=standard
 ```
+
 - PostgreSQL database
 - CloudWatch monitoring
 - Automated backups
 - CloudFront CDN
 
 #### Enterprise Stack (~$50-100/month)
+
 ```bash
 cdk deploy -c environment=production -c stack_type=enterprise
 ```
+
 - Aurora Serverless PostgreSQL
 - Multi-AZ deployment
 - WAF protection
@@ -162,11 +177,13 @@ ls -la cdk.out/
 ### 2. Deploy Infrastructure
 
 #### Option A: Deploy All Stacks
+
 ```bash
 cdk deploy -c environment=dev --all
 ```
 
 #### Option B: Deploy Individual Stacks
+
 ```bash
 # Deploy in order
 cdk deploy -c environment=dev n8n-deploy-dev-network
@@ -259,6 +276,7 @@ cdk deploy -c environment=production --require-approval broadening
 ### 3. Update Container Image
 
 To update n8n version:
+
 ```yaml
 # In system.yaml
 defaults:
@@ -316,6 +334,7 @@ aws backup start-restore-job \
 ### 3. Database Rollback
 
 For RDS/Aurora:
+
 ```bash
 # Restore from snapshot
 aws rds restore-db-instance-from-db-snapshot \
@@ -326,27 +345,32 @@ aws rds restore-db-instance-from-db-snapshot \
 ## Deployment Best Practices
 
 ### 1. Use Separate Environments
+
 - Never deploy directly to production
 - Test in dev/staging first
 - Use different AWS accounts for isolation
 
 ### 2. Version Control
+
 - Tag releases in git
 - Document changes in CHANGELOG
 - Use semantic versioning
 
 ### 3. Monitoring
+
 - Set up CloudWatch alarms
 - Configure SNS notifications
 - Review logs regularly
 
 ### 4. Security
+
 - Rotate credentials quarterly
 - Review IAM permissions
 - Enable AWS GuardDuty
 - Use PrivateLink for AWS services
 
 ### 5. Cost Management
+
 - Set up AWS Budgets
 - Use Spot instances for non-production
 - Review Cost Explorer monthly
@@ -357,6 +381,7 @@ aws rds restore-db-instance-from-db-snapshot \
 ### Common Issues
 
 1. **CDK Bootstrap Required**
+
    ```bash
    cdk bootstrap aws://ACCOUNT-ID/REGION
    ```
@@ -395,6 +420,7 @@ aws ecs describe-tasks \
 ## CI/CD Integration
 
 ### GitHub Actions
+
 ```yaml
 # .github/workflows/deploy.yml
 - name: Deploy to AWS
@@ -404,6 +430,7 @@ aws ecs describe-tasks \
 ```
 
 ### GitLab CI
+
 ```yaml
 # .gitlab-ci.yml
 deploy:

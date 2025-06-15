@@ -1,4 +1,5 @@
 """Compute stack for ECS cluster and Fargate services."""
+
 from typing import Optional
 
 from aws_cdk import Duration
@@ -87,15 +88,12 @@ class ComputeStack(N8nBaseStack):
         # Set up auto-scaling if enabled
         if (
             self.env_config.settings.scaling
-            and self.env_config.settings.scaling.max_tasks
-            > self.env_config.settings.scaling.min_tasks
+            and self.env_config.settings.scaling.max_tasks > self.env_config.settings.scaling.min_tasks
         ):
             self._setup_auto_scaling()
 
         # Add resilience mechanisms if enabled
-        if self.env_config.settings.features and self.env_config.settings.features.get(
-            "resilience_enabled", False
-        ):
+        if self.env_config.settings.features and self.env_config.settings.features.get("resilience_enabled", False):
             self._add_resilience_mechanisms()
 
         # Add outputs
@@ -221,13 +219,15 @@ class ComputeStack(N8nBaseStack):
             service_url="http://localhost:5678",
             environment=self.environment,
             tunnel_secret_name=cf_config.tunnel_token_secret_name,
-            access_config={
-                "enabled": cf_config.access_enabled,
-                "allowed_emails": cf_config.access_allowed_emails,
-                "allowed_domains": cf_config.access_allowed_domains,
-            }
-            if cf_config.access_enabled
-            else None,
+            access_config=(
+                {
+                    "enabled": cf_config.access_enabled,
+                    "allowed_emails": cf_config.access_allowed_emails,
+                    "allowed_domains": cf_config.access_allowed_domains,
+                }
+                if cf_config.access_enabled
+                else None
+            ),
         )
 
         # Add Cloudflare tunnel sidecar to the task definition
@@ -257,9 +257,7 @@ class ComputeStack(N8nBaseStack):
             description="ECS cluster name",
         )
 
-        self.add_output(
-            "ClusterArn", value=self.cluster.cluster_arn, description="ECS cluster ARN"
-        )
+        self.add_output("ClusterArn", value=self.cluster.cluster_arn, description="ECS cluster ARN")
 
         # Service outputs
         self.add_output(

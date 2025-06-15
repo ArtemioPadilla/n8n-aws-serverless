@@ -1,4 +1,5 @@
 """Integration tests for configuration validation and loading."""
+
 import os
 
 import pytest
@@ -261,9 +262,7 @@ class TestConfigValidation:
     def test_cross_region_backup_validation(self, valid_config, tmp_path):
         """Test cross-region backup configuration validation."""
         # Enable cross-region backup without regions
-        valid_config["environments"]["production"]["settings"]["backup"][
-            "backup_regions"
-        ] = []
+        valid_config["environments"]["production"]["settings"]["backup"]["backup_regions"] = []
 
         config_file = tmp_path / "system.yaml"
         with open(config_file, "w") as f:
@@ -282,9 +281,7 @@ class TestConfigValidation:
         # Create base config
         base_config = {
             "global": {"project_name": "test-n8n", "organization": "test-org"},
-            "defaults": {
-                "fargate": {"cpu": 256, "memory": 512, "n8n_version": "1.94.1"}
-            },
+            "defaults": {"fargate": {"cpu": 256, "memory": 512, "n8n_version": "1.94.1"}},
         }
 
         # Create environment-specific config

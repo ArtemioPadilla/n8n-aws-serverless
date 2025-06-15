@@ -2,9 +2,9 @@ name: Test and Lint
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -17,142 +17,149 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-    - name: Run linting
-      run: |
-        # Black formatting check
-        black --check n8n_deploy tests
-        
-        # Flake8 linting
-        flake8 n8n_deploy tests
-        
-        # isort import sorting check
-        isort --check-only n8n_deploy tests
+      - name: Run linting
+        run: |
+          # Black formatting check
+          black --check n8n_deploy tests
 
-    - name: Run type checking
-      run: |
-        mypy n8n_deploy || true  # Don't fail on type errors for now
+          # Flake8 linting
+          flake8 n8n_deploy tests
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+          # isort import sorting check
+          isort --check-only n8n_deploy tests
 
-    - name: Run tests with coverage
-      run: |
-        pytest --cov=n8n_deploy --cov-report=xml --cov-report=html --cov-report=term
+      - name: Run type checking
+        run: |
+          mypy n8n_deploy || true  # Don't fail on type errors for now
 
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      if: github.event_name != 'pull_request'
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-        token: ${{ secrets.CODECOV_TOKEN || '' }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Upload coverage HTML report
-      uses: actions/upload-artifact@v4
-      if: failure()
-      with:
-        name: coverage-report-${{ matrix.python-version }}
-        path: htmlcov/
+      - name: Run tests with coverage
+        run: |
+          # Set AWS region for boto3 tests
+          export AWS_DEFAULT_REGION=us-east-1
+          pytest --cov=n8n_deploy --cov-report=xml --cov-report=html --cov-report=term
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN || '' }}
+
+      - name: Upload coverage HTML report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: coverage-report-${{ matrix.python-version }}
+          path: htmlcov/
 
   cdk-synth:
     name: CDK Synthesis Test
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-    - name: Install AWS CDK
-      run: |
-        npm install -g aws-cdk@2 --force
+      - name: Install AWS CDK
+        run: |
+          npm install -g aws-cdk@2 --force
 
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: CDK Synthesis
-      run: |
-        # Test synthesis for different environments
-        cdk synth -c environment=dev --quiet
-        cdk synth -c environment=staging --quiet
-        cdk synth -c environment=production --quiet
-        
-        # Test with different stack types
-        cdk synth -c environment=dev -c stack_type=minimal --quiet
-        cdk synth -c environment=dev -c stack_type=standard --quiet
+      - name: CDK Synthesis
+        run: |
+          # Set up dummy AWS credentials for CDK synthesis
+          export AWS_ACCESS_KEY_ID=test
+          export AWS_SECRET_ACCESS_KEY=test
+          export AWS_DEFAULT_REGION=us-east-1
+
+          # Test synthesis for different environments
+          cdk synth -c environment=dev --quiet
+          cdk synth -c environment=staging --quiet
+          cdk synth -c environment=production --quiet
+
+          # Test with different stack types
+          cdk synth -c environment=dev -c stack_type=minimal --quiet
+          cdk synth -c environment=dev -c stack_type=standard --quiet
 
   docker-build:
     name: Docker Build Test
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Test Docker Compose Configuration
-      run: |
-        cd docker
-        # Set test environment variables
-        export CLOUDFLARE_TUNNEL_TOKEN=test-token
-        export N8N_ENCRYPTION_KEY=test-encryption-key
-        export N8N_BASIC_AUTH_USER=test-user
-        export N8N_BASIC_AUTH_PASSWORD=test-password
-        export POSTGRES_USER=test-postgres-user
-        export POSTGRES_PASSWORD=test-postgres-password
-        # Test base config
-        docker compose config
-        # Test production config (standalone file)
-        docker compose -f docker-compose.prod.yml config
+      - name: Test Docker Compose Configuration
+        run: |
+          cd docker
+          # Set test environment variables
+          export CLOUDFLARE_TUNNEL_TOKEN=test-token
+          export N8N_ENCRYPTION_KEY=test-encryption-key
+          export N8N_BASIC_AUTH_USER=test-user
+          export N8N_BASIC_AUTH_PASSWORD=test-password
+          export POSTGRES_USER=test-postgres-user
+          export POSTGRES_PASSWORD=test-postgres-password
+          # Test base config
+          docker compose config
+          # Test production config (standalone file)
+          docker compose -f docker-compose.prod.yml config
 
-    - name: Build Docker images
-      run: |
-        cd docker
-        # Set test environment variables
-        export CLOUDFLARE_TUNNEL_TOKEN=test-token
-        export N8N_ENCRYPTION_KEY=test-encryption-key
-        export N8N_BASIC_AUTH_USER=test-user
-        export N8N_BASIC_AUTH_PASSWORD=test-password
-        export POSTGRES_USER=test-postgres-user
-        export POSTGRES_PASSWORD=test-postgres-password
-        # Build base configuration
-        docker compose build --no-cache
+      - name: Build Docker images
+        run: |
+          cd docker
+          # Set test environment variables
+          export CLOUDFLARE_TUNNEL_TOKEN=test-token
+          export N8N_ENCRYPTION_KEY=test-encryption-key
+          export N8N_BASIC_AUTH_USER=test-user
+          export N8N_BASIC_AUTH_PASSWORD=test-password
+          export POSTGRES_USER=test-postgres-user
+          export POSTGRES_PASSWORD=test-postgres-password
+          # Build base configuration
+          docker compose build --no-cache
 
   security-scan:
     name: Security Scan
@@ -160,33 +167,33 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    
+
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
 
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always() && github.event_name != 'pull_request'
-      with:
-        sarif_file: 'trivy-results.sarif'
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && github.event_name != 'pull_request'
+        with:
+          sarif_file: "trivy-results.sarif"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Run bandit security linter
-      run: |
-        pip install bandit
-        bandit -r n8n_deploy -f json -o bandit-report.json || true
+      - name: Run bandit security linter
+        run: |
+          pip install bandit
+          bandit -r n8n_deploy -f json -o bandit-report.json || true
 
-    - name: Upload bandit results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: bandit-report
-        path: bandit-report.json
+      - name: Upload bandit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json

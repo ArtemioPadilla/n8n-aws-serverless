@@ -1,4 +1,5 @@
 """Unit tests for MonitoringStack."""
+
 from unittest.mock import Mock
 
 import pytest
@@ -32,9 +33,7 @@ class TestMonitoringStack:
     def test_config(self):
         """Create test configuration."""
         return N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
@@ -193,9 +192,7 @@ class TestMonitoringStack:
             },
         )
 
-    def test_storage_alarms_creation(
-        self, app, test_config, compute_stack_mock, storage_stack_mock
-    ):
+    def test_storage_alarms_creation(self, app, test_config, compute_stack_mock, storage_stack_mock):
         """Test creation of storage resource alarms."""
         storage_stack_mock.file_system.file_system_id = "fs-12345678"
 
@@ -224,9 +221,7 @@ class TestMonitoringStack:
             },
         )
 
-    def test_database_alarms_creation(
-        self, app, test_config, compute_stack_mock, database_stack_mock
-    ):
+    def test_database_alarms_creation(self, app, test_config, compute_stack_mock, database_stack_mock):
         """Test creation of database resource alarms."""
         stack = MonitoringStack(
             app,
@@ -291,16 +286,12 @@ class TestMonitoringStack:
     def test_no_email_subscription_when_not_configured(self, app, compute_stack_mock):
         """Test that email subscription is not created when alarm_email is not set."""
         config = N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "test": EnvironmentConfig(
                     account="123456789012",
                     region="us-east-1",
-                    settings=EnvironmentSettings(
-                        monitoring=MonitoringConfig(alarm_email=None)  # No email
-                    ),
+                    settings=EnvironmentSettings(monitoring=MonitoringConfig(alarm_email=None)),  # No email
                 )
             },
         )
@@ -339,13 +330,9 @@ class TestMonitoringStack:
         expected_outputs = {"AlarmTopicArn", "DashboardUrl"}
 
         for output in expected_outputs:
-            assert any(
-                output in key for key in output_keys
-            ), f"Missing output: {output}"
+            assert any(output in key for key in output_keys), f"Missing output: {output}"
 
-    def test_no_database_alarms_without_database_stack(
-        self, app, test_config, compute_stack_mock
-    ):
+    def test_no_database_alarms_without_database_stack(self, app, test_config, compute_stack_mock):
         """Test that database alarms are not created when database stack is not provided."""
         stack = MonitoringStack(
             app,
@@ -370,16 +357,12 @@ class TestMonitoringStack:
     def test_production_memory_scaling_alarms(self, app, compute_stack_mock):
         """Test additional alarms for production environment."""
         config = N8nConfig(
-            global_config=GlobalConfig(
-                project_name="test-n8n", organization="test-org"
-            ),
+            global_config=GlobalConfig(project_name="test-n8n", organization="test-org"),
             environments={
                 "production": EnvironmentConfig(
                     account="123456789012",
                     region="us-east-1",
-                    settings=EnvironmentSettings(
-                        monitoring=MonitoringConfig(enable_container_insights=True)
-                    ),
+                    settings=EnvironmentSettings(monitoring=MonitoringConfig(enable_container_insights=True)),
                 )
             },
         )
@@ -397,9 +380,7 @@ class TestMonitoringStack:
         assert stack.is_production() is True
         assert stack.monitoring_config.enable_container_insights is True
 
-    def test_dashboard_widgets_configuration(
-        self, app, test_config, compute_stack_mock, storage_stack_mock
-    ):
+    def test_dashboard_widgets_configuration(self, app, test_config, compute_stack_mock, storage_stack_mock):
         """Test dashboard widget configuration with storage stack."""
         compute_stack_mock.n8n_service.service.service_name = "test-n8n-service"
         compute_stack_mock.cluster.cluster_name = "test-cluster"
@@ -518,9 +499,7 @@ class TestMonitoringStack:
         ]
 
         for expected in expected_filters:
-            assert any(
-                expected in str(name) for name in filter_names
-            ), f"Missing metric filter: {expected}"
+            assert any(expected in str(name) for name in filter_names), f"Missing metric filter: {expected}"
 
     def test_custom_metric_alarms(self, app, test_config, compute_stack_mock):
         """Test custom n8n metric alarms."""
