@@ -50,6 +50,8 @@ class ConfigLoader:
             self._validate_config()
 
         # Get environment configuration
+        if not self._config:
+            raise ValueError("Configuration not loaded")
         env_config = self._config.get_environment(environment)
         if not env_config:
             raise ValueError(f"Environment '{environment}' not found in configuration")
@@ -66,13 +68,18 @@ class ConfigLoader:
             env_config = self._apply_overrides(env_config, overrides)
 
         # Create a new config with only the selected environment
-        selected_config = N8nConfig(
-            global_config=self._config.global_config,
-            defaults=self._config.defaults,
-            environments={environment: env_config},
-            stacks=self._config.stacks,
-            shared_resources=self._config.shared_resources,
-        )
+        config_dict = {
+            "global": self._config.global_config.dict(),
+            "environments": {environment: env_config.dict()},
+        }
+        if self._config.defaults:
+            config_dict["defaults"] = self._config.defaults.dict()
+        if self._config.stacks:
+            config_dict["stacks"] = {k: v.dict() for k, v in self._config.stacks.items()}
+        if self._config.shared_resources:
+            config_dict["shared_resources"] = self._config.shared_resources.dict()
+        
+        selected_config = N8nConfig(**config_dict)
 
         return selected_config
 
@@ -114,6 +121,8 @@ class ConfigLoader:
         Returns:
             Modified environment configuration
         """
+        if not self._config:
+            raise ValueError("Configuration not loaded")
         stack_config = self._config.get_stack_config(stack_type)
         if not stack_config:
             raise ValueError(f"Stack type '{stack_type}' not found in configuration")
@@ -164,7 +173,7 @@ class ConfigLoader:
             self._load_raw_config()
             self._validate_config()
 
-        return list(self._config.environments.keys())
+        return list(self._config.environments.keys()) if self._config else []
 
     def get_available_stack_types(self) -> list[str]:
         """Get list of available stack types."""

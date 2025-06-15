@@ -62,6 +62,7 @@ jobs:
         file: ./coverage.xml
         flags: cloudflare
         name: cloudflare-${{ matrix.python-version }}
+        fail_ci_if_error: false
 
   docker-test:
     runs-on: ubuntu-latest
@@ -156,5 +157,8 @@ jobs:
                   tunnel_domain: "test.example.com"
         EOF
         
+        # Copy test config to expected location
+        cp test-system.yaml system.yaml
+        
         # Test CDK synthesis
-        cdk synth -c environment=test -c config_path=test-system.yaml --quiet
+        cdk synth -c environment=test --quiet

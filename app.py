@@ -38,7 +38,12 @@ def create_stacks(
     """
     # Load configuration
     try:
-        config_loader = ConfigLoader()
+        # Check if a custom config path is provided
+        config_path = app.node.try_get_context("config_path")
+        if config_path:
+            config_loader = ConfigLoader(config_path)
+        else:
+            config_loader = ConfigLoader()
         config = config_loader.load_config(environment, stack_type)
     except FileNotFoundError:
         print("Error: system.yaml not found. Please create a system.yaml file.")

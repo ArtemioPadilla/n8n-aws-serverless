@@ -133,6 +133,7 @@ jobs:
       if: always()
       uses: actions/github-script@v7
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const environment = '${{ steps.params.outputs.environment }}';
           const apiUrl = '${{ steps.outputs.api_url }}';
@@ -168,6 +169,7 @@ jobs:
     - name: Send notification
       uses: actions/github-script@v7
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const status = '${{ needs.deploy.result }}';
           const environment = '${{ github.event.inputs.environment || 'dev' }}';
