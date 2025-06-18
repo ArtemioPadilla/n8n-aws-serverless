@@ -119,7 +119,7 @@ repos:
       # Quick unit tests on every commit
       - id: quick-test
         name: Run quick unit tests
-        entry: bash -c 'pytest tests/unit -x --tb=short -q || true'
+        entry: bash -c 'pytest tests/unit -x --tb=short -q --no-cov || true'
         language: system
         pass_filenames: false
         types: [python]
