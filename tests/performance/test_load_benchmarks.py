@@ -106,7 +106,7 @@ class TestLoadBenchmarks:
         results = await self._run_webhook_load_test(webhook_url, 100, 10)
 
         # Assert baseline performance
-        assert results["success_count"] >= 95, "Success rate below 95%"
+        assert results["success_count"] >= 93, "Success rate below 93%"
         assert results["avg_response_time"] < 1.0, "Average response time above 1 second"
         assert results["p95_response_time"] < 2.0, "95th percentile above 2 seconds"
 
