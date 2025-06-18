@@ -55,7 +55,8 @@
       "Bash(prettier:*)",
       "Bash(npx prettier:*)",
       "Bash(cat:*)",
-      "Bash(shellcheck:*)"
+      "Bash(shellcheck:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   }
